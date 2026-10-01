@@ -108,8 +108,10 @@ was duff, a boiled flour pudding, and the men sang about it at the windlass.
 // context: Francis Allyn Olmsted, Incidents of a Whaling Voyage (1841), pp. 47–48 (two watches, four hours at a time; Olmsted sailed from New London) — https://archive.org/details/incidentsofwhali00olms
 
 The first stop was the Azores, the Western Islands, where American whalers took on fresh
-food and, often, fresh men. Erasthus wrote home in July and August 1851, from the island of
-Flores. Trade there ran on barter; a few years earlier a whaler at Flores had bought three
+food and, often, fresh men. The _Hannibal_ called at Fayal on July 26 with nothing yet to show
+for the voyage, and again on August 11 to land sixty-five barrels of sperm oil for shipment
+home; the _Vesper_ of New London was there landing oil at the same time. Erasthus wrote home
+that summer, and his letters mention the island of Flores. Trade there ran on barter; a few years earlier a whaler at Flores had bought three
 thousand onions, two hundred eggs and four dozen cabbages for a single barrel of oil. On
 August 20, while the _Hannibal_ was in those waters, a sperm whale in the Atlantic smashed a
 whaleboat of the New Bedford ship _Ann Alexander_ "to fragments no larger than a common
@@ -117,9 +119,15 @@ chair" and then sank the ship. Two months later a New York writer named Herman M
 published a very long novel about a whale that sank a ship. _Moby-Dick_ came out in London in
 October and New York in November, sold poorly, and earned its author, in the end, \$556.37.
 // src: record (Letters From the Sea nos. 2–3: 1851 Jul 24 & 25 refs "Island of Flora"; 1851 Aug 17 refs "Western Islands")
+// src: Dennis Wood, Abstracts of Whaling Voyages, vol. 2 p. 316 ("At Fayal July 26. Clean"; "At do Aug 11. 65 Sp. (Lnd)") — https://archive.org/details/abstractsofwhali2184denn/page/n352 ; Whalemen's Shipping List 1851-09-23 p. 4 (oil landed at Fayal: Hannibal 65 bbls; Vesper, NLondon, 50 bbls)
 // context: Azores as first foreign stop; provisioning and recruiting; Flores 1847, a barrel of oil for "3,000 onions, 200 eggs & 4 dozen cabbages" — NPS ethnography, ch. 9 — https://home.nps.gov/nebe/learn/historyculture/upload/NEBE_Ethnographic_1825-1925_FY22_508.pdf
 // context: Ann Alexander, Aug 20 1851 — Alexander Starbuck, History of the American Whale Fishery (1878), p. 119 — https://archive.org/details/historyofamerica00star
 // context: Moby-Dick London Oct 18, New York Nov 14 1851; Melville's earnings $556.37 — https://blog.loa.org/2010/10/october-18-1851-melvilles-moby-dick-is.html
+
+No report of her survives for the next five months, and which way she went is not known. In
+January 1852 she turned up at Mangonui, on New Zealand's Doubtless Bay, with ninety barrels of
+sperm oil and two hundred of whale, bound for the Northwest Coast.
+// src: Wood, vol. 2 p. 316 ("At Mongonui in Jany 1852. 90 Sp 200 Wh. for N.W.C.") — https://archive.org/details/abstractsofwhali2184denn/page/n352 ; Whalemen's Shipping List 1852-06-15 (table)
 
 For the _Hannibal_, wherever the whales were meant the far north. Three years earlier a Sag
 Harbor captain named Thomas Roys had taken his ship through the Bering Strait and found the
@@ -130,10 +138,18 @@ and hoop skirts. In the Arctic summer the sun barely set, and the first whale ev
 there was killed at midnight. In fog the ships called to one another with bells, guns, horns
 and by pounding on empty casks. Not all of them came home. That July a New London ship, the
 _Superior_, went ashore on the Siberian coast in thick fog while boiling out a whale. On
-August 18 the _Hannibal_ was spoken with thirteen whales to her credit, and on August 31
-another whaler logged her at sixty-nine degrees north, above the Bering Strait.
+August 18 two ships reported speaking the _Hannibal_, one crediting her with thirteen whales
+and the other with eleven. On August 31 the _Betsey Williams_ of Stonington met her north of
+the Bering Strait, and whoever kept that ship's log wrote, "Spoke the Hannibal of New London
+Captain Lester 11 whale," and drew a little ship in the margin. Two days later, off Cape
+Thaddeus in the Gulf of Anadyr, Captain Lester wrote home: 1,700 barrels, all well, but nine
+whales lost to bad irons and lines. He was bound south to cruise for sperm whales on the
+Line, and expected to be at Hong Kong in February.
 // src: The Polynesian (Honolulu), 1852 Oct 2, p. 2 (Hibernia's report: "18 [Aug.] Hannibal, do. [N.L.] 13 wb"; Superior "ashore in thick fog, trying out at the time") — https://www.loc.gov/resource/sn82015408/1852-10-02/ed-1/?sp=2
-// src: CoML logbook data, Betsey Williams (AV01853), 1852 Aug 31, spoke Hannibal at 68.97 N, 172.43 W (facts/records/sources/hannibal/data/…coml_spoken…)
+// src: The Polynesian 1852 Oct 16 p. 2 (Ontario: "Hannibal 11 wh.", Aug 18); Wood vol. 2 p. 316 ("Spoke Aug 18. 13 whs this season")
+// src: Logbook of the Betsey Williams (New Bedford Whaling Museum KWM 370), 1852 Aug 31: "Spoke the Hannibal of New London Captain Lester 11 whale[s]", with a drawing of the ship — https://archive.org/details/logbookofbetseyw00unse/page/n136 ; position about 69 N, interpolated (CoML AV01853)
+// src: Wood vol. 2 p. 316 ("A Letter reports her off Cape St. Thaddeus Sept 2. 1700"); NY Daily Tribune 1852-12-17 p. 8 (Lester's letter: lost 9 whales by poor irons and lines; bound to the Line; Hong Kong in February) — https://www.loc.gov/resource/sn83030213/1852-12-17/ed-1/?sp=8
+// NOTE: whale counts differ (13 Hibernia and Wood; 11 Ontario and Betsey Williams); both given.
 // context: Roys 1848 — Bockstoce, Arctic 37:4 (1984), p. 528 — https://pubs.aina.ucalgary.ca/arctic/arctic37-4-528.pdf ; fleet 50 (1849) to 224 (1852) — Northern Mariner 16:2, p. 55 — https://www.cnrs-scrn.org/northern_mariner/vol16/tnm_16_2_53-68.pdf
 // context: bowhead of 150 bbl "with bone in proportion" — Starbuck p. 99n; first Arctic whale "captured at 12 o'clock at night"; fog signals — Starbuck pp. 98–99; baleen for corsets and hoop skirts — https://www.nps.gov/nebe/learn/historyculture/whaleproducts.htm
 // NOTE: "a ton or more of baleen" is conservative against Scammon p. 52 (over 3,500 lb in the largest).
@@ -170,26 +186,31 @@ Pribilof Islands, where, more than a century later, Dad would spend three years 
 
 #sectionbreak
 
-In the autumn the fleet came south. On November 20, 1852, the _Hannibal_ anchored at Ronkiti
-harbor on Ascension Island, as the whalers called Pohnpei, in the Caroline Islands. It was a
-favorite stop, for the island chief's hospitality and for its prices: a hog cost five dollars
+In the autumn the fleet came south. On November 20, 1852, the _Hannibal_ anchored at Ascension
+Island, as the whalers called Pohnpei, in the Caroline Islands. It was a favorite stop, for
+its chiefs' hospitality and for its prices: a hog cost five dollars
 in tobacco. It was also a favorite place to jump ship. Some hundred and fifty beachcombers
 lived ashore, deserters and castaways mostly, and one recaptured runaway had made his second
 escape by paddling ashore in the captain's wooden bathtub. The first American missionaries had
 arrived ten weeks before the _Hannibal_ and been unnerved by the rowdy beachcombers who met
-their ship begging for tobacco. In January the _Hannibal_ left for Hong Kong, and on February
-4, 1853, she arrived there with three other American whalers.
-// src: The Polynesian, 1853 May 14, p. 3 ("Arrivals at Ascension Island, 1852 … Nov. 20. Hannibal"); 1853 Nov 19, p. 2 (Ronkiti Harbor list: "Nov 20, '52, Hannibal … Jan 13, '53 … for Hongkong"; OCR poor); 1853 Jun 4, p. 2 (Hong Kong: arrived "4th [Feb.], wh ship Hannibal, Lester" with Monongahela, Bart Gosnold, John Wells) — https://www.loc.gov/resource/sn82015408/1853-06-04/ed-1/?sp=2
+their ship begging for tobacco. The _Hannibal_ sailed on December 3 to cruise on the Line,
+passed the island again on January 15 bound for Hong Kong, and reached Hong Kong in February
+1853, in company with three other American whalers.
+// src: The Polynesian, 1853 May 14, p. 3 ("Arrivals at Ascension Island, 1852 … Nov. 20. Hannibal"); 1853 Nov 19, p. 2 (Ascension Island shipping list: in Nov 20 '52; sailed Dec 3 for the line; passed Jan 15 '53 bound for Hongkong; master misprinted "Mason"); 1853 Jun 4, p. 2 (Hong Kong: arrived "4th [Feb.], wh ship Hannibal, Lester" with Monongahela, Bart Gosnold, John Wells) — https://www.loc.gov/resource/sn82015408/1853-06-04/ed-1/?sp=2
+// NOTE: Hong Kong arrival is Feb 3/4 (NY Tribune, Polynesian) or Feb 14 (NY Herald, Wood, WSL); the text says February.
 // context: David Hanlon, Upon a Stone Altar: A History of the Island of Pohnpei to 1890 (1988), pp. 74–76 (Rohnkiti; hog $5 in tobacco; ~150 beachcombers; the bathtub), pp. 92–93 (ABCFM missionaries arrived Sep 6 1852; "rowdy group of beachcombers") — https://scholarspace.manoa.hawaii.edu/server/api/core/bitstreams/e02874d4-99dc-40d6-865d-5cf44dc18c69/content
 
 Hong Kong, as Dad explained, was a common stop for the whalers: it was British, so money
-could be changed and stores taken on. It was there that Erasthus and the _Hannibal_ parted
-company. The family's version is that the crew, unhappy with their treatment, mutinied.
+could be changed and stores taken on. The _Hannibal_ stayed about three weeks. Captain Lester
+sent twenty thousand pounds of whalebone home to New York aboard the _Annie Bucknam_, and on
+February 27 the ship sailed north again. It was her only call at Hong Kong that year, and it
+was there that Erasthus and the _Hannibal_ parted company. The family's version is that the crew, unhappy with their treatment, mutinied.
 Dad guessed it was the quiet kind: they went ashore for supplies and never went back. "But
 that's something that could be seen from his letters," he said. If so, he had plenty of
 company. The average whaleship of the time lost nearly two-thirds of the crew she sailed with
 before she got home, and about three men in ten deserted.
-// src: [S5 00:09:43]; [S5 00:13:20]; record (1852 letter refs Hong Kong; police force in Hong Kong, 1853); The Polynesian 1853 Jun 4 p. 2 (Hannibal at Hong Kong Feb 4 1853)
+// src: [S5 00:09:43]; [S5 00:13:20]; record (1852 letter refs Hong Kong; police force in Hong Kong, 1853); NY Herald 1853-05-06 p. 8 (Lester's letter of Feb 23: bone shipped by the Annie Bucknam; to sail on the 25th) — https://www.loc.gov/resource/sn83030313/1853-05-06/ed-1/?sp=8 ; Wood vol. 2 p. 316 ("Sld fm Hong Kong Feb 27 for a cruise")
+// NOTE: no source says when he left the ship; the Feb 1853 call is the only fit (facts/records/hannibal/burnham_mentions.md).
 // context: Hohman (1928), p. 64 (turnover nearly two-thirds; about three in ten deserted)
 // REVIEW: that he deserted is inferred from his leaving the ship at Hong Kong; the family calls
 // it a mutiny. The author to confirm the wording.
@@ -214,14 +235,19 @@ hadn't made it through this," Dad said, "none of us would exist."
 #plate("/photos/print/P040-withheld.png", caption: "Seven bandits and a bridge: Hong Kong, 1853", width: 4.4in)
 // photo: P040 — AI illustration generated from the museum tintype (2004.09.013); see IMAGE-STYLE.md
 
-The _Hannibal_ went on without him. In October 1853 she was at Lahaina, on Maui, a whaling
-town with a brand-new prison for sailors, where the newspaper noted that she had "sailed
-without clearance," which is to say without waiting for her papers; smallpox was loose in
-the islands that autumn, and there were reasons not to linger. She reached New London on
-April 4, 1854, with about half the oil of her previous voyage. Captain Lester died six years
+The _Hannibal_ went on without him. She spent the summer of 1853 back in the Arctic, where
+she took only two or three whales, and on October 22 she came in to Lahaina, on Maui, a
+whaling town with a brand-new prison for sailors. The newspaper's list of arrivals noted that
+she had "sailed without clearance," which is to say without waiting for her papers. Smallpox
+was loose in the islands that autumn. Four days later she was at Honolulu with two thousand
+barrels of whale oil; she cleared for home on November 12, called at Rarotonga in December,
+and on March 29 was spoken sixty miles south of Montauk. She reached New London on April 4,
+1854, thirty-three months and eleven days out, with about half the oil of her previous
+voyage. Captain Lester died six years
 later, in command of another New London ship, and in 1861 the _Hannibal_ herself was
 abandoned in Cumberland Inlet, off Baffin Island.
-// src: The Polynesian 1853 Oct 29 p. 2 (Port of Lahaina: "sh Hannibal, Lester, sailed without clearance") — https://www.loc.gov/resource/sn82015408/1853-10-29/ed-1/?sp=2 ; voyage AV06134 (returned Apr 4 1854: 97 sperm, 1,678 whale, 20,000 bone; previous voyage 100 sperm, 3,400 whale); vessel AS1529 ("Aband, Cumberland Inlet, 1861"); Lester: master of the Pioneer, died Jun 14 1860 (AV07659)
+// src: Wood vol. 2 p. 316 (Arctic Aug 28 and Sept 3 1853, 2 and 3 whales; Honolulu Oct 26, 2000 wh; cleared Nov 12; "At Koratonga Dec 14 for home"; off Montauk Mar 29; arrived Apr 4 1854 "in 33 months & 11 days") — https://archive.org/details/abstractsofwhali2184denn/page/n352 ; NY Herald 1854-04-06 p. 8
+// src: The Polynesian 1853 Oct 29 p. 2 (Port of Lahaina, arrived Oct 22: "sh Hannibal, Lester, sailed without clearance") — https://www.loc.gov/resource/sn82015408/1853-10-29/ed-1/?sp=2 ; voyage AV06134 (returned Apr 4 1854: 97 sperm, 1,678 whale, 20,000 bone; previous voyage 100 sperm, 3,400 whale); vessel AS1529 ("Aband, Cumberland Inlet, 1861"); Lester: master of the Pioneer, died Jun 14 1860 (AV07659)
 // context: Hale Paʻahao, Lahaina's prison, built 1852–53 — https://www.lahainarestoration.org/lahainaprison.html ; smallpox epidemic of 1853 (The Polynesian 1853 Dec 17 p. 2)
 // NOTE: "without waiting for her papers" is the plain meaning of the phrase; no source explains this case.
 
@@ -477,11 +503,13 @@ handwriting, waiting for the family to come and read them.
    master Jeremiah Lester Jr.; crew list of June 21, 1851, entry "Erastus W. Brunham," age 18.
    Whaling History, American Offshore Whaling Voyages database.
    #link("https://whalinghistory.org/?s=AV06134")[whalinghistory.org]],
-  [Where the _Hannibal_ was: shipping news in _The Polynesian_ (Honolulu), October 2, 1852; May 14,
-   June 4, October 29 and November 19, 1853, in the Library of Congress's Chronicling America
-   #link("https://www.loc.gov/item/sn82015408/")[loc.gov]; the logbook of the _Betsey Williams_,
-   August 31, 1852, in the Census of Marine Life logbook data at whalinghistory.org. The map is
-   drawn from these positions alone.],
+  [Where the _Hannibal_ was: Dennis Wood's manuscript _Abstracts of Whaling Voyages_, vol. 2 p. 316,
+   the voyage summary #link("https://archive.org/details/abstractsofwhali2184denn/page/n352")[archive.org]; the logbook of the _Betsey Williams_, August 31,
+   1852 #link("https://archive.org/details/logbookofbetseyw00unse/page/n136")[archive.org]; shipping
+   news in _The Polynesian_ (Honolulu), the _New-York Daily Tribune_, the _New York Herald_ and the
+   _Whalemen's Shipping List_, 1851–1854, in the Library of Congress's Chronicling America
+   #link("https://www.loc.gov/item/sn82015408/")[loc.gov] and Mystic Seaport. No logbook of this
+   voyage is known to survive. The map is drawn from these reports alone.],
   [Life aboard: J. Ross Browne, _Etchings of a Whaling Cruise_ (1846); F. A. Olmsted, _Incidents
    of a Whaling Voyage_ (1841); Alexander Starbuck, _History of the American Whale Fishery_
    (1878); Elmo P. Hohman, _The American Whaleman_ (1928), all on the Internet Archive; David
