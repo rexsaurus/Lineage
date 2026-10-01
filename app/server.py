@@ -108,6 +108,8 @@ DEFAULT_SETTINGS = {
     "trim": "7x10", "printer": "kdp", "drive_folder": "", "sync_sources": False, "sync_outputs": False,
     "terminal_command": "", "terminal_cwd": "", "voice_id": "", "voice_name": "",
     "family_name": "", "subtitle": "", "summary": "", "subject_short": "", "covers_override": "",
+    "crest_mode": "none", "crest_show": False,
+    "crest_surfaces": {"header": True, "familypedia": True, "title_page": True, "exports": True, "invitations": True},
 }
 # Changing these marks the pages built from them stale (never rewritten silently).
 IDENTITY_DEPENDENTS = {"title": ["title page", "introduction draft", "Familypedia front page"],
@@ -885,13 +887,14 @@ def engine_covers(project):
 def engine_identity(project):
     s = project.read()
     st = s["settings"]
-    crest = next((p for p in (project.root / ".lineage").glob("crest.*")), None)
+    cs = crest_state(project)
+    crest_path = cs["current"] if (cs["mode"] != "none" and cs["show"]) else None
     auto = engine_covers(project)
     return {"family_name": st.get("family_name", ""), "title": s.get("title", ""), "subtitle": st.get("subtitle", ""),
             "summary": st.get("summary", ""), "subject": s.get("subject", ""), "subject_short": st.get("subject_short", ""),
             "covers_auto": auto["text"], "covers": st.get("covers_override") or auto["text"],
             "covers_overridden": bool(st.get("covers_override")),
-            "crest": crest.relative_to(project.root).as_posix() if crest else None,
+            "crest": crest_path, "crest_surfaces": cs["surfaces"], "crest_provenance": cs["provenance"],
             "display_title": s.get("title") or "Untitled lineage", "stale": s.get("stale", [])}
 
 
@@ -912,6 +915,142 @@ def engine_draft_summary(project):
         bits.append(f"It covers {cov['text'].replace(' · ', ', in ')}.")
     bits.append("Everything in it comes from what was said on the recordings and from the records cited alongside.")
     return " ".join(bits)
+
+# ---------------------------------------------------------------- crest / symbol
+# Generate (OpenAI images, 4 candidates, attempts kept), Upload (original kept; optional
+# background removal and a one-colour version), or None. Hidden everywhere until switched on;
+# hiding never deletes. Provenance travels with the mark, so a generated one never reads as inherited.
+CREST_STYLES = {
+    "engraved": "engraved line art, fine black hatching on white, like a nineteenth-century book plate",
+    "woodcut": "a woodcut print, bold black carved lines on white",
+    "heraldic": "a heraldic shield, flat colours with a thin black outline, simple charges",
+    "monogram": "a letterpress monogram, one colour, set in a round seal",
+    "botanical": "a botanical mark, a single plant drawn in fine line, one colour",
+}
+IMAGE_MODEL = "gpt-image-1"
+
+
+def _crest_dir(project):
+    d = project.root / ".lineage" / "crest"
+    (d / "attempts").mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def crest_state(project):
+    d = _crest_dir(project)
+    cur = d / "current.png"
+    prov = json.loads((d / "current.json").read_text()) if (d / "current.json").exists() else None
+    attempts = []
+    for meta in sorted((d / "attempts").glob("*.json"), reverse=True):
+        m = json.loads(meta.read_text())
+        img = meta.with_suffix(".png")
+        if img.exists():
+            attempts.append({**m, "image": img.relative_to(project.root).as_posix(), "name": img.stem})
+    variants = {k: (d / f"current-{k}.png").relative_to(project.root).as_posix()
+                for k in ("transparent", "mono") if (d / f"current-{k}.png").exists()}
+    st = project.read()["settings"]
+    return {"mode": st.get("crest_mode", "none"), "show": bool(st.get("crest_show")),
+            "surfaces": st.get("crest_surfaces") or DEFAULT_SETTINGS["crest_surfaces"],
+            "current": cur.relative_to(project.root).as_posix() if cur.exists() else None,
+            "provenance": prov, "attempts": attempts[:40], "variants": variants,
+            "styles": {k: v for k, v in CREST_STYLES.items()}, "openai": bool(load_config()["keys"].get("openai"))}
+
+
+def crest_prompt_fill(project):
+    """A starting point from the project's own material, to be edited."""
+    st = project.read()["settings"]
+    tl = engine_timeline(project)
+    places = list(dict.fromkeys(e["place"].split(",")[0] for e in tl["events"] if e["place"]))[:5]
+    trades = list(dict.fromkeys(e["type"] for e in tl["events"] if e["type"] in ("employment", "migration", "military service", "journey")))
+    words = re.findall(r"ore boats|whal\w+|mill\w*|tobacco|farm\w*|cabin|lake|river|ship\w*|dock\w*|school|church", " ".join(e["title"] for e in tl["events"]), re.I)
+    return ", ".join(x for x in [st.get("family_name") or "", ", ".join(places), ", ".join(dict.fromkeys(w.lower() for w in words))] if x)
+
+
+def crest_generate(project, prompt, style):
+    key = load_config()["keys"].get("openai")
+    if not key:
+        raise RuntimeError("Add an OpenAI key in Connectors")
+    full = (f"A family symbol for a family history book: {prompt}. Style: {CREST_STYLES.get(style, style)}. "
+            "Centered on a plain white background, no text, no letters unless it is a monogram, reads clearly at small sizes.")
+    req = urllib.request.Request("https://api.openai.com/v1/images/generations", method="POST",
+                                 data=json.dumps({"model": IMAGE_MODEL, "prompt": full, "n": 4, "size": "1024x1024"}).encode(),
+                                 headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=300) as r:
+            body = json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"OpenAI said {e.code}: {e.read().decode(errors='replace')[:200]}")
+    d = _crest_dir(project)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    made = []
+    for i, item in enumerate(body.get("data", [])):
+        if item.get("b64_json"):
+            img = base64.b64decode(item["b64_json"])
+        elif item.get("url"):
+            with urllib.request.urlopen(item["url"], timeout=120) as r:
+                img = r.read()
+        else:
+            continue
+        name = f"{stamp}-{i + 1}"
+        (d / "attempts" / f"{name}.png").write_bytes(img)
+        (d / "attempts" / f"{name}.json").write_text(json.dumps({"kind": "generated", "model": IMAGE_MODEL, "prompt": prompt,
+                                                                  "style": style, "full_prompt": full, "date": _now()}, indent=1))
+        made.append(name)
+    return {"made": made, **crest_state(project)}
+
+
+def crest_choose(project, name):
+    d = _crest_dir(project)
+    src = d / "attempts" / f"{name}.png"
+    if not src.exists():
+        raise FileNotFoundError("no such attempt")
+    shutil.copy2(src, d / "current.png")
+    shutil.copy2(src.with_suffix(".json"), d / "current.json")
+    for v in d.glob("current-*.png"):
+        v.unlink()
+    s = project.read()
+    s["settings"]["crest_mode"] = "generate"
+    s["stale"] = sorted(set(s.get("stale", [])) | {"title page", "Familypedia front page"})
+    project.write(s)
+    return crest_state(project)
+
+
+def crest_upload(project, filename, data, provenance_kind, note):
+    ext = Path(filename).suffix.lower()
+    if ext not in (".png", ".jpg", ".jpeg", ".svg"):
+        raise ValueError("use a PNG, JPG or SVG")
+    d = _crest_dir(project)
+    (d / f"original{ext}").write_bytes(data)                       # the original is always kept
+    if ext == ".svg":
+        (d / "current.svg").write_bytes(data)
+        if shutil.which("rsvg-convert"):
+            subprocess.run(["rsvg-convert", "-w", "1024", "-o", str(d / "current.png"), str(d / "current.svg")], timeout=60)
+    elif shutil.which("ffmpeg"):
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(d / f"original{ext}"), str(d / "current.png")], timeout=60)
+    else:
+        (d / "current.png").write_bytes(data)
+    for v in d.glob("current-*.png"):
+        v.unlink()
+    (d / "current.json").write_text(json.dumps({"kind": "uploaded", "provenance": provenance_kind, "note": note,
+                                                "original": f"original{ext}", "date": _now()}, indent=1))
+    s = project.read()
+    s["settings"]["crest_mode"] = "upload"
+    s["stale"] = sorted(set(s.get("stale", [])) | {"title page", "Familypedia front page"})
+    project.write(s)
+    return crest_state(project)
+
+
+def crest_variant(project, kind):
+    """Optional print helpers from the current mark; the original stays untouched."""
+    d = _crest_dir(project)
+    src = d / "current.png"
+    if not src.exists() or not shutil.which("ffmpeg"):
+        raise RuntimeError("needs a current crest and ffmpeg")
+    out = d / f"current-{kind}.png"
+    vf = {"transparent": "format=rgba,colorkey=white:0.25:0.1",
+          "mono": "format=gray,lutyuv=y='if(lt(val,140),0,255)',format=rgba,colorkey=white:0.2:0.05"}[kind]
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(src), "-vf", vf, str(out)], timeout=120)
+    return crest_state(project)
 
 # ---------------------------------------------------------------- stories
 # A story is one written piece (a chapter file on disk). The UI says "story"; the files keep
@@ -974,6 +1113,11 @@ def engine_stories(project):
             "stale": stale.get(r["id"]),
         }
         r.update(rows_extra)
+    voices = story_voices(project)
+    for r in rows:
+        r.update(story_audio_info(project, r) if r["exists"] else {"has_audio": False})
+        r["voice_override"] = voices.get(r["id"])
+        r["narration_chars"] = None
     return rows
 
 
@@ -1028,6 +1172,563 @@ def engine_render_story(project, story_id, ppi=110):
     pages = sorted(p.relative_to(project.root).as_posix() for p in out.glob("page-*.png"))
     return {"pages": pages, "story": story}
 
+
+# ---------------------------------------------------------------- timeline
+PIVOTAL = re.compile(r"\b(born|birth|died|death|dies|married|marri|wedding|moved|moves|emigrat|immigrat|crossed|enlist|"
+                     r"war|discharg|graduat|retir|buil[dt]|bought|sold|fire|flood)\w*", re.I)
+EVENT_TYPES = [("birth", r"\bborn|birth"), ("death", r"\bdied|death|dies|buried"), ("marriage", r"marri|wedding"),
+               ("migration", r"emigrat|immigrat|crossed|moved|moves|sailed"), ("military service", r"enlist|regiment|war|discharg"),
+               ("disaster", r"fire|flood|storm|snow|wreck"), ("employment", r"work|job|mill|ore boats|school|nursing"),
+               ("journey", r"journey|voyage|trip|drove|walk")]
+
+
+def _tier_of(e):
+    basis = " ".join(e.get(k, "") or "" for k in ("date_basis", "event", "source")).lower()
+    if "family account" in basis or "lore" in basis:
+        return "lore"
+    if re.search(r"\bR\d+\b|https?://|record|roster|census|certificate", basis):
+        return "documented"
+    if "told" in basis:
+        return "told"
+    return "witnessed"
+
+
+def _event_type(text):
+    return next((t for t, rx in EVENT_TYPES if re.search(rx, text, re.I)), "event")
+
+
+def _timeline_rows(project):
+    tl = project.root / "facts" / "timeline.csv"
+    return list(csv.DictReader(open(tl, encoding="utf-8"))) if tl.exists() else []
+
+
+def _transcript_line(project, cite):
+    """The transcript paragraph a citation like [S1 00:00:29] points at."""
+    m = re.search(r"(S\d+) (\d\d:\d\d:\d\d)", cite or "")
+    if not m:
+        return None
+    f = project.root / "transcript" / "clean" / f"{m.group(1)}.md"
+    if not f.exists():
+        return None
+    for line in f.read_text(encoding="utf-8").splitlines():
+        pm = PARA.match(line)
+        if pm and pm["sid"] == m.group(1) and pm["ts"] == m.group(2):
+            return {"speaker": pm["spk"], "text": pm["text"], "cite": f"[{pm['sid']} {pm['ts']}]"}
+    return None
+
+
+def engine_timeline(project):
+    """Every event, oldest first, with tier, people, places, citations, stories, highlights, conflicts and gaps."""
+    stars = set(json.loads((project.root / "data" / "timeline_stars.json").read_text())) \
+        if (project.root / "data" / "timeline_stars.json").exists() else set()
+    stories = {s["id"]: s["title"] for s in engine_stories(project)}
+    slugs = {a["title"]: a["slug"] for a in engine_familypedia(project)}
+    photos = {}
+    for r in intake_load(project).values():
+        if r.get("kind") == "image" and r.get("thumb") and not r.get("trashed"):
+            for e in (r.get("mine") or {}).get("events", []) or []:
+                photos[e] = r["thumb"]
+    events, undated = [], []
+    for e in _timeline_rows(project):
+        years = YEAR.findall(e.get("date_start") or "")
+        people = [x.strip() for x in (e.get("people") or "").split(";") if x.strip()]
+        quote = (e.get("quote") or "").strip()
+        cites = [c.strip() for c in re.split(r";\s*", e.get("source") or "") if c.strip()]
+        ev = {"id": e["event_id"], "year": int(years[0]) if years else None, "date": e.get("date_display") or e.get("date_start") or "",
+              "precision": e.get("precision") or "", "derived": (e.get("precision") or "") not in ("day", "exact", "year"),
+              "title": e["event"].rstrip("."), "summary": e.get("date_basis") or "", "people": people,
+              "place": e.get("place") or "", "cites": cites, "quote": quote, "tier": _tier_of(e),
+              "confidence": e.get("confidence") or "", "conflict": (e.get("conflicts") or "").strip(),
+              "story": stories.get(str(e.get("chapter") or "")), "story_id": str(e.get("chapter") or "") or None,
+              "slug": slugs.get(e["event"].rstrip(".")), "person_slugs": {p: slugs.get(p) for p in people},
+              "place_slug": slugs.get(e.get("place") or ""), "type": _event_type(e["event"]),
+              "starred": e["event_id"] in stars, "photo": photos.get(e["event_id"])}
+        ev["highlight"] = ev["starred"] or bool(PIVOTAL.search(e["event"]))
+        (events if ev["year"] else undated).append(ev)
+    events.sort(key=lambda x: (x["year"], x["id"]))
+    gaps = []
+    for a, b in zip(events, events[1:]):
+        if b["year"] - a["year"] >= 6:
+            gaps.append({"after": a["id"], "from": a["year"], "to": b["year"]})
+    birth = None
+    subject = project.read().get("subject") or ""
+    for ev in events:
+        if subject and subject in ev["people"] and ev["type"] == "birth":
+            birth = ev["year"]
+    return {"events": events, "undated": undated, "gaps": gaps, "subject_birth": birth,
+            "subject_short": project.read()["settings"].get("subject_short") or (subject.split()[0] if subject else "")}
+
+
+def engine_timeline_svg(project):
+    tl = engine_timeline(project)
+    rows = tl["events"]
+    h = 60 + 46 * len(rows)
+    tier_fill = {"documented": "#1C1A17", "witnessed": "#4F7A54", "told": "#FFFDF8", "lore": "#FFFDF8"}
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="760" height="{h}" viewBox="0 0 760 {h}" font-family="Georgia, serif">',
+             f'<rect width="760" height="{h}" fill="#F7F3EC"/>',
+             f'<text x="30" y="34" font-size="20" fill="#1C1A17">{html_escape(project.read().get("title") or "Timeline")}</text>',
+             f'<line x1="130" y1="50" x2="130" y2="{h - 10}" stroke="#C96F4A" stroke-width="2"/>']
+    for i, ev in enumerate(rows):
+        y = 70 + 46 * i
+        dash = ' stroke-dasharray="2,2"' if ev["tier"] == "lore" else ""
+        parts.append(f'<text x="118" y="{y + 5}" font-size="13" text-anchor="end" fill="#4A443C">{html_escape(ev["date"])}</text>')
+        parts.append(f'<circle cx="130" cy="{y}" r="6" fill="{tier_fill.get(ev["tier"], "#FFFDF8")}" stroke="#1C1A17" stroke-width="1.5"{dash}/>')
+        parts.append(f'<text x="146" y="{y + 5}" font-size="14" fill="#1C1A17">{html_escape(ev["title"][:90])}</text>')
+    parts.append("</svg>")
+    return "\n".join(parts).encode()
+
+
+def add_question(project, text, source):
+    p = project.root / "data" / "questions.json"
+    cur = json.loads(p.read_text()) if p.exists() else []
+    cur.append({"text": text, "source": source, "at": _now(), "by": "me"})
+    p.write_text(json.dumps(cur, indent=1, ensure_ascii=False))
+    return cur
+
+# ---------------------------------------------------------------- genealogy (derived from sources)
+# derived.json: what the last approved rebuild found. mine.json: my corrections, which always win.
+# proposed.json: a rebuild waiting for review. No evidence, no link: people without one float free.
+REL_TYPES = ("parent", "spouse", "sibling")
+G_TIERS = ("documented", "told", "lore", "unconfirmed")
+
+
+def _gdir(project):
+    d = project.root / "data" / "genealogy"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _gload(project, name, default):
+    p = _gdir(project) / f"{name}.json"
+    return json.loads(p.read_text()) if p.exists() else default
+
+
+def _gsave(project, name, data):
+    (_gdir(project) / f"{name}.json").write_text(json.dumps(data, indent=1, ensure_ascii=False))
+
+
+def _pid(name):
+    return _slug(name) or "unknown"
+
+
+def _lid(a, rel, b):
+    """Link id. Spouse and sibling have no direction, so their ids are order-free."""
+    if rel in ("spouse", "sibling"):
+        a, b = sorted((a, b))
+    return f"{a}-{rel}-{b}"
+
+
+def genealogy_material(project):
+    """What the rebuild reads: transcripts, source summaries and notes, records, the timeline's people."""
+    parts = []
+    for p, t in _texts(project, ["transcript/clean/*.md"]):
+        parts.append(f"=== TRANSCRIPT {p.stem}\n" + t[:60000])
+    for r in intake_load(project).values():
+        if r.get("trashed"):
+            continue
+        e = effective(r)
+        extra = " ".join(filter(None, [e.get("summary"), r.get("notes"), " ".join((r.get("fields") or {}).values())]))
+        if extra.strip():
+            parts.append(f"=== SOURCE {r['id']} ({r['original_name']})\n{extra}")
+    arch = project.root / "data" / "archives.csv"
+    if arch.exists():
+        parts.append("=== RECORDS\n" + arch.read_text(encoding="utf-8")[:20000])
+    return "\n\n".join(parts)[:150000]
+
+
+def genealogy_rebuild(project):
+    """Derive people and relationships with evidence. Every link must cite a passage that exists."""
+    people = {}
+    for a in engine_familypedia(project):
+        if a["type"] == "person":
+            people[_pid(a["title"])] = {"id": _pid(a["title"]), "name": a["title"], "aliases": [], "dates": "", "living": None,
+                                        "evidence": []}
+    links, note = [], ""
+    if load_config()["keys"].get("anthropic"):
+        material = genealogy_material(project)
+        prompt = ("You are building a family tree for a family-history book, ONLY from the material below. Answer with JSON: "
+                  '{"people":[{"name":"","aliases":[],"dates":"","living":true|false|null}], '
+                  '"links":[{"a":"name","rel":"parent|spouse|sibling","b":"name","tier":"documented|told|lore|unconfirmed",'
+                  '"evidence":[{"cite":"[S1 00:00:05] or SOURCE id or a record id","quote":"the exact words that establish it"}]}]}\n'
+                  "\"a parent b\" means a is the parent of b. Rules: include a relationship ONLY when the material states it; "
+                  "quote the exact words. Never infer a relationship from a surname, a date, or two people appearing together. "
+                  "'told' = the narrator was told it; 'lore' = family story; 'documented' = a record says it.\n\nMATERIAL:\n" + material)
+        req = urllib.request.Request("https://api.anthropic.com/v1/messages", method="POST",
+                                     data=json.dumps({"model": INTAKE_MODEL, "max_tokens": 4000,
+                                                      "messages": [{"role": "user", "content": prompt}]}).encode(),
+                                     headers={"x-api-key": load_config()["keys"]["anthropic"], "anthropic-version": "2023-06-01",
+                                              "content-type": "application/json"})
+        with urllib.request.urlopen(req, timeout=180) as r:
+            out = "".join(b.get("text", "") for b in json.loads(r.read().decode()).get("content", []) if b.get("type") == "text")
+        m = re.search(r"\{.*\}", out, re.S)
+        data = json.loads(m.group(0)) if m else {"people": [], "links": []}
+        haystack = material
+        for pp in data.get("people", []):
+            pid = _pid(pp.get("name", ""))
+            people.setdefault(pid, {"id": pid, "name": pp.get("name"), "aliases": [], "dates": "", "living": None, "evidence": []})
+            people[pid].update({k: pp[k] for k in ("aliases", "dates", "living") if pp.get(k) not in (None, "", [])})
+        dropped = 0
+        for ln in data.get("links", []):
+            ev = [x for x in ln.get("evidence", []) if x.get("quote") and x["quote"][:40] in haystack]
+            if not ev or ln.get("rel") not in REL_TYPES:
+                dropped += 1
+                continue                                   # no evidence, no link
+            a, b = _pid(ln["a"]), _pid(ln["b"])
+            for pid, nm in ((a, ln["a"]), (b, ln["b"])):
+                people.setdefault(pid, {"id": pid, "name": nm, "aliases": [], "dates": "", "living": None, "evidence": []})
+            links.append({"id": _lid(a, ln["rel"], b), "a": a, "rel": ln["rel"], "b": b,
+                          "tier": ln.get("tier") if ln.get("tier") in G_TIERS else "unconfirmed", "evidence": ev})
+        note = f"derived by {INTAKE_MODEL}; {len(links)} relationship(s) with evidence, {dropped} dropped for lack of a quotable passage"
+    else:
+        note = "no Anthropic key: people listed from the material, no relationships derived (add a key, or ask the Genealogist)"
+    proposed = {"people": people, "links": links, "made": _now(), "note": note}
+    _gsave(project, "proposed", proposed)
+    return genealogy_diff(project)
+
+
+def genealogy_diff(project):
+    cur = _gload(project, "derived", {"people": {}, "links": []})
+    new = _gload(project, "proposed", None)
+    if not new:
+        return {"pending": False}
+    cl = {l["id"]: l for l in cur["links"]}
+    nl = {l["id"]: l for l in new["links"]}
+    pairs_cur = {(l["a"], l["b"]): l for l in cur["links"]}
+    contradictions = [{"new": l, "old": pairs_cur[(l["a"], l["b"])]} for l in new["links"]
+                      if (l["a"], l["b"]) in pairs_cur and pairs_cur[(l["a"], l["b"])]["rel"] != l["rel"]]
+    return {"pending": True, "note": new.get("note"), "made": new.get("made"),
+            "new_people": [p for k, p in new["people"].items() if k not in cur["people"]],
+            "new_links": [l for k, l in nl.items() if k not in cl],
+            "changed_links": [{"old": cl[k], "new": l} for k, l in nl.items() if k in cl and cl[k]["tier"] != l["tier"]],
+            "gone_links": [l for k, l in cl.items() if k not in nl],
+            "contradictions": contradictions}
+
+
+def genealogy_apply(project, accept_ids=None):
+    """Accept a reviewed rebuild. Contradictions are kept as conflicts, never resolved silently."""
+    new = _gload(project, "proposed", None)
+    if not new:
+        raise ValueError("nothing to apply")
+    cur = _gload(project, "derived", {"people": {}, "links": [], "conflicts": []})
+    diff = genealogy_diff(project)
+    keep = set(accept_ids) if accept_ids is not None else {l["id"] for l in new["links"]}
+    links = {l["id"]: l for l in cur["links"]}
+    for l in new["links"]:
+        if l["id"] in keep:
+            links[l["id"]] = l
+    conflicts = cur.get("conflicts", []) + [{"a": c["new"]["a"], "b": c["new"]["b"], "versions": [c["old"], c["new"]],
+                                              "state": "unresolved", "at": _now()} for c in diff["contradictions"]]
+    people = {**cur["people"], **new["people"]}
+    _gsave(project, "derived", {"people": people, "links": list(links.values()), "conflicts": conflicts, "applied": _now(),
+                                "note": new.get("note")})
+    (_gdir(project) / "proposed.json").unlink()
+    _ghistory(project, "applied a rebuild", {"links": len(keep), "conflicts": len(diff["contradictions"])})
+    return genealogy_graph(project)
+
+
+def _ghistory(project, event, detail=None):
+    h = _gload(project, "history", [])
+    h.append({"at": _now(), "by": "me", "event": event, "detail": detail or {}})
+    _gsave(project, "history", h)
+
+
+def genealogy_graph(project):
+    """The tree as shown: derived, with my corrections laid over it (they always win)."""
+    d = _gload(project, "derived", {"people": {}, "links": [], "conflicts": []})
+    mine = _gload(project, "mine", {"people": {}, "links": {}, "merges": [], "notes": {}})
+    people = {k: dict(v, by="derived") for k, v in d["people"].items()}
+    for pid, p in mine.get("people", {}).items():
+        people[pid] = {**people.get(pid, {"id": pid, "aliases": [], "dates": "", "living": None, "evidence": []}), **p, "by": "me"}
+    links = {l["id"]: dict(l, by="derived") for l in d["links"]}
+    for lid, l in mine.get("links", {}).items():
+        if l.get("removed"):
+            links.pop(lid, None)
+        else:
+            links[lid] = {**links.get(lid, {}), **l, "id": lid, "by": "me"}
+    for mg in mine.get("merges", []):                     # merged duplicates: alias recorded, links redirected
+        keep, gone = mg["keep"], mg["merge"]
+        if gone in people and keep in people:
+            people[keep]["aliases"] = sorted(set(people[keep].get("aliases", [])) | {people[gone]["name"]} | set(people[gone].get("aliases", [])))
+            people.pop(gone)
+        for l in links.values():
+            l["a"] = keep if l["a"] == gone else l["a"]
+            l["b"] = keep if l["b"] == gone else l["b"]
+    slugs = {a["slug"] for a in engine_familypedia(project)}
+    sources_by_person = {}
+    for r in intake_load(project).values():
+        if not r.get("trashed"):
+            for nm in effective(r).get("people") or []:
+                sources_by_person.setdefault(_pid(nm), []).append(r.get("thumb") if r.get("kind") == "image" else None)
+    stories = engine_stories(project)
+    for pid, p in people.items():
+        p["note"] = mine.get("notes", {}).get(pid, "")
+        p["article"] = pid if pid in slugs else None
+        thumbs = [t for t in sources_by_person.get(pid, []) if t]
+        p["photo"] = thumbs[0] if thumbs else None
+        p["n_sources"] = len(sources_by_person.get(pid, []))
+        p["has_story"] = any(p["name"].split()[0] in (project.root / st["file"]).read_text(encoding="utf-8", errors="ignore")
+                             for st in stories if st["exists"]) if p.get("name") else False
+    subject = project.read().get("subject") or ""
+    return {"people": list(people.values()), "links": list(links.values()), "conflicts": d.get("conflicts", []),
+            "subject": _pid(subject) if subject else None, "note": d.get("note", ""), "applied": d.get("applied"),
+            "pending": genealogy_diff(project).get("pending", False), "history": _gload(project, "history", [])[-30:]}
+
+
+def genealogy_edit(project, op, data):
+    mine = _gload(project, "mine", {"people": {}, "links": {}, "merges": [], "notes": {}})
+    if op == "person":
+        pid = data.get("id") or _pid(data["name"])
+        mine["people"][pid] = {k: data[k] for k in ("name", "dates", "living", "aliases") if k in data}
+    elif op == "link":
+        a, b, rel = _pid(data["a"]), _pid(data["b"]), data["rel"]
+        if rel not in REL_TYPES:
+            raise ValueError(f"relationship must be one of {REL_TYPES}")
+        lid = data.get("id") or _lid(a, rel, b)
+        mine["links"][lid] = {"a": a, "b": b, "rel": rel, "tier": data.get("tier", "unconfirmed"),
+                              "evidence": [{"cite": "stated by me", "quote": data.get("evidence", "")}], "at": _now()}
+    elif op == "link_tier":
+        mine["links"].setdefault(data["id"], {}).update({"tier": data["tier"], "at": _now()})
+    elif op == "link_remove":
+        mine["links"][data["id"]] = {"removed": True, "at": _now()}
+    elif op == "merge":
+        mine["merges"].append({"keep": data["keep"], "merge": data["merge"], "at": _now()})
+    elif op == "split":
+        mine["merges"] = [m for m in mine["merges"] if m["merge"] != data["merge"]]
+    elif op == "note":
+        mine["notes"][data["id"]] = data.get("note", "")
+    else:
+        raise ValueError("unknown edit")
+    _gsave(project, "mine", mine)
+    _ghistory(project, op, data)
+    return genealogy_graph(project)
+
+
+def genealogy_gedcom(project):
+    g = genealogy_graph(project)
+    ids = {p["id"]: f"@I{i + 1}@" for i, p in enumerate(g["people"])}
+    out = ["0 HEAD", "1 SOUR LINEAGE", "1 GEDC", "2 VERS 5.5.1", "1 CHAR UTF-8"]
+    for p in g["people"]:
+        out += [f"0 {ids[p['id']]} INDI", f"1 NAME {p.get('name') or p['id']}"]
+        if p.get("dates"):
+            out += ["1 NOTE dates as the evidence supports: " + p["dates"]]
+        for al in p.get("aliases", []):
+            out.append(f"1 NAME {al}")
+    fams = {}
+    for l in g["links"]:
+        if l["rel"] == "spouse":
+            fams.setdefault(tuple(sorted((l["a"], l["b"]))), {"spouses": {l["a"], l["b"]}, "children": set(), "notes": []})["notes"].append(l)
+    for l in g["links"]:
+        if l["rel"] == "parent":
+            fam = next((k for k, f in fams.items() if l["a"] in f["spouses"]), None)
+            if fam is None:
+                fam = (l["a"],)
+                fams.setdefault(fam, {"spouses": {l["a"]}, "children": set(), "notes": []})
+            fams[fam]["children"].add(l["b"])
+            fams[fam]["notes"].append(l)
+    for i, (k, f) in enumerate(fams.items()):
+        out.append(f"0 @F{i + 1}@ FAM")
+        for j, sp in enumerate(sorted(f["spouses"])):
+            out.append(f"1 {'HUSB' if j == 0 else 'WIFE'} {ids.get(sp, '@I0@')}")
+        for c in sorted(f["children"]):
+            out.append(f"1 CHIL {ids.get(c, '@I0@')}")
+        for n in f["notes"]:
+            out.append(f"1 NOTE {n['rel']} link, tier {n['tier']}: " + "; ".join(e.get('cite', '') for e in n.get("evidence", [])))
+    out.append("0 TRLR")
+    return ("\n".join(out) + "\n").encode()
+
+
+def genealogy_import_gedcom(project, text, filename):
+    """Imported facts arrive as unconfirmed, tagged with their origin — never as gospel."""
+    indi, fams, cur = {}, [], None
+    for line in text.splitlines():
+        m = re.match(r"^(\d+)\s+(@[^@]+@\s+)?(\w+)\s*(.*)$", line.strip())
+        if not m:
+            continue
+        lvl, xref, tag, val = int(m.group(1)), (m.group(2) or "").strip(), m.group(3), m.group(4)
+        if lvl == 0:
+            cur = {"x": xref, "tag": tag}
+            if tag == "INDI":
+                indi[xref] = {"name": ""}
+            elif tag == "FAM":
+                cur["spouses"], cur["children"] = [], []
+                fams.append(cur)
+        elif cur and cur["tag"] == "INDI" and tag == "NAME" and not indi[cur["x"]]["name"]:
+            indi[cur["x"]]["name"] = val.replace("/", "").strip()
+        elif cur and cur["tag"] == "FAM" and tag in ("HUSB", "WIFE"):
+            cur["spouses"].append(val)
+        elif cur and cur["tag"] == "FAM" and tag == "CHIL":
+            cur["children"].append(val)
+    mine = _gload(project, "mine", {"people": {}, "links": {}, "merges": [], "notes": {}})
+    known = {_lid(l["a"], l["rel"], l["b"]) for l in _gload(project, "derived", {"links": []})["links"]}
+    mine["links"] = {**{k: None for k in known}, **mine["links"]}
+    origin = f"GEDCOM import: {filename}"
+    for x, p in indi.items():
+        if p["name"]:
+            mine["people"].setdefault(_pid(p["name"]), {"name": p["name"], "origin": origin})
+    n = 0
+    for f in fams:
+        names = lambda xs: [indi[x]["name"] for x in xs if x in indi and indi[x]["name"]]
+        sp = names(f["spouses"])
+        for a in sp:
+            for c in names(f["children"]):
+                lid = _lid(_pid(a), "parent", _pid(c))
+                mine["links"].setdefault(lid, {"a": _pid(a), "b": _pid(c), "rel": "parent", "tier": "unconfirmed",
+                                               "evidence": [{"cite": origin, "quote": "listed as parent and child"}], "at": _now()}); n += 1
+        if len(sp) == 2:
+            lid = _lid(_pid(sp[0]), "spouse", _pid(sp[1]))
+            mine["links"].setdefault(lid, {"a": _pid(sp[0]), "b": _pid(sp[1]), "rel": "spouse", "tier": "unconfirmed",
+                                           "evidence": [{"cite": origin, "quote": "listed as a family"}], "at": _now()}); n += 1
+    mine["links"] = {k: v for k, v in mine["links"].items() if v is not None}
+    _gsave(project, "mine", mine)
+    _ghistory(project, "imported GEDCOM", {"file": filename, "people": len(indi), "links": n})
+    return genealogy_graph(project)
+
+# ---------------------------------------------------------------- narration (ElevenLabs)
+# One story is one episode. The script is the story's own prose; an unapproved bridge is
+# never read aloud, so narration refuses until it is approved.
+TTS_MODEL = "eleven_multilingual_v2"
+
+
+def _story_by_id(project, story_id):
+    return next((x for x in engine_stories(project) if x["id"] == str(story_id)), None)
+
+
+def _balanced(text, start):
+    """Index just past the bracket group that opens at text[start] ('(' or '[')."""
+    pairs = {"(": ")", "[": "]"}
+    open_c, close_c, depth, i = text[start], pairs[text[start]], 0, start
+    while i < len(text):
+        c = text[i]
+        if c == "\\":
+            i += 2; continue
+        if c == open_c:
+            depth += 1
+        elif c == close_c:
+            depth -= 1
+            if depth == 0:
+                return i + 1
+        i += 1
+    return len(text)
+
+
+def story_script(project, story_id):
+    """Plain spoken text of a story: comments, layout calls, plates, records and descent removed."""
+    st = _story_by_id(project, story_id)
+    if not st or not st["exists"]:
+        raise RuntimeError("this story has no text yet")
+    raw = (project.root / st["file"]).read_text(encoding="utf-8")
+    if st["bridges"]:
+        raise PermissionError(f"approve {st['bridges']} bridge{'s' if st['bridges'] != 1 else ''} first: an unapproved bridge is never narrated")
+    if st["file"].endswith(".md"):
+        text = re.sub(r"^#+\s*", "", raw, flags=re.M)
+        return st, re.sub(r"[*_`]", "", text).strip()
+    raw = re.sub(r"(?m)^\s*//.*$", "", raw)
+    out, i = [], 0
+    drop = ("show", "import", "plate", "plate-pair", "photo", "descent", "records", "photo-addendum", "idx", "idx-see", "note", "set", "let")
+    while i < len(raw):
+        m = re.compile(r"#([a-zA-Z][\w-]*)").match(raw, i)
+        if raw[i] == "#" and m:
+            name, j = m.group(1), m.end()
+            if name == "sectionbreak":
+                out.append("\n\n"); i = j; continue
+            if name in ("show", "import", "set", "let"):
+                nl = raw.find("\n", j); seg_end = len(raw) if nl < 0 else nl
+                # a multi-line call: skip its bracket group
+                k = raw.find("(", j, seg_end)
+                i = _balanced(raw, k) if k >= 0 else seg_end
+                continue
+            groups = []
+            while j < len(raw) and raw[j] in "([":
+                end = _balanced(raw, j)
+                groups.append(raw[j:end]); j = end
+            if name in drop:
+                i = j; continue
+            out.append(" ".join(g[1:-1] for g in groups if g.startswith("[")))
+            i = j; continue
+        out.append(raw[i]); i += 1
+    text = "".join(out)
+    text = re.sub(r"\\([#\[\]*_$@])", r"\1", text)
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n\s*\n+", "\n\n", text).strip()
+    return st, text
+
+
+def _audio_paths(project, st):
+    slug = re.sub(r"[^a-z0-9]+", "-", st["title"].lower()).strip("-") or f"story-{st['id']}"
+    base = project.root / "output" / "audio" / f"{int(st['id']):02d}-{slug}" if str(st["id"]).isdigit() else project.root / "output" / "audio" / slug
+    return base.with_suffix(".mp3"), base.with_suffix(".json")
+
+
+def story_audio_info(project, st):
+    mp3, meta = _audio_paths(project, st)
+    if not mp3.exists():
+        return {"has_audio": False}
+    m = json.loads(meta.read_text()) if meta.exists() else {}
+    stale = None
+    try:
+        _, text = story_script(project, st["id"])
+        stale = m.get("text_sha") != _sha256_bytes(text.encode())
+    except Exception:
+        stale = True
+    return {"has_audio": True, "audio": mp3.relative_to(project.root).as_posix(), "audio_duration": m.get("duration"),
+            "audio_stale": stale, "audio_voice": m.get("voice_name"), "audio_made": m.get("made")}
+
+
+def story_voices(project):
+    p = project.root / "data" / "story_voices.json"
+    return json.loads(p.read_text()) if p.exists() else {}
+
+
+def engine_narrate(project, story_id, voice_id=None):
+    key = load_config()["keys"].get("elevenlabs")
+    if not key:
+        raise RuntimeError("Add an ElevenLabs key in Connectors to narrate")
+    st, text = story_script(project, story_id)
+    s = project.read()["settings"]
+    voice_id = voice_id or story_voices(project).get(str(story_id)) or s.get("voice_id")
+    if not voice_id:
+        raise RuntimeError("choose a voice at the top of the Stories tab first")
+    paras, chunks, cur = text.split("\n\n"), [], ""
+    for para in paras:                                  # requests stay well under the model's limit
+        if len(cur) + len(para) > 4500 and cur:
+            chunks.append(cur); cur = ""
+        cur = (cur + "\n\n" + para).strip()
+    if cur:
+        chunks.append(cur)
+    audio = b""
+    for c in chunks:
+        req = urllib.request.Request(f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}?output_format=mp3_44100_128",
+                                     data=json.dumps({"text": c, "model_id": TTS_MODEL}).encode(), method="POST",
+                                     headers={"xi-api-key": key, "Content-Type": "application/json", "Accept": "audio/mpeg"})
+        try:
+            with urllib.request.urlopen(req, timeout=300) as r:
+                audio += r.read()
+        except urllib.error.HTTPError as e:
+            raise RuntimeError(f"ElevenLabs said {e.code}: {e.read().decode(errors='replace')[:200]}")
+    mp3, meta = _audio_paths(project, st)
+    mp3.parent.mkdir(parents=True, exist_ok=True)
+    mp3.write_bytes(audio)
+    voice_name = next((v["name"] for v in list_voices(key)[0] if v["voice_id"] == voice_id), voice_id)
+    meta.write_text(json.dumps({"story": st["id"], "title": st["title"], "voice_id": voice_id, "voice_name": voice_name,
+                                "chars": len(text), "text_sha": _sha256_bytes(text.encode()), "model": TTS_MODEL,
+                                "made": _now(), "duration": media_duration(mp3)}, indent=1))
+    return {"audio": mp3.relative_to(project.root).as_posix(), "chars": len(text), "duration": media_duration(mp3)}
+
+
+def engine_audio_zip(project):
+    """Every narrated story as one zip with a simple chapter list, in book order."""
+    import io, zipfile
+    buf = io.BytesIO()
+    lines = []
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_STORED) as z:
+        for st in sorted(engine_stories(project), key=lambda x: (x["year"] or 9999, x["id"])):
+            info = story_audio_info(project, st)
+            if info.get("has_audio"):
+                f = project.root / info["audio"]
+                z.write(f, f.name)
+                lines.append(f"{f.name}\t{st['title']}\t{st['dates']}")
+        z.writestr("chapters.txt", "\n".join(lines) + "\n")
+    return buf.getvalue()
 
 # ---------------------------------------------------------------- Familypedia
 # Articles are built only from the project's own material: units, the timeline, transcripts,
@@ -1145,7 +1846,25 @@ def engine_article(project, slug):
         + (f", between {dates[0]} and {dates[-1]}" if len(set(dates)) > 1 else (f", {dates[0]}" if dates else "")) + ".")
     open_q = [f"Only one mention so far: ask about {a['title']} in the next recording."] if a["stub"] else []
     open_q += [f"{e['event']} — confidence {e['confidence']}" for e in events if e.get("confidence") == "low"]
-    return {**a, "lead": lead, "lead_by": "me" if edits.get("lead") else "derived", "notes": edits.get("notes", ""),
+    extra = {}
+    if a["type"] == "event":
+        tl = engine_timeline(project)
+        me = next((e for e in tl["events"] + tl["undated"] if e["title"] == a["title"]), None)
+        if me:
+            others = [e for e in tl["events"] if e["id"] != me["id"] and set(e["people"]) & set(me["people"])]
+            before = [e for e in others if (e["year"] or 0) < (me["year"] or 0) or ((e["year"] == me["year"]) and e["id"] < me["id"])]
+            after = [e for e in others if e not in before]
+            passages = [x for x in (_transcript_line(project, c) for c in me["cites"]) if x]
+            extra = {"event": me, "passages": passages,
+                     "before": [{"title": e["title"], "date": e["date"], "slug": e["slug"]} for e in before[-3:]],
+                     "after": [{"title": e["title"], "date": e["date"], "slug": e["slug"]} for e in after[:3]],
+                     "conflicts": [me["conflict"]] if me["conflict"] else []}
+            lead = edits.get("lead") or (f"{me['title']}, {me['date']}" + (f", in {me['place']}" if me["place"] else "")
+                                         + f". The material calls this {('family lore' if me['tier'] == 'lore' else me['tier'])}"
+                                         + (f"; confidence {me['confidence']}." if me["confidence"] else "."))
+            a["infobox_extra"] = {"date": me["date"], "precision": me["precision"], "place": me["place"],
+                                  "people": me["people"], "type": me["type"]}
+    return {**a, **extra, "lead": lead, "lead_by": "me" if edits.get("lead") else "derived", "notes": edits.get("notes", ""),
             "infobox": {"type": a["type"], "dates": ", ".join(dict.fromkeys(dates)) or "unknown",
                         "places": sorted({e["place"] for e in events if e.get("place")})},
             "tiers": tiers, "mentions": mentions[:80], "stories": list(stories.values()),
@@ -2007,6 +2726,95 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         lambda: engine_render_story(self.project, sid))
         return self.send_json({"job": jid})
 
+    def e_story_script(self, q):
+        try:
+            st, text = story_script(self.project, (q.get("id") or [""])[0])
+            return self.send_json({"id": st["id"], "text": text, "chars": len(text)})
+        except PermissionError as e:
+            return self.send_json({"blocked": str(e)})
+        except RuntimeError as e:
+            return self.send_json({"error": str(e)}, 400)
+
+    def e_narrate(self, q):
+        d = self.read_json()
+        sid = str(d.get("id", ""))
+        try:
+            story_script(self.project, sid)
+        except PermissionError as e:
+            return self.send_json({"blocked": str(e)})
+        except RuntimeError as e:
+            return self.send_json({"error": str(e)}, 400)
+        if not load_config()["keys"].get("elevenlabs"):
+            return self.send_json({"error": "Add an ElevenLabs key in Connectors to narrate"}, 400)
+        jid = start_job([("Writing the narration script", 0.1), ("Recording with ElevenLabs", 0.1)],
+                        lambda: engine_narrate(self.project, sid, d.get("voice_id")))
+        return self.send_json({"job": jid})
+
+    def e_story_voice(self, q):
+        d = self.read_json()
+        v = story_voices(self.project)
+        if d.get("voice_id"):
+            v[str(d["id"])] = d["voice_id"]
+        else:
+            v.pop(str(d.get("id")), None)
+        (self.project.root / "data" / "story_voices.json").write_text(json.dumps(v, indent=1))
+        return self.send_json({"ok": True})
+
+    def e_audio_zip(self, q):
+        data = engine_audio_zip(self.project)
+        title = re.sub(r"[^A-Za-z0-9]+", "-", self.project.read().get("title") or "lineage").strip("-")
+        return self.serve_bytes(data, "application/zip", {"Content-Disposition": f'attachment; filename="{title}-audio.zip"'})
+
+    def e_timeline(self, q):
+        return self.send_json(engine_timeline(self.project))
+
+    def e_timeline_svg(self, q):
+        return self.serve_bytes(engine_timeline_svg(self.project), "image/svg+xml",
+                                {"Content-Disposition": 'attachment; filename="timeline.svg"'})
+
+    def e_timeline_star(self, q):
+        d = self.read_json()
+        p = self.project.root / "data" / "timeline_stars.json"
+        stars = set(json.loads(p.read_text())) if p.exists() else set()
+        (stars.add if d.get("star") else stars.discard)(d.get("id"))
+        p.write_text(json.dumps(sorted(stars)))
+        return self.send_json({"stars": sorted(stars)})
+
+    def e_question(self, q):
+        d = self.read_json()
+        return self.send_json({"questions": add_question(self.project, d.get("text", ""), d.get("source", ""))})
+
+    def g_graph(self, q):
+        return self.send_json(genealogy_graph(self.project))
+
+    def g_rebuild(self, q):
+        jid = start_job([("Reading the sources for people and relationships", 0.1)], lambda: genealogy_rebuild(self.project))
+        return self.send_json({"job": jid})
+
+    def g_review(self, q):
+        return self.send_json(genealogy_diff(self.project))
+
+    def g_apply(self, q):
+        try:
+            return self.send_json(genealogy_apply(self.project, self.read_json().get("accept")))
+        except ValueError as e:
+            return self.send_json({"error": str(e)}, 400)
+
+    def g_edit(self, q):
+        d = self.read_json()
+        try:
+            return self.send_json(genealogy_edit(self.project, d.get("op"), d))
+        except (ValueError, KeyError) as e:
+            return self.send_json({"error": str(e)}, 400)
+
+    def g_gedcom(self, q):
+        return self.serve_bytes(genealogy_gedcom(self.project), "text/plain; charset=utf-8",
+                                {"Content-Disposition": 'attachment; filename="lineage.ged"'})
+
+    def g_import(self, q):
+        d = self.read_json()
+        return self.send_json(genealogy_import_gedcom(self.project, d.get("text", ""), d.get("filename", "import.ged")))
+
     def e_familypedia(self, q):
         return self.send_json({"articles": engine_familypedia(self.project)})
 
@@ -2276,6 +3084,56 @@ class Handler(http.server.BaseHTTPRequestHandler):
         s["stale"] = [x for x in s.get("stale", []) if x not in drop]
         self.project.write(s)
         return self.send_json(engine_identity(self.project))
+
+    def crest_get(self, q):
+        return self.send_json(crest_state(self.project))
+
+    def crest_fill(self, q):
+        return self.send_json({"prompt": crest_prompt_fill(self.project)})
+
+    def crest_gen(self, q):
+        d = self.read_json()
+        if not load_config()["keys"].get("openai"):
+            return self.send_json({"error": "Add an OpenAI key in Connectors"}, 400)
+        jid = start_job([("Drawing four candidates", 0.1)], lambda: crest_generate(self.project, d.get("prompt", ""), d.get("style", "engraved")))
+        return self.send_json({"job": jid})
+
+    def crest_pick(self, q):
+        try:
+            return self.send_json(crest_choose(self.project, self.read_json().get("name", "")))
+        except FileNotFoundError as e:
+            return self.send_json({"error": str(e)}, 404)
+
+    def crest_variant_ep(self, q):
+        try:
+            return self.send_json(crest_variant(self.project, self.read_json().get("kind")))
+        except (RuntimeError, KeyError) as e:
+            return self.send_json({"error": str(e)}, 400)
+
+    def crest_upload_ep(self, q):
+        ctype = self.headers.get("Content-Type", "")
+        m = re.search(r"boundary=(.+)$", ctype)
+        if not m:
+            return self.send_json({"error": "expected multipart"}, 400)
+        body = self.rfile.read(int(self.headers["Content-Length"]))
+        fields, file = {}, None
+        for part in body.split(b"--" + m.group(1).strip('"').encode()):
+            if b"\r\n\r\n" not in part:
+                continue
+            head, data = part.split(b"\r\n\r\n", 1)
+            data = data[:-2] if data.endswith(b"\r\n") else data
+            nm = re.search(rb'name="([^"]*)"', head)
+            fn = re.search(rb'filename="([^"]*)"', head)
+            if fn and fn.group(1):
+                file = (fn.group(1).decode(errors="replace"), data)
+            elif nm:
+                fields[nm.group(1).decode()] = data.decode(errors="replace")
+        if not file:
+            return self.send_json({"error": "no file"}, 400)
+        try:
+            return self.send_json(crest_upload(self.project, file[0], file[1], fields.get("provenance", "design"), fields.get("note", "")))
+        except ValueError as e:
+            return self.send_json({"error": str(e)}, 400)
 
     def crest(self, q):
         """One image file: the family crest or cover, used on the header and title page."""
@@ -2571,9 +3429,24 @@ ROUTES = {
     ("POST", "/api/engine/story/state"): Handler.e_story_state,
     ("POST", "/api/engine/story/render"): Handler.e_story_render,
     ("GET", "/api/engine/familypedia"): Handler.e_familypedia,
+    ("GET", "/api/engine/genealogy"): Handler.g_graph,
+    ("POST", "/api/engine/genealogy/rebuild"): Handler.g_rebuild,
+    ("GET", "/api/engine/genealogy/review"): Handler.g_review,
+    ("POST", "/api/engine/genealogy/apply"): Handler.g_apply,
+    ("POST", "/api/engine/genealogy/edit"): Handler.g_edit,
+    ("GET", "/api/engine/genealogy.ged"): Handler.g_gedcom,
+    ("POST", "/api/engine/genealogy/import"): Handler.g_import,
+    ("GET", "/api/engine/timeline"): Handler.e_timeline,
+    ("GET", "/api/engine/timeline.svg"): Handler.e_timeline_svg,
+    ("POST", "/api/engine/timeline/star"): Handler.e_timeline_star,
+    ("POST", "/api/engine/question"): Handler.e_question,
     ("GET", "/api/engine/article"): Handler.e_article,
     ("POST", "/api/engine/article"): Handler.e_article_save,
     ("GET", "/api/engine/episodes"): Handler.e_episodes,
+    ("GET", "/api/engine/story/script"): Handler.e_story_script,
+    ("POST", "/api/engine/story/narrate"): Handler.e_narrate,
+    ("POST", "/api/engine/story/voice"): Handler.e_story_voice,
+    ("GET", "/api/engine/audio.zip"): Handler.e_audio_zip,
     # dashboard state
     ("GET", "/api/bootstrap"): Handler.bootstrap,
     ("GET", "/api/settings"): Handler.get_settings,
@@ -2582,6 +3455,12 @@ ROUTES = {
     ("POST", "/api/identity/draft-summary"): Handler.identity_draft,
     ("POST", "/api/identity/fresh"): Handler.identity_fresh,
     ("POST", "/api/identity/crest"): Handler.crest,
+    ("GET", "/api/crest"): Handler.crest_get,
+    ("POST", "/api/crest/fill"): Handler.crest_fill,
+    ("POST", "/api/crest/generate"): Handler.crest_gen,
+    ("POST", "/api/crest/choose"): Handler.crest_pick,
+    ("POST", "/api/crest/variant"): Handler.crest_variant_ep,
+    ("POST", "/api/crest/upload"): Handler.crest_upload_ep,
     ("POST", "/api/upload"): Handler.upload,
     ("POST", "/api/engine/source/scan"): Handler.e_scan,
     ("POST", "/api/engine/source/scan-all"): Handler.e_scan_all,
