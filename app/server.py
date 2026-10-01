@@ -1190,7 +1190,7 @@ def _tier_of(e):
     basis = " ".join(e.get(k, "") or "" for k in ("date_basis", "event", "source")).lower()
     if "family account" in basis or "lore" in basis:
         return "lore"
-    if re.search(r"\bR\d+\b|https?://|record|roster|census|certificate", basis):
+    if re.search(r"\bR\d+\b|https?://|record|roster|census|certificate|manifest|ledger", basis, re.I):
         return "documented"
     if "told" in basis:
         return "told"

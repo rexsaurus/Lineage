@@ -1,8 +1,9 @@
 # Lineage dashboard
 
-A local dashboard for the Lineage pipeline: turn recorded interviews with a relative into a
-book (and an audiobook) without the machine making things up. It runs on your own computer and
-binds to `127.0.0.1` only.
+The dashboard for a Lineage project: the family's sources, the Familypedia, the genealogy, the
+timeline and the stories, in one place, with every fact traceable to its source and nothing
+made up by the machine. Stories render as book pages and can be narrated; the printed book is
+built from the same record. It runs on your own computer and binds to `127.0.0.1` only.
 
 ```bash
 ./lineage                         # http://127.0.0.1:8777, project ~/lineage-books/my-book

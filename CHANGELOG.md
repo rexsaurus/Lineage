@@ -5,6 +5,26 @@ Every entry says whether it changes anything that would alter already-generated 
 (templates, the book template, style guides, skills); when it does, a project updating to it
 marks those stories stale rather than regenerating them.
 
+## 0.5.0 — 2026-10-01
+
+**Alters generated stories: no.** Eight skills' `description:` lines changed (what triggers
+them, not what they tell the writer); `lineage update` now recognizes a description-only change
+and doesn't mark stories stale for it.
+
+Lineage is described as what it is: a cooperative family documentation and research platform
+whose outputs include stories, a book and narration.
+- README rewritten around the platform, with a tour of the real dashboard; docs/HOWTO.md
+  restructured (set up a lineage, contributors, sources, records, genealogy and Familypedia,
+  then stories and a book); docs/FACTORY.md, the plugin, marketplace and skill descriptions
+  reframed.
+- `examples/demo-lineage/`: an invented family (the Calders) with recordings, scanned records,
+  a ship, a route, a genealogy, contributors and a narrated story, built by
+  `scripts/demo_lineage.py`. `make demo` opens the dashboard on it.
+- `make screenshots` (`scripts/screenshots.py`, Playwright) captures the dashboard against the
+  demo lineage into `docs/images/`, with an empty HOME so no keys or accounts appear.
+- Timeline and Familypedia tiers: a record citation (R001), manifest or ledger now counts as
+  "what the records show" (the check was case-sensitive after lower-casing).
+
 ## 0.4.0 — 2026-10-01
 
 **Alters generated stories: no.** Nothing under `plugins/lineage/book/`, `fonts/` or `skills/`.

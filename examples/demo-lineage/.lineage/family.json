@@ -1,0 +1,44 @@
+{
+ "members": [
+  {
+   "id": "m1",
+   "name": "Sam Calder",
+   "email": "sam@example.org",
+   "role": "editor",
+   "relation": "grandson; recorded the interviews",
+   "added": "2026-09-20T10:00:00-05:00"
+  },
+  {
+   "id": "m2",
+   "name": "June Calder Moe",
+   "email": "june@example.org",
+   "role": "contributor",
+   "relation": "Ruth's sister; holds the letters and the Bible",
+   "added": "2026-09-20T10:00:00-05:00"
+  },
+  {
+   "id": "m3",
+   "name": "Peter Lind",
+   "email": "peter@example.org",
+   "role": "contributor",
+   "relation": "Ruth's nephew; has the sea chest",
+   "added": "2026-09-20T10:00:00-05:00"
+  },
+  {
+   "id": "m4",
+   "name": "Linnea Calder",
+   "email": "linnea@example.org",
+   "role": "reader",
+   "relation": "Sam's mother",
+   "added": "2026-09-20T10:00:00-05:00"
+  }
+ ],
+ "invites": [
+  {
+   "member": "m3",
+   "token": "demo-invite-token",
+   "created": 1790000000,
+   "expires": 2000000000
+  }
+ ]
+}

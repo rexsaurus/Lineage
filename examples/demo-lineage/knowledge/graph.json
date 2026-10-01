@@ -1,0 +1,230 @@
+{
+ "nodes": [
+  {
+   "id": "person:anders-calder",
+   "type": "person",
+   "label": "Anders Calder"
+  },
+  {
+   "id": "person:henrik-calder",
+   "type": "person",
+   "label": "Henrik Calder"
+  },
+  {
+   "id": "person:ruth-calder",
+   "type": "person",
+   "label": "Ruth Calder"
+  },
+  {
+   "id": "person:signe-calder",
+   "type": "person",
+   "label": "Signe Calder",
+   "basis": "1910 census"
+  },
+  {
+   "id": "person:karl-lindgren",
+   "type": "person",
+   "label": "Karl Lindgren",
+   "basis": "passenger manifest"
+  },
+  {
+   "id": "person:johan-brekke",
+   "type": "person",
+   "label": "Johan Brekke",
+   "basis": "passenger manifest"
+  },
+  {
+   "id": "person:captain-r-mcallister",
+   "type": "person",
+   "label": "R. McAllister",
+   "basis": "demo shipping register"
+  },
+  {
+   "id": "vessel:s-s-ottavia",
+   "type": "vessel",
+   "label": "S.S. Ottavia",
+   "rig": "steamship",
+   "tonnage": "4,800",
+   "built": "Glasgow, 1891",
+   "owner": "Demo Atlantic Line",
+   "registry": "Liverpool",
+   "fate": "broken up, 1926",
+   "url": "https://example.org/demo/ships/ottavia",
+   "retrieved": "2026-09-18"
+  },
+  {
+   "id": "voyage:ottavia-1900",
+   "type": "voyage",
+   "label": "Ottavia, Liverpool to Quebec, May 1900",
+   "url": "https://example.org/demo/ottavia-1900"
+  },
+  {
+   "id": "organization:duluth-ore-dock-company",
+   "type": "organization",
+   "label": "Duluth Ore Dock Company",
+   "description": "loaded iron ore from rail cars into lake freighters"
+  },
+  {
+   "id": "unit:arrowhead-engineer-battalion",
+   "type": "unit",
+   "label": "Arrowhead Engineer Battalion",
+   "description": "combat engineers (bridges)"
+  },
+  {
+   "id": "object:anders-sea-chest",
+   "type": "object",
+   "label": "Anders's sea chest",
+   "description": "painted pine chest, his initials on the lid",
+   "date": "about 1900"
+  },
+  {
+   "id": "publication:duluth-lakeside-courier",
+   "type": "publication",
+   "label": "Duluth Lakeside Courier",
+   "description": "daily newspaper"
+  },
+  {
+   "id": "place:liverpool-england",
+   "type": "place",
+   "label": "Liverpool, England"
+  },
+  {
+   "id": "place:quebec-canada",
+   "type": "place",
+   "label": "Quebec, Canada"
+  },
+  {
+   "id": "record:r001",
+   "type": "record",
+   "label": "Passenger manifest, S.S. Ottavia, May 1900",
+   "url": "https://example.org/demo/ottavia-1900",
+   "retrieved": "2026-09-18"
+  },
+  {
+   "id": "record:r003",
+   "type": "record",
+   "label": "Payroll ledger, Dock No. 6, October 1938",
+   "url": "https://example.org/demo/ore-dock-payroll-1938",
+   "retrieved": "2026-09-18"
+  },
+  {
+   "id": "record:r005",
+   "type": "record",
+   "label": "Duluth Lakeside Courier, Nov 9, 1950",
+   "url": "https://example.org/demo/courier-1950-11-09",
+   "retrieved": "2026-09-18"
+  },
+  {
+   "id": "letter:henrik-1944-09-03",
+   "type": "letter",
+   "label": "Henrik to Ruth, Sept. 3, 1944",
+   "date": "1944-09-03",
+   "description": "from France: building bridges; Ruth carries the lunch pail"
+  }
+ ],
+ "edges": [
+  {
+   "source": "voyage:ottavia-1900",
+   "rel": "voyage_of",
+   "target": "vessel:s-s-ottavia"
+  },
+  {
+   "source": "person:captain-r-mcallister",
+   "rel": "master_of",
+   "target": "voyage:ottavia-1900"
+  },
+  {
+   "source": "person:anders-calder",
+   "rel": "crew_on",
+   "target": "voyage:ottavia-1900",
+   "rank": "steerage"
+  },
+  {
+   "source": "person:karl-lindgren",
+   "rel": "crew_on",
+   "target": "voyage:ottavia-1900",
+   "rank": "steerage"
+  },
+  {
+   "source": "person:johan-brekke",
+   "rel": "crew_on",
+   "target": "voyage:ottavia-1900",
+   "rank": "steerage"
+  },
+  {
+   "source": "voyage:ottavia-1900",
+   "rel": "called_at",
+   "target": "place:liverpool-england"
+  },
+  {
+   "source": "voyage:ottavia-1900",
+   "rel": "called_at",
+   "target": "place:quebec-canada"
+  },
+  {
+   "source": "record:r001",
+   "rel": "documents",
+   "target": "voyage:ottavia-1900"
+  },
+  {
+   "source": "record:r001",
+   "rel": "mentions",
+   "target": "person:anders-calder"
+  },
+  {
+   "source": "person:anders-calder",
+   "rel": "worked_at",
+   "target": "organization:duluth-ore-dock-company"
+  },
+  {
+   "source": "person:henrik-calder",
+   "rel": "worked_at",
+   "target": "organization:duluth-ore-dock-company"
+  },
+  {
+   "source": "record:r003",
+   "rel": "mentions",
+   "target": "person:anders-calder"
+  },
+  {
+   "source": "record:r003",
+   "rel": "mentions",
+   "target": "person:henrik-calder"
+  },
+  {
+   "source": "record:r003",
+   "rel": "concerns",
+   "target": "organization:duluth-ore-dock-company"
+  },
+  {
+   "source": "person:henrik-calder",
+   "rel": "served_in",
+   "target": "unit:arrowhead-engineer-battalion"
+  },
+  {
+   "source": "letter:henrik-1944-09-03",
+   "rel": "mentions",
+   "target": "person:henrik-calder"
+  },
+  {
+   "source": "letter:henrik-1944-09-03",
+   "rel": "addressed_to",
+   "target": "person:ruth-calder"
+  },
+  {
+   "source": "letter:henrik-1944-09-03",
+   "rel": "concerns",
+   "target": "unit:arrowhead-engineer-battalion"
+  },
+  {
+   "source": "object:anders-sea-chest",
+   "rel": "owned_by",
+   "target": "person:anders-calder"
+  },
+  {
+   "source": "record:r005",
+   "rel": "concerns",
+   "target": "publication:duluth-lakeside-courier"
+  }
+ ]
+}

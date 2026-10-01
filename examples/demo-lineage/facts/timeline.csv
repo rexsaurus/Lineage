@@ -1,0 +1,14 @@
+event_id,date_start,date_end,date_display,precision,date_basis,event,people,place,generation,source,quote,confidence,conflicts,chapter
+E001,1883,,about 1883,approx,Manifest age 17 in May 1900 (record R001); family account says sixteen at the crossing.,"Anders Calder born near Aalesund, Norway",Anders Calder,"Aalesund, Norway",ancestors,R001; [S1 00:00:05],,medium,"Age at the crossing: the family says sixteen [S1 00:00:05], the manifest says 17 (R001). Both kept.",1
+E002,1900-05-21,,"May 21, 1900",day,"Passenger manifest, S.S. Ottavia (R001)",Anders Calder crosses from Liverpool to Quebec on the S.S. Ottavia,Anders Calder,"Quebec, Canada",ancestors,R001; [S1 00:00:05],came over on a ship when he was sixteen,high,,1
+E003,1900,,about 1900,approx,Family account; follows E002,Anders works on the ore boats at Duluth (family account),Anders Calder,"Duluth, Minnesota",ancestors,[S1 00:00:21],He ended up on the ore boats,low,,1
+E004,1910,,1910,year,"Federal census, Duluth (R002)",Henrik Calder born in Duluth,Henrik Calder; Anders Calder,"Duluth, Minnesota",parents,R002,,high,,
+E005,1938,,1938,year,book.yaml birth year,Ruth Calder born in Duluth,Ruth Calder; Henrik Calder,"Duluth, Minnesota",subject,[S1 00:00:29],,high,,2
+E006,1938-10-15,,October 1938,day,"Payroll ledger, Dock No. 6 (R003)",Anders and Henrik on the payroll of the Duluth Ore Dock Company,Anders Calder; Henrik Calder,"Duluth, Minnesota",parents,R003,,high,,2
+E007,1944-09-03,,"September 3, 1944",day,Letter (source 1944-letter-henrik-to-ruth.pdf),Henrik writes to Ruth from France with the Arrowhead Engineer Battalion,Henrik Calder; Ruth Calder; Pete,France,parents,R004,Here we build bridges,high,,2
+E008,1945,1946,about 1945,approx,'maybe seven or eight' + birth year 1938,Ruth walks her father's lunch to the ore dock,Ruth Calder; Henrik Calder,"Duluth, Minnesota",subject,[S1 00:00:29],maybe seven or eight,medium,The 1944 letter already has her carrying the pail at six (R004).,2
+E009,1950-11-07,1950-11-14,November 1950,approx,"'around 1950, I think'; the Courier dates it Nov 1950 (R005)",The big snow; school closed for a week,Ruth Calder; Pete,"Duluth, Minnesota",subject,[S1 00:00:48]; R005,"around 1950, I think",high,,2
+E010,1951,,1951,year,Family account,Anders Calder dies in Duluth,Anders Calder,"Duluth, Minnesota",ancestors,[S1 00:00:21],,low,,1
+E011,1956,1959,1956–1959,year,'1956. Three years.',Ruth trains as a nurse in Minneapolis,Ruth Calder,"Minneapolis, Minnesota",subject,[S2 00:00:03],I went down to Minneapolis for nursing school in 1956,high,,3
+E012,1959,,1959,year,"'A church dance, in 1959'",Ruth meets Walt at a church dance,Ruth Calder; Walt,"Minneapolis, Minnesota",subject,[S2 00:00:19],"A church dance, in 1959",high,,3
+E013,1964,1968,1964–1968,approx,'1964 or so. It took four summers.',Ruth and Walt build the cabin on Pike Lake,Ruth Calder; Walt,"Pike Lake, Minnesota",subject,[S2 00:00:36],It took four summers,medium,,3

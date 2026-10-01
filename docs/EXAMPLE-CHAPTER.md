@@ -1,5 +1,9 @@
 # The worked example: "Erasthus Burnham"
 
+> **One export of the record.** A Lineage project is a family record first: sources, a
+> genealogy, a timeline and a Familypedia, each fact linked to its source. A printed chapter
+> like this one is one thing that record can produce; see [HOWTO.md](HOWTO.md) for the rest.
+
 This is a real chapter, published with the family's permission, from the book Lineage
 was built for: a biography of the author's father, written by his son from recorded interviews. Living
 family members' names are redacted: the subject appears as "Dad".

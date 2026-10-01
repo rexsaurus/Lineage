@@ -1,7 +1,8 @@
 # Lineage
 
-The public platform: skills, scripts, the book template, the project template and the
-dashboard for turning recorded interviews with a relative into a book.
+The public platform for a family's own documentation and research: the dashboard, skills,
+scripts and templates that turn what a family collects into a researched, sourced record
+(genealogy, timeline, Familypedia), with stories, a printed book and narration as exports.
 
 ## The arrangement with book projects (read first)
 Book projects (each family's own, usually private, repo) are **consumers** of Lineage, not

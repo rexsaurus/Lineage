@@ -9,6 +9,9 @@
 #                                    (warning only), build output/book-draft.pdf + back index
 #   make final PROJECT=...           final build: stops on any misquote or unapproved #bridge,
 #                                    then runs preflight
+#   make screenshots                 rebuild the invented demo lineage and capture the dashboard
+#                                    into docs/images/ (needs: pip install playwright, and Chrome)
+#   make demo                        the dashboard on the demo lineage (a scratch copy)
 #   make clean                       remove generated files from the examples
 #
 # Everything runs inside the project folder; nothing here edits your recordings.
@@ -24,7 +27,7 @@ export LINEAGE := $(BA)
 # zsh passes PROJECT=~/x through unexpanded; expand a leading ~ here.
 override PROJECT := $(patsubst ~/%,$(HOME)/%,$(PROJECT))
 
-.PHONY: install install-transcribe sample new status draft final clean check-project
+.PHONY: install install-transcribe sample new status draft final clean check-project screenshots demo
 
 install:
 	@command -v python3 >/dev/null || { echo "python3 is required"; exit 1; }
@@ -87,6 +90,16 @@ final: draft
 	    --trim $$($(PY) -c "import yaml;print(yaml.safe_load(open('book.yaml'))['print']['trim'])") \
 	    --printer $$($(PY) -c "import yaml;print(yaml.safe_load(open('book.yaml'))['print'].get('printer','kdp'))") \
 	    --color $$($(PY) -c "import yaml;print(yaml.safe_load(open('book.yaml'))['print'].get('color','bw'))")
+
+screenshots: sample
+	@$(PY) -c "import playwright" 2>/dev/null || $(PY) -m pip install -q playwright
+	@$(PY) $(BA)/plugins/lineage/scripts/screenshots.py
+
+demo: sample
+	@$(PY) $(BA)/plugins/lineage/scripts/demo_lineage.py
+	@rm -rf /tmp/lineage-demo && cp -R $(BA)/examples/demo-lineage /tmp/lineage-demo
+	@echo "demo lineage copied to /tmp/lineage-demo (the fixture stays clean)"
+	@$(BA)/app/lineage /tmp/lineage-demo
 
 clean:
 	@rm -rf $(SAMPLE)/output $(SAMPLE)/chapters $(SAMPLE)/book/main.typ $(SAMPLE)/book/template.typ \

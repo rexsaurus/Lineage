@@ -1,6 +1,6 @@
 ---
 name: memoir-style-guide
-description: The voice, point-of-view, quotation, fact-sourcing and chapter-shape rules for a Lineage family biography — a third-person, past-tense narrative about the subject, written by the family member who recorded the interviews, built only from the recordings and sourced research, with the subject's own words woven in as exact quotations. Use this whenever drafting, shaping, rewriting, editing, tightening, proofreading or reviewing any story unit, chapter or passage; turning transcript into prose; writing captions, transitions, context or epigraphs; handling quotes, dialect, dates or names; or when a passage feels flat, invented, or doesn't sound like the subject. This is the master rulebook: other writing skills defer to it.
+description: The voice, point-of-view, quotation, fact-sourcing and chapter-shape rules for the stories and printed book a Lineage record exports — a third-person, past-tense narrative about the subject, written by the family member who recorded the interviews, built only from the recordings and sourced research, with the subject's own words woven in as exact quotations. Use this whenever drafting, shaping, rewriting, editing, tightening, proofreading or reviewing any story unit, chapter or passage; turning transcript into prose; writing captions, transitions, context or epigraphs; handling quotes, dialect, dates or names; or when a passage feels flat, invented, or doesn't sound like the subject. This is the master rulebook; other writing skills defer to it.
 ---
 
 # Biography Style Guide

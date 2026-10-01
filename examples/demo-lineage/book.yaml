@@ -1,0 +1,31 @@
+# Lineage project config. Every skill reads this first.
+# This is the SAMPLE project: an invented subject and invented recordings.
+title: "The Lake Was Always There"
+subtitle: "A Life of Ruth Calder"
+narrator:                       # the subject of the book
+  name: "Ruth Calder"
+  label: "Grandma"              # speaker label used in the transcripts
+  pronoun: "she"                # she | he | they — used in generated back matter
+  birth_year: 1938              # anchors every "when I was twelve"
+  birthplace: "Duluth, Minnesota"
+interviewer:                    # the family member who recorded and writes the book
+  name: "Sam Calder"
+  label: "Sam"
+other_speakers: []
+family_figures:                 # relatives who get a family-history chapter (or share "Others in the Family")
+  - "Anders Calder"
+proper_nouns:                   # KEEP SHORT: surnames and odd place names only. A long
+  - "Calder"                    # prompt gets echoed into the transcript as fake speech.
+  - "Duluth"
+transcription_locked: true      # timestamps are cited; never re-run speech recognition
+print:
+  trim: "7x10"
+  color: "bw"
+  printer: "kdp"
+  in_chapter_contents: false
+draft: true
+narration:
+  mode: "third_person"
+  subject_name: "Ruth"          # how chapters refer to the subject after first mention
+front:
+  introduction_title: "Introduction"

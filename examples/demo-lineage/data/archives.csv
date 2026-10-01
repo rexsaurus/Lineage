@@ -1,0 +1,8 @@
+record_id,item,type,description,date_range,holder,holder_relation,location_general,location_detail_private,condition,status,mentioned_in,chapter,official_copy_hint,print_permission,follow_up
+R001,"Passenger manifest, S.S. Ottavia, May 1900",documents,"Anders Calder, 17, of Aalesund, bound for Duluth",1900,Demo immigration archive,,online,,image,institutional,https://example.org/demo/ottavia-1900 [S1 00:00:05],1,,yes,
+R002,"Federal census 1910, Duluth",documents,"Calder household: Anders, his wife Signe, son Henrik (born 1910)",1910,Demo census index,,online,,transcribed,institutional,https://example.org/demo/census-1910-duluth,,,yes,
+R003,"Payroll ledger, Duluth Ore Dock Company, Dock No. 6",documents,"A. Calder, dock foreman; H. Calder, chute tender, October 1938",1938,Demo county historical society,,"Duluth, Minnesota",,good,institutional,https://example.org/demo/ore-dock-payroll-1938,2,,yes,
+R004,"Letters from Henrik in France, 1944",letters,Eleven letters to the family; one to Ruth transcribed,1944,June Calder Moe,Ruth's sister,Minnesota,her desk drawer,good,confirmed,[S1 00:00:29],2,,ask,Scan the other ten
+R005,"Duluth Lakeside Courier, Nov 9, 1950",documents,Front page: schools shut for the big snow,1950,Demo newspaper archive,,online,,microfilm,institutional,https://example.org/demo/courier-1950-11-09 [S1 00:00:48],2,,yes,
+R006,Anders's sea chest,heirlooms,"Painted pine chest, his initials on the lid",about 1900,Peter Lind,Ruth's nephew,Minnesota,,worn,confirmed,family account,,,ask,Photograph the lid
+R007,Family Bible,bible,Births and marriages from 1883,1883–1962,June Calder Moe,Ruth's sister,Minnesota,,fragile,confirmed,family account,,,ask,Photograph the family register pages

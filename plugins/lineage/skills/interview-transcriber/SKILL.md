@@ -1,6 +1,6 @@
 ---
 name: interview-transcriber
-description: Turns interview recordings (or existing transcripts) for a Lineage book into the timestamped, speaker-labelled transcript every other skill builds on — inventories and checksums the audio, transcribes with WhisperX, diarizes long sessions in chunks, maps speakers with the author's confirmation, renders verbatim and clean layers with spelling fixes applied from corrections.json, labels each session with date, place and topic outline, and keeps a proper-noun glossary. Use this whenever audio, video or transcript files are added, the user asks to transcribe, label speakers, fix a misheard name, split or merge sessions, or asks "what did Grandma say about X" and no transcript exists yet. Always the first step of the pipeline.
+description: Turns interview recordings (or existing transcripts) in a lineage into the timestamped, speaker-labelled transcript every other skill builds on — inventories and checksums the audio, transcribes with WhisperX, diarizes long sessions in chunks, maps speakers with the author's confirmation, renders verbatim and clean layers with spelling fixes applied from corrections.json, labels each session with date, place and topic outline, and keeps a proper-noun glossary. Use this whenever audio, video or transcript files are added, the user asks to transcribe, label speakers, fix a misheard name, split or merge sessions, or asks "what did Grandma say about X" and no transcript exists yet. Always the first step of the pipeline.
 ---
 
 # Interview Transcriber

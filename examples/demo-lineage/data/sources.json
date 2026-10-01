@@ -1,0 +1,745 @@
+{
+ "ab911d885c5a": {
+  "id": "ab911d885c5a",
+  "path": "audio/sample-session-1.m4a",
+  "original_name": "sample-session-1.m4a",
+  "sha256": "ab911d885c5a107f114a193f6f9a56eac7d05df490532b3c00850f8adfbb0d89",
+  "bytes": 410735,
+  "mime": "audio/mp4",
+  "kind": "audio",
+  "date_added": "2026-09-12T09:10:00-05:00",
+  "added_by": "Sam Calder",
+  "derived": {
+   "summary": "Ruth talks about where the Calders came from, the ore dock, and the big snow.",
+   "people": [
+    "Ruth Calder",
+    "Anders Calder",
+    "Henrik Calder",
+    "Pete"
+   ],
+   "places": [
+    "Duluth, Minnesota",
+    "Norway"
+   ],
+   "organizations": [],
+   "date_range": "1900–1950",
+   "doc_kind": "recording",
+   "confidence": {
+    "summary": "high",
+    "people": "high",
+    "places": "high",
+    "date_range": "medium",
+    "doc_kind": "high"
+   },
+   "method": "demo fixture (written by hand)",
+   "suggested_name": "sample-session-1.m4a",
+   "suggested_name_basis": "date from the content"
+  },
+  "mine": {},
+  "fields": {
+   "provenance": "demo fixture"
+  },
+  "notes": "",
+  "stages": {
+   "ingest": {
+    "state": "done",
+    "detail": ""
+   },
+   "extract": {
+    "state": "done",
+    "detail": ""
+   },
+   "understand": {
+    "state": "done",
+    "detail": ""
+   },
+   "index": {
+    "state": "done",
+    "detail": ""
+   },
+   "drive": {
+    "state": "skipped",
+    "detail": "not connected"
+   }
+  },
+  "history": [
+   {
+    "at": "2026-09-12T09:10:00-05:00",
+    "by": "Sam Calder",
+    "event": "added"
+   }
+  ]
+ },
+ "ff21f38bde6e": {
+  "id": "ff21f38bde6e",
+  "path": "audio/sample-session-2.m4a",
+  "original_name": "sample-session-2.m4a",
+  "sha256": "ff21f38bde6e40488eb5bfa1d65edd5630d9ea4361db62f22abfc6967eee58d3",
+  "bytes": 404058,
+  "mime": "audio/mp4",
+  "kind": "audio",
+  "date_added": "2026-09-13T09:11:00-05:00",
+  "added_by": "Sam Calder",
+  "derived": {
+   "summary": "Nursing school in Minneapolis, meeting Walt at a church dance, building the cabin on Pike Lake.",
+   "people": [
+    "Ruth Calder",
+    "Walt"
+   ],
+   "places": [
+    "Minneapolis, Minnesota",
+    "Pike Lake, Minnesota"
+   ],
+   "organizations": [],
+   "date_range": "1956–1968",
+   "doc_kind": "recording",
+   "confidence": {
+    "summary": "high",
+    "people": "high",
+    "places": "high",
+    "date_range": "medium",
+    "doc_kind": "high"
+   },
+   "method": "demo fixture (written by hand)",
+   "suggested_name": "sample-session-2.m4a",
+   "suggested_name_basis": "date from the content"
+  },
+  "mine": {},
+  "fields": {
+   "provenance": "demo fixture"
+  },
+  "notes": "",
+  "stages": {
+   "ingest": {
+    "state": "done",
+    "detail": ""
+   },
+   "extract": {
+    "state": "done",
+    "detail": ""
+   },
+   "understand": {
+    "state": "done",
+    "detail": ""
+   },
+   "index": {
+    "state": "done",
+    "detail": ""
+   },
+   "drive": {
+    "state": "skipped",
+    "detail": "not connected"
+   }
+  },
+  "history": [
+   {
+    "at": "2026-09-13T09:11:00-05:00",
+    "by": "Sam Calder",
+    "event": "added"
+   }
+  ]
+ },
+ "510bbfd8afa5": {
+  "id": "510bbfd8afa5",
+  "path": "sources/1900-ottavia-passenger-list.png",
+  "original_name": "1900-ottavia-passenger-list.png",
+  "sha256": "510bbfd8afa5eec90672f3e5922271a2c2da2ba216752f49f7985d57fe4cad3b",
+  "bytes": 90367,
+  "mime": "image/png",
+  "kind": "image",
+  "date_added": "2026-09-14T09:12:00-05:00",
+  "added_by": "Sam Calder",
+  "derived": {
+   "summary": "Passenger manifest page, S.S. Ottavia, Liverpool to Quebec, May 21, 1900. Line 15: Calder, Anders, 17, of Aalesund, for Duluth.",
+   "people": [
+    "Anders Calder",
+    "Karl Lindgren",
+    "Johan Brekke"
+   ],
+   "places": [
+    "Liverpool, England",
+    "Quebec, Canada",
+    "Duluth, Minnesota"
+   ],
+   "organizations": [],
+   "date_range": "1900",
+   "doc_kind": "record",
+   "confidence": {
+    "summary": "high",
+    "people": "high",
+    "places": "high",
+    "date_range": "medium",
+    "doc_kind": "high"
+   },
+   "method": "demo fixture (written by hand)",
+   "suggested_name": "1900-ottavia-passenger-list.png",
+   "suggested_name_basis": "date from the content"
+  },
+  "mine": {},
+  "fields": {
+   "provenance": "demo fixture"
+  },
+  "notes": "",
+  "stages": {
+   "ingest": {
+    "state": "done",
+    "detail": ""
+   },
+   "extract": {
+    "state": "done",
+    "detail": ""
+   },
+   "understand": {
+    "state": "done",
+    "detail": ""
+   },
+   "index": {
+    "state": "done",
+    "detail": ""
+   },
+   "drive": {
+    "state": "skipped",
+    "detail": "not connected"
+   }
+  },
+  "history": [
+   {
+    "at": "2026-09-14T09:12:00-05:00",
+    "by": "Sam Calder",
+    "event": "added"
+   }
+  ]
+ },
+ "0854e99f41f8": {
+  "id": "0854e99f41f8",
+  "path": "sources/1938-ore-dock-payroll-ledger.png",
+  "original_name": "1938-ore-dock-payroll-ledger.png",
+  "sha256": "0854e99f41f8f16b5ddf3aad194b39aac1463c069c1e332dd056ecc144dabb8e",
+  "bytes": 64126,
+  "mime": "image/png",
+  "kind": "image",
+  "date_added": "2026-09-15T09:13:00-05:00",
+  "added_by": "Peter Lind",
+  "derived": {
+   "summary": "Payroll ledger of the Duluth Ore Dock Company, Dock No. 6, October 1938: A. Calder, dock foreman; H. Calder, chute tender.",
+   "people": [
+    "Anders Calder",
+    "Henrik Calder"
+   ],
+   "places": [
+    "Duluth, Minnesota"
+   ],
+   "organizations": [],
+   "date_range": "1938",
+   "doc_kind": "record",
+   "confidence": {
+    "summary": "high",
+    "people": "high",
+    "places": "high",
+    "date_range": "medium",
+    "doc_kind": "high"
+   },
+   "method": "demo fixture (written by hand)",
+   "suggested_name": "1938-ore-dock-payroll-ledger.png",
+   "suggested_name_basis": "date from the content"
+  },
+  "mine": {},
+  "fields": {
+   "provenance": "demo fixture"
+  },
+  "notes": "",
+  "stages": {
+   "ingest": {
+    "state": "done",
+    "detail": ""
+   },
+   "extract": {
+    "state": "done",
+    "detail": ""
+   },
+   "understand": {
+    "state": "done",
+    "detail": ""
+   },
+   "index": {
+    "state": "done",
+    "detail": ""
+   },
+   "drive": {
+    "state": "skipped",
+    "detail": "not connected"
+   }
+  },
+  "history": [
+   {
+    "at": "2026-09-15T09:13:00-05:00",
+    "by": "Peter Lind",
+    "event": "added"
+   }
+  ]
+ },
+ "2a04a67396a7": {
+  "id": "2a04a67396a7",
+  "path": "sources/1950-courier-the-big-snow.png",
+  "original_name": "1950-courier-the-big-snow.png",
+  "sha256": "2a04a67396a7ec1c0ade2872206cb7bd2b3e531e04f915ea4a0018ea51898877",
+  "bytes": 94313,
+  "mime": "image/png",
+  "kind": "image",
+  "date_added": "2026-09-16T09:14:00-05:00",
+  "added_by": "Sam Calder",
+  "derived": {
+   "summary": "Front page of the Duluth Lakeside Courier, Nov 9, 1950: the city buried, schools shut for the week.",
+   "people": [],
+   "places": [
+    "Duluth, Minnesota"
+   ],
+   "organizations": [],
+   "date_range": "1950",
+   "doc_kind": "record",
+   "confidence": {
+    "summary": "high",
+    "people": "high",
+    "places": "high",
+    "date_range": "medium",
+    "doc_kind": "high"
+   },
+   "method": "demo fixture (written by hand)",
+   "suggested_name": "1950-courier-the-big-snow.png",
+   "suggested_name_basis": "date from the content"
+  },
+  "mine": {},
+  "fields": {
+   "provenance": "demo fixture"
+  },
+  "notes": "",
+  "stages": {
+   "ingest": {
+    "state": "done",
+    "detail": ""
+   },
+   "extract": {
+    "state": "done",
+    "detail": ""
+   },
+   "understand": {
+    "state": "done",
+    "detail": ""
+   },
+   "index": {
+    "state": "done",
+    "detail": ""
+   },
+   "drive": {
+    "state": "skipped",
+    "detail": "not connected"
+   }
+  },
+  "history": [
+   {
+    "at": "2026-09-16T09:14:00-05:00",
+    "by": "Sam Calder",
+    "event": "added"
+   }
+  ]
+ },
+ "b364f3991770": {
+  "id": "b364f3991770",
+  "path": "sources/1944-letter-henrik-to-ruth.pdf",
+  "original_name": "1944-letter-henrik-to-ruth.pdf",
+  "sha256": "b364f3991770e728e23a5fd0ff0dc7e3ac3f98015c51b6006fd52e450488d5aa",
+  "bytes": 16378,
+  "mime": "application/pdf",
+  "kind": "pdf",
+  "date_added": "2026-09-17T09:15:00-05:00",
+  "added_by": "June Calder Moe",
+  "derived": {
+   "summary": "Henrik writes to Ruth from France, Sept. 3, 1944: building bridges; she carries the lunch pail to the dock.",
+   "people": [
+    "Henrik Calder",
+    "Ruth Calder",
+    "Pete",
+    "Anders Calder"
+   ],
+   "places": [
+    "France",
+    "Duluth, Minnesota"
+   ],
+   "organizations": [],
+   "date_range": "1944",
+   "doc_kind": "letter",
+   "confidence": {
+    "summary": "high",
+    "people": "high",
+    "places": "high",
+    "date_range": "medium",
+    "doc_kind": "high"
+   },
+   "method": "demo fixture (written by hand)",
+   "suggested_name": "1944-letter-henrik-to-ruth.pdf",
+   "suggested_name_basis": "date from the content"
+  },
+  "mine": {},
+  "fields": {
+   "provenance": "demo fixture"
+  },
+  "notes": "",
+  "stages": {
+   "ingest": {
+    "state": "done",
+    "detail": ""
+   },
+   "extract": {
+    "state": "done",
+    "detail": ""
+   },
+   "understand": {
+    "state": "done",
+    "detail": ""
+   },
+   "index": {
+    "state": "done",
+    "detail": ""
+   },
+   "drive": {
+    "state": "skipped",
+    "detail": "not connected"
+   }
+  },
+  "history": [
+   {
+    "at": "2026-09-17T09:15:00-05:00",
+    "by": "June Calder Moe",
+    "event": "added"
+   }
+  ]
+ },
+ "e4a49a279a87": {
+  "id": "e4a49a279a87",
+  "path": "sources/1944-letter-henrik-to-ruth-transcription.txt",
+  "original_name": "1944-letter-henrik-to-ruth-transcription.txt",
+  "sha256": "e4a49a279a875562f13d4b8a4f581bbbe2cf2a99af4cb0a06e137fcdb0ab8718",
+  "bytes": 550,
+  "mime": "text/plain",
+  "kind": "text",
+  "date_added": "2026-09-18T09:16:00-05:00",
+  "added_by": "June Calder Moe",
+  "derived": {
+   "summary": "June's typed transcription of Henrik's letter of Sept. 3, 1944.",
+   "people": [
+    "Henrik Calder",
+    "Ruth Calder"
+   ],
+   "places": [
+    "France"
+   ],
+   "organizations": [],
+   "date_range": "1944",
+   "doc_kind": "transcript",
+   "confidence": {
+    "summary": "high",
+    "people": "high",
+    "places": "high",
+    "date_range": "medium",
+    "doc_kind": "high"
+   },
+   "method": "demo fixture (written by hand)",
+   "suggested_name": "1944-letter-henrik-to-ruth-transcription.txt",
+   "suggested_name_basis": "date from the content"
+  },
+  "mine": {},
+  "fields": {
+   "provenance": "demo fixture"
+  },
+  "notes": "",
+  "stages": {
+   "ingest": {
+    "state": "done",
+    "detail": ""
+   },
+   "extract": {
+    "state": "done",
+    "detail": ""
+   },
+   "understand": {
+    "state": "done",
+    "detail": ""
+   },
+   "index": {
+    "state": "done",
+    "detail": ""
+   },
+   "drive": {
+    "state": "skipped",
+    "detail": "not connected"
+   }
+  },
+  "history": [
+   {
+    "at": "2026-09-18T09:16:00-05:00",
+    "by": "June Calder Moe",
+    "event": "added"
+   }
+  ]
+ },
+ "ae866ab3f473": {
+  "id": "ae866ab3f473",
+  "path": "sources/ore-dock-1946-illustration.jpg",
+  "original_name": "ore-dock-1946-illustration.jpg",
+  "sha256": "ae866ab3f4739476f5ba5695603b8bcc3f702f6d8bedf71b0268dfb16a94ab12",
+  "bytes": 104155,
+  "mime": "image/jpeg",
+  "kind": "image",
+  "date_added": "2026-09-19T09:17:00-05:00",
+  "added_by": "Sam Calder",
+  "derived": {
+   "summary": "Generated illustration: an ore boat loading at a Duluth ore dock in winter",
+   "people": [],
+   "places": [
+    "Duluth, Minnesota"
+   ],
+   "organizations": [],
+   "date_range": "about 1946",
+   "doc_kind": "photo",
+   "confidence": {
+    "summary": "high",
+    "people": "high",
+    "places": "high",
+    "date_range": "medium",
+    "doc_kind": "high"
+   },
+   "method": "demo fixture (written by hand)",
+   "suggested_name": "ore-dock-1946-illustration.jpg",
+   "suggested_name_basis": "date from the content"
+  },
+  "mine": {},
+  "fields": {
+   "provenance": "demo fixture"
+  },
+  "notes": "",
+  "stages": {
+   "ingest": {
+    "state": "done",
+    "detail": ""
+   },
+   "extract": {
+    "state": "done",
+    "detail": ""
+   },
+   "understand": {
+    "state": "done",
+    "detail": ""
+   },
+   "index": {
+    "state": "done",
+    "detail": ""
+   },
+   "drive": {
+    "state": "skipped",
+    "detail": "not connected"
+   }
+  },
+  "history": [
+   {
+    "at": "2026-09-19T09:17:00-05:00",
+    "by": "Sam Calder",
+    "event": "added"
+   }
+  ]
+ },
+ "62f9d4550707": {
+  "id": "62f9d4550707",
+  "path": "sources/pike-lake-cabin-illustration.jpg",
+  "original_name": "pike-lake-cabin-illustration.jpg",
+  "sha256": "62f9d45507075c7fd9278f79605a7cff7d59be3569f851afe491a3e4f20e35f3",
+  "bytes": 131496,
+  "mime": "image/jpeg",
+  "kind": "image",
+  "date_added": "2026-09-20T09:18:00-05:00",
+  "added_by": "Sam Calder",
+  "derived": {
+   "summary": "Generated illustration: a half-built log cabin by a lake, about 1965",
+   "people": [],
+   "places": [
+    "Pike Lake, Minnesota"
+   ],
+   "organizations": [],
+   "date_range": "about 1965",
+   "doc_kind": "photo",
+   "confidence": {
+    "summary": "high",
+    "people": "high",
+    "places": "high",
+    "date_range": "medium",
+    "doc_kind": "high"
+   },
+   "method": "demo fixture (written by hand)",
+   "suggested_name": "pike-lake-cabin-illustration.jpg",
+   "suggested_name_basis": "date from the content"
+  },
+  "mine": {},
+  "fields": {
+   "provenance": "demo fixture"
+  },
+  "notes": "",
+  "stages": {
+   "ingest": {
+    "state": "done",
+    "detail": ""
+   },
+   "extract": {
+    "state": "done",
+    "detail": ""
+   },
+   "understand": {
+    "state": "done",
+    "detail": ""
+   },
+   "index": {
+    "state": "done",
+    "detail": ""
+   },
+   "drive": {
+    "state": "skipped",
+    "detail": "not connected"
+   }
+  },
+  "history": [
+   {
+    "at": "2026-09-20T09:18:00-05:00",
+    "by": "Sam Calder",
+    "event": "added"
+   }
+  ]
+ },
+ "50b3cd9019a5": {
+  "id": "50b3cd9019a5",
+  "path": "sources/big-snow-1950-illustration.jpg",
+  "original_name": "big-snow-1950-illustration.jpg",
+  "sha256": "50b3cd9019a5537d4edf822c0f8b29262036fc720e9c78c2237dd9e422f225d9",
+  "bytes": 71679,
+  "mime": "image/jpeg",
+  "kind": "image",
+  "date_added": "2026-09-21T09:19:00-05:00",
+  "added_by": "Sam Calder",
+  "derived": {
+   "summary": "Generated illustration: a hillside street buried in snow, 1950",
+   "people": [],
+   "places": [
+    "Duluth, Minnesota"
+   ],
+   "organizations": [],
+   "date_range": "November 1950",
+   "doc_kind": "photo",
+   "confidence": {
+    "summary": "high",
+    "people": "high",
+    "places": "high",
+    "date_range": "medium",
+    "doc_kind": "high"
+   },
+   "method": "demo fixture (written by hand)",
+   "suggested_name": "big-snow-1950-illustration.jpg",
+   "suggested_name_basis": "date from the content"
+  },
+  "mine": {},
+  "fields": {
+   "provenance": "demo fixture"
+  },
+  "notes": "",
+  "stages": {
+   "ingest": {
+    "state": "done",
+    "detail": ""
+   },
+   "extract": {
+    "state": "done",
+    "detail": ""
+   },
+   "understand": {
+    "state": "done",
+    "detail": ""
+   },
+   "index": {
+    "state": "done",
+    "detail": ""
+   },
+   "drive": {
+    "state": "skipped",
+    "detail": "not connected"
+   }
+  },
+  "history": [
+   {
+    "at": "2026-09-21T09:19:00-05:00",
+    "by": "Sam Calder",
+    "event": "added"
+   }
+  ]
+ },
+ "f1016dba4f09": {
+  "id": "f1016dba4f09",
+  "path": "sources/quebec-arrival-1900-illustration.jpg",
+  "original_name": "quebec-arrival-1900-illustration.jpg",
+  "sha256": "f1016dba4f09e97579510eced52690408c549eb7970476376e0fad2442c2ade2",
+  "bytes": 89811,
+  "mime": "image/jpeg",
+  "kind": "image",
+  "date_added": "2026-09-22T09:20:00-05:00",
+  "added_by": "Sam Calder",
+  "derived": {
+   "summary": "Generated illustration: an emigrant steamer at the Quebec quay, 1900",
+   "people": [],
+   "places": [
+    "Quebec, Canada"
+   ],
+   "organizations": [],
+   "date_range": "May 1900",
+   "doc_kind": "photo",
+   "confidence": {
+    "summary": "high",
+    "people": "high",
+    "places": "high",
+    "date_range": "medium",
+    "doc_kind": "high"
+   },
+   "method": "demo fixture (written by hand)",
+   "suggested_name": "quebec-arrival-1900-illustration.jpg",
+   "suggested_name_basis": "date from the content"
+  },
+  "mine": {},
+  "fields": {
+   "provenance": "demo fixture"
+  },
+  "notes": "",
+  "stages": {
+   "ingest": {
+    "state": "done",
+    "detail": ""
+   },
+   "extract": {
+    "state": "done",
+    "detail": ""
+   },
+   "understand": {
+    "state": "done",
+    "detail": ""
+   },
+   "index": {
+    "state": "done",
+    "detail": ""
+   },
+   "drive": {
+    "state": "skipped",
+    "detail": "not connected"
+   }
+  },
+  "history": [
+   {
+    "at": "2026-09-22T09:20:00-05:00",
+    "by": "Sam Calder",
+    "event": "added"
+   }
+  ]
+ }
+}

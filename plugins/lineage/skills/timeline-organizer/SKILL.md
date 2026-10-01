@@ -1,6 +1,6 @@
 ---
 name: timeline-organizer
-description: Converts a Lineage book's interview transcripts (and any cited records) into one sequential, sourced timeline of the subject's life and the family's past — resolving "when I was twelve" and "right after the war" into dates with the arithmetic shown, keeping hedged dates hedged, flagging conflicts between tellings or between the family and the records, and producing a timeline CSV, a decade-by-decade summary, a spreadsheet and the printed timeline appendix. Use this whenever the user asks for a timeline, chronology, dates, "what order did this happen", "how old was she when", wants to check a date or reconcile two stories, or when chapters need ordering or images dating — even if they don't say "timeline".
+description: Converts a lineage's interview transcripts (and any cited records) into one sequential, sourced timeline of the subject's life and the family's past — resolving "when I was twelve" and "right after the war" into dates with the arithmetic shown, keeping hedged dates hedged, flagging conflicts between tellings or between the family and the records, and producing a timeline CSV, a decade-by-decade summary, a spreadsheet and the printed timeline appendix. Use this whenever the user asks for a timeline, chronology, dates, "what order did this happen", "how old was she when", wants to check a date or reconcile two stories, or when chapters need ordering or images dating — even if they don't say "timeline".
 ---
 
 # Timeline Organizer

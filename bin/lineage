@@ -88,6 +88,16 @@ def install(repo, tag):
     return dest
 
 
+def description_only(repo, old, new, path):
+    """True when a SKILL.md changed only in its `description:` line (what triggers the skill,
+    not what it tells the writer), which can't alter a generated story."""
+    if not path.endswith("SKILL.md"):
+        return False
+    diff = git("diff", "--unified=0", f"{old}..{new}", "--", path, cwd=repo, check=False)
+    changed = [l for l in diff.splitlines() if l[:1] in "+-" and not l.startswith(("+++", "---"))]
+    return bool(changed) and all(l[1:].startswith("description:") for l in changed)
+
+
 def changelog_between(repo, old, new):
     text = git("show", f"{new}:CHANGELOG.md", cwd=repo, check=False)
     out, keep = [], False
@@ -189,7 +199,7 @@ def cmd_update(a):
     print(changelog_between(repo, current, target) or "(no changelog entries)")
     files = git("diff", "--name-only", f"{current}..{target}" if current else target, cwd=repo).split() if current else \
         git("ls-tree", "-r", "--name-only", target, cwd=repo).split()
-    story_files = [f for f in files if f.startswith(STORY_PATHS)]
+    story_files = [f for f in files if f.startswith(STORY_PATHS) and not (current and description_only(repo, current, target, f))]
     print(f"\nLineage files changed: {len(files)}" + (f" ({len(story_files)} can alter generated stories)" if current else ""))
     for f in story_files[:40]:
         print(f"  ! {f}")

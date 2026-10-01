@@ -1,0 +1,5 @@
+id,title,url,holder,type,date_retrieved,rights_notes
+S01,"Passenger manifest, S.S. Ottavia, Liverpool to Quebec, May 1900",https://example.org/demo/ottavia-1900,Demo immigration archive,passenger list,2026-09-18,demo record
+S02,"Federal census 1910, Duluth, ward 4, sheet 12",https://example.org/demo/census-1910-duluth,Demo census index,census,2026-09-18,demo record
+S03,"Payroll ledger, Dock No. 6, October 1938",https://example.org/demo/ore-dock-payroll-1938,Demo county historical society,ledger,2026-09-19,demo record
+S04,"Duluth Lakeside Courier, Nov 9, 1950, p. 1",https://example.org/demo/courier-1950-11-09,Demo newspaper archive,newspaper,2026-09-19,demo record

@@ -1,8 +1,15 @@
 # The factory
 
-Lineage is one instance of a general pattern. The factory is the generator for the
-pattern: give it five answers and it writes a new pipeline, with skills, a runtime, a fixture
-and a HOWTO, for a different kind of source material.
+The factory generates trustworthy source-to-output pipelines: raw material goes in and is
+frozen, every claim made from it cites back to the exact lines it came from, and a person
+decides at named points. Give it five answers and it writes a new pipeline, with skills, a
+runtime, a fixture and a HOWTO, for a different kind of source material.
+
+Lineage is one instance. Its sources are a family's recordings, photographs, documents and
+public records; what it builds from them is a family record (a genealogy, a timeline and an
+encyclopedia of the people, places, events, vessels, organizations and objects in the
+material), and one of that record's outputs is a printed book. The pattern is the same
+whether the output is a book, an encyclopedia, a report or a page.
 
 ```
 /plugin marketplace add rexsaurus/Lineage
@@ -42,8 +49,9 @@ Only these change from domain to domain:
    the output is a one-line change.
 3. **The evidence tiers.** How well a claim is supported: witnessed / told / lore;
    logged / stated / reconstructed; documented / asserted / disputed. Every unit declares one.
-4. **The output, and what builds it.** A printed book via Typst, an HTML page, Markdown, or
-   anything a shell command can produce.
+4. **The output, and what builds it.** A printed book via Typst, a browsable encyclopedia,
+   an HTML page, Markdown, or anything a shell command can produce. One record can have
+   several outputs; Lineage's include a Familypedia, a timeline, a genealogy and a book.
 5. **The gates.** The points where a human decides: are these the right sources, is this the
    right structure, may this go out. Each has one question.
 

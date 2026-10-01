@@ -1,0 +1,168 @@
+{
+ "people": {
+  "anders-calder": {
+   "id": "anders-calder",
+   "name": "Anders Calder",
+   "aliases": [
+    "Grandpa Anders"
+   ],
+   "dates": "about 1883–1951",
+   "living": false,
+   "evidence": []
+  },
+  "signe-calder": {
+   "id": "signe-calder",
+   "name": "Signe Calder",
+   "aliases": [],
+   "dates": "in the 1910 census",
+   "living": false,
+   "evidence": []
+  },
+  "henrik-calder": {
+   "id": "henrik-calder",
+   "name": "Henrik Calder",
+   "aliases": [],
+   "dates": "born 1910",
+   "living": false,
+   "evidence": []
+  },
+  "ruth-calder": {
+   "id": "ruth-calder",
+   "name": "Ruth Calder",
+   "aliases": [
+    "Grandma"
+   ],
+   "dates": "born 1938",
+   "living": true,
+   "evidence": []
+  },
+  "pete": {
+   "id": "pete",
+   "name": "Pete",
+   "aliases": [],
+   "dates": "",
+   "living": null,
+   "evidence": []
+  },
+  "june-calder-moe": {
+   "id": "june-calder-moe",
+   "name": "June Calder Moe",
+   "aliases": [],
+   "dates": "",
+   "living": true,
+   "evidence": []
+  },
+  "walt": {
+   "id": "walt",
+   "name": "Walt",
+   "aliases": [],
+   "dates": "",
+   "living": null,
+   "evidence": []
+  },
+  "sam-calder": {
+   "id": "sam-calder",
+   "name": "Sam Calder",
+   "aliases": [],
+   "dates": "",
+   "living": true,
+   "evidence": []
+  }
+ },
+ "links": [
+  {
+   "id": "anders-calder-parent-henrik-calder",
+   "a": "anders-calder",
+   "rel": "parent",
+   "b": "henrik-calder",
+   "tier": "documented",
+   "evidence": [
+    {
+     "cite": "R002",
+     "quote": "Calder household: Anders, his wife Signe, son Henrik"
+    }
+   ]
+  },
+  {
+   "id": "signe-calder-parent-henrik-calder",
+   "a": "signe-calder",
+   "rel": "parent",
+   "b": "henrik-calder",
+   "tier": "documented",
+   "evidence": [
+    {
+     "cite": "R002",
+     "quote": "Calder household: Anders, his wife Signe, son Henrik"
+    }
+   ]
+  },
+  {
+   "id": "anders-calder-spouse-signe-calder",
+   "a": "anders-calder",
+   "rel": "spouse",
+   "b": "signe-calder",
+   "tier": "documented",
+   "evidence": [
+    {
+     "cite": "R002",
+     "quote": "Anders, his wife Signe"
+    }
+   ]
+  },
+  {
+   "id": "henrik-calder-parent-ruth-calder",
+   "a": "henrik-calder",
+   "rel": "parent",
+   "b": "ruth-calder",
+   "tier": "told",
+   "evidence": [
+    {
+     "cite": "[S1 00:00:29]",
+     "quote": "my father's lunch"
+    }
+   ]
+  },
+  {
+   "id": "pete-sibling-ruth-calder",
+   "a": "ruth-calder",
+   "rel": "sibling",
+   "b": "pete",
+   "tier": "told",
+   "evidence": [
+    {
+     "cite": "[S1 00:00:48]",
+     "quote": "Pete"
+    }
+   ]
+  },
+  {
+   "id": "june-calder-moe-sibling-ruth-calder",
+   "a": "ruth-calder",
+   "rel": "sibling",
+   "b": "june-calder-moe",
+   "tier": "told",
+   "evidence": [
+    {
+     "cite": "R004",
+     "quote": "June Calder Moe, Ruth's sister"
+    }
+   ]
+  },
+  {
+   "id": "ruth-calder-spouse-walt",
+   "a": "ruth-calder",
+   "rel": "spouse",
+   "b": "walt",
+   "tier": "told",
+   "evidence": [
+    {
+     "cite": "[S2 00:00:19]",
+     "quote": "Walt couldn't dance at all"
+    }
+   ]
+  }
+ ],
+ "conflicts": [],
+ "applied": "2026-09-20T10:00:00-05:00",
+ "note": "demo: every link cites a passage or a record"
+}

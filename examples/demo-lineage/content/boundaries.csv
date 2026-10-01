@@ -1,0 +1,7 @@
+session,start,id,title,part,section,tier,people,places,events,flags
+S1,00:00:02,U001,The boots,family,Others in the Family,told,Anders Calder,"Norway;Duluth, Minnesota",E001;E002,
+S1,00:00:29,U002,The ore dock,life,The Ore Dock,,,"Duluth, Minnesota",E003,
+S1,00:00:48,U003,The big snow,life,The Ore Dock,,Pete,"Duluth, Minnesota",E004,
+S2,00:00:03,U004,The shoes,life,Walt and the Cabin,,,"Minneapolis, Minnesota",E005,
+S2,00:00:17,U005,The dance,life,Walt and the Cabin,,Walt,"Minneapolis, Minnesota",E006,
+S2,00:00:36,U006,The cabin,life,Walt and the Cabin,,Walt,"Pike Lake, Minnesota",E007,

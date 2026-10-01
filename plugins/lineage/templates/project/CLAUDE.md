@@ -14,8 +14,9 @@ This project **uses** Lineage; it is not a copy of it.
   the local copy.
 - `make lineage-version` shows the pinned release; `make dashboard` opens the dashboard.
 
-A book written from recorded interviews with a relative. The tools and rules live in the
-Lineage repo ($LINEAGE); the skills are linked into `.claude/skills/`.
+A family's lineage: its sources, records, genealogy, timeline and Familypedia, with stories and
+a book as exports. The tools and rules live in the Lineage repo ($LINEAGE); the skills are
+linked into `.claude/skills/`.
 
 Run repo tools with the Lineage Python: `source $LINEAGE/.venv/bin/activate` at the
 start of a session (or call `$LINEAGE/.venv/bin/python <script>`).
