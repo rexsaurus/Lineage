@@ -24,6 +24,7 @@ leave a clearly named hook where the Lineage skills get wired in.
 import argparse, base64, csv, fcntl, hashlib, http.server, json, mimetypes, os, pty, queue, re
 import secrets, shlex, shutil, signal, socketserver, struct, subprocess, termios, threading, time
 import urllib.error, urllib.parse, urllib.request, uuid, warnings
+from html import escape as html_escape
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -355,6 +356,257 @@ def engine_make_page(project, source_id):
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return out.relative_to(project.root).as_posix()
 
+
+
+# ---------------------------------------------------------------- stories
+# A story is one written piece (a chapter file on disk). The UI says "story"; the files keep
+# their names (chapters/, data/chapters.csv) so the Lineage skills downstream don't change.
+STORY_STATES = ("draft", "in the book", "kept aside")
+YEAR = re.compile(r"(1[5-9]\d\d|20\d\d)")
+
+
+def _story_states(project):
+    p = project.root / "data" / "story_states.json"
+    return json.loads(p.read_text()) if p.exists() else {}
+
+
+def _plain_words(text):
+    text = re.sub(r"(?m)^\s*//.*$", " ", text)               # comments
+    text = re.sub(r"#\w[\w.-]*(\.with)?\(.*?\)\s*$", " ", text, flags=re.M)
+    text = re.sub(r"[#\[\]{}*_]", " ", text)
+    return len(re.findall(r"[A-Za-z’'-]+", text))
+
+
+def engine_stories(project):
+    """Every story with its dates, size, bridges, state and place in the book, oldest first."""
+    rows = []
+    csv_path, json_path = project.root / "data" / "chapters.csv", project.root / "data" / "chapters.json"
+    if csv_path.exists():
+        for r in csv.DictReader(open(csv_path, encoding="utf-8")):
+            rows.append({"id": r.get("chapter"), "file": r.get("file", ""), "title": r.get("title", ""),
+                         "part": r.get("part", ""), "dates": r.get("dates") or r.get("date_range") or "",
+                         "summary": r.get("summary", ""), "map_status": r.get("status", "")})
+    elif json_path.exists():
+        for c in json.loads(json_path.read_text()):
+            slug = re.sub(r"[^a-z0-9]+", "-", c["title"].lower()).strip("-")
+            rows.append({"id": str(c["n"]), "file": f"chapters/{int(c['n']):02d}-{slug}.md", "title": c["title"],
+                         "part": c.get("part", ""), "dates": c.get("years", ""), "summary": c.get("summary", ""),
+                         "map_status": "proposed"})
+    states = _story_states(project)
+    parts, chapter_no = [], 0
+    for r in rows:
+        f = project.root / r["file"] if r["file"] else None
+        text = f.read_text(encoding="utf-8", errors="ignore") if f and f.is_file() else ""
+        years = [int(y) for y in YEAR.findall(r["dates"])]
+        state = states.get(r["id"], "in the book" if text else "draft")
+        if state == "in the book":
+            chapter_no += 1
+            if r["part"] and r["part"] not in parts:
+                parts.append(r["part"])
+        words = _plain_words(text) if text else 0
+        rows_extra = {
+            "exists": bool(text), "words": words, "reading_minutes": max(1, round(words / 230)) if words else 0,
+            "bridges": len(re.findall(r"#bridge\[|⟦BRIDGE", text)),
+            "quotes": len(re.findall(r'"[^"\n]{12,}"|“[^”\n]{12,}”', text)),
+            "photos": len(re.findall(r"#(?:plate|photo|plate-pair)\(", text)),
+            "citations": len(re.findall(r"// src:", text)),
+            "year": years[0] if years else None, "state": state,
+            "book_position": (f"{'Part ' + str(len(parts)) + ', ' if r['part'] else ''}Chapter {chapter_no}"
+                              if state == "in the book" else ("kept aside" if state == "kept aside" else "not in the book yet")),
+            "mtime": f.stat().st_mtime if f and f.is_file() else None,
+        }
+        r.update(rows_extra)
+    return rows
+
+
+def engine_set_story_state(project, story_id, state):
+    if state not in STORY_STATES:
+        raise ValueError(f"state must be one of {STORY_STATES}")
+    states = _story_states(project)
+    states[str(story_id)] = state
+    (project.root / "data" / "story_states.json").write_text(json.dumps(states, indent=1))
+    return states
+
+
+def lineage_home():
+    """The Lineage plugin folder (book template and fonts), from a repo checkout."""
+    for cand in (HERE.parent / "plugins" / "lineage", Path(os.environ.get("LINEAGE", "")) if os.environ.get("LINEAGE") else None):
+        if cand and (cand / "book" / "template.typ").exists():
+            return cand
+    return None
+
+
+def engine_render_story(project, story_id, ppi=110):
+    """Compile one story on its own into real book pages (PNG). Returns the page paths."""
+    story = next((s for s in engine_stories(project) if s["id"] == str(story_id)), None)
+    if not story or not story["exists"]:
+        raise RuntimeError("this story has no text yet")
+    if not story["file"].endswith(".typ"):
+        raise RuntimeError("only Typst story files can be rendered as pages (this one is a draft in Markdown)")
+    if not shutil.which("typst"):
+        raise RuntimeError("typst is not installed")
+    home = lineage_home()
+    tpl = project.root / "book" / "template.typ"
+    if home and (not tpl.exists() or tpl.read_bytes() != (home / "book" / "template.typ").read_bytes()):
+        tpl.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(home / "book" / "template.typ", tpl)
+    if not tpl.exists():
+        raise RuntimeError("no book/template.typ in the project")
+    out = project.root / ".lineage" / "render" / str(story_id)
+    if out.exists():
+        shutil.rmtree(out)
+    out.mkdir(parents=True)
+    title = (project.read().get("title") or "").replace('"', "'")
+    main = out / "main.typ"
+    main.write_text(f'#import "/book/template.typ": *\n#show: book.with(title: "{title}", trim: "{project.read()["settings"].get("trim", "7x10")}")\n'
+                    f'#show: main-matter\n#include "/{story["file"]}"\n', encoding="utf-8")
+    cmd = ["typst", "compile", "--root", str(project.root)]
+    if home and (home / "fonts").exists():
+        cmd += ["--font-path", str(home / "fonts")]
+    cmd += ["--format", "png", "--ppi", str(ppi), str(main), str(out / "page-{0p}.png")]
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+    if r.returncode:
+        raise RuntimeError(r.stderr.strip().splitlines()[0] if r.stderr.strip() else "typst failed")
+    pages = sorted(p.relative_to(project.root).as_posix() for p in out.glob("page-*.png"))
+    return {"pages": pages, "story": story}
+
+
+# ---------------------------------------------------------------- Familypedia
+# Articles are built only from the project's own material: units, the timeline, transcripts,
+# sources. My edits live in data/familypedia/<slug>.json and always survive a rebuild.
+def _slug(s):
+    return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
+
+
+def _unit_frontmatter(project):
+    out = []
+    for p, text in _texts(project, ["content/units/*.md"]):
+        m = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.S)
+        if not m:
+            continue
+        fm = {}
+        for line in m.group(1).splitlines():
+            k, _, v = line.partition(":")
+            fm[k.strip()] = v.strip()
+        lists = {}
+        for k in ("people", "places", "timeline_events"):
+            v = fm.get(k, "[]")
+            lists[k] = re.findall(r'"([^"]+)"', v)
+        shaped = m.group(2).split("## Shaped", 1)[1].split("## Notes", 1)[0] if "## Shaped" in m.group(2) else ""
+        out.append({"id": fm.get("id", p.stem), "title": fm.get("title", "").strip('"'), "chapter": fm.get("chapter", ""),
+                    "people": lists["people"], "places": lists["places"], "events": lists["timeline_events"], "shaped": shaped})
+    return out
+
+
+def _mention_key(article, transcripts):
+    """What to search the transcripts for: the full name, else (for people) the first name."""
+    key = article["title"].split(",")[0].strip()
+    if article["type"] == "person" and key not in transcripts:
+        first = key.split()[0] if key.split() else ""
+        key = first if len(first) > 3 else key
+    return key if len(key) > 3 else ""
+
+
+def engine_familypedia(project):
+    """Index of every article the project can support, with its type and how much material it has."""
+    arts = {}
+
+    def add(name, kind):
+        name = name.strip()
+        if not name:
+            return None
+        a = arts.setdefault(_slug(name), {"slug": _slug(name), "title": name, "type": kind,
+                                           "units": set(), "events": set(), "mentions": 0})
+        return a
+
+    units = _unit_frontmatter(project)
+    for u in units:
+        for n in u["people"]:
+            add(n, "person")["units"].add(u["id"])
+        for n in u["places"]:
+            add(n, "place")["units"].add(u["id"])
+    tl = project.root / "facts" / "timeline.csv"
+    events = list(csv.DictReader(open(tl, encoding="utf-8"))) if tl.exists() else []
+    for e in events:
+        ev = add(e["event"].rstrip("."), "event")
+        if ev:
+            ev["events"].add(e["event_id"])
+        for n in re.split(r";\s*", e.get("people", "")):
+            if n:
+                add(n, "person")["events"].add(e["event_id"])
+        if e.get("place"):
+            add(e["place"], "place")["events"].add(e["event_id"])
+    transcripts = "\n".join(t for _, t in _texts(project, ["transcript/clean/*.md"]))
+    for a in arts.values():
+        a["mentions"] = len(re.findall(re.escape(_mention_key(a, transcripts)), transcripts)) if _mention_key(a, transcripts) else 0
+        a["stub"] = (len(a["units"]) + len(a["events"]) + a["mentions"]) <= 1
+        a["units"], a["events"] = sorted(a["units"]), sorted(a["events"])
+    return sorted(arts.values(), key=lambda a: (a["type"], a["title"].lower()))
+
+
+def engine_article(project, slug):
+    """One article: lead, infobox, tiers, mentions with citations, stories, sources, backlinks."""
+    index = {a["slug"]: a for a in engine_familypedia(project)}
+    a = index.get(slug)
+    if not a:
+        raise KeyError("no such article")
+    units = [u for u in _unit_frontmatter(project) if u["id"] in a["units"]]
+    tl = project.root / "facts" / "timeline.csv"
+    events = [e for e in (csv.DictReader(open(tl, encoding="utf-8")) if tl.exists() else []) if e["event_id"] in a["events"]]
+    key = _mention_key(a, "\n".join(t for _, t in _texts(project, ["transcript/clean/*.md"])))
+    mentions = []
+    for p, text in _texts(project, ["transcript/clean/*.md"]):
+        for line in text.splitlines():
+            pm = PARA.match(line)
+            if pm and key and key in pm["text"]:
+                mentions.append({"speaker": pm["spk"], "cite": f"[{pm['sid']} {pm['ts']}]", "session": pm["sid"],
+                                 "t": pm["ts"], "text": pm["text"]})
+    tiers = {"witnessed": [], "told": [], "lore": [], "documented": []}
+    for e in events:
+        basis = (e.get("date_basis", "") + " " + e.get("event", "")).lower()
+        tier = "lore" if "family account" in basis or "lore" in basis else ("told" if "told" in basis else "witnessed")
+        tiers[tier].append({"text": e["event"], "date": e.get("date_display", ""), "cite": e.get("source", ""),
+                            "confidence": e.get("confidence", "")})
+    stories = {}
+    for s in engine_stories(project):
+        f = project.root / s["file"]
+        if key and f.is_file() and key in f.read_text(encoding="utf-8", errors="ignore"):
+            stories[s["id"]] = {"id": s["id"], "title": s["title"]}
+    for u in units:
+        if u["chapter"]:
+            st = next((s for s in engine_stories(project) if s["id"] == u["chapter"]), None)
+            if st:
+                stories[st["id"]] = {"id": st["id"], "title": st["title"]}
+    backlinks = sorted({o["title"] for o in index.values() if o["slug"] != slug and (set(o["units"]) & set(a["units"]) or set(o["events"]) & set(a["events"]))})
+    dates = [e.get("date_display") for e in events if e.get("date_display")]
+    edits_p = project.root / "data" / "familypedia" / f"{slug}.json"
+    edits = json.loads(edits_p.read_text()) if edits_p.exists() else {}
+    lead = edits.get("lead") or (
+        f"{a['title']} appears in {len(units)} stor{'y' if len(units) == 1 else 'ies'} of the recordings"
+        + (f" and {len(events)} timeline event{'s' if len(events) != 1 else ''}" if events else "")
+        + (f", between {dates[0]} and {dates[-1]}" if len(dates) > 1 else (f", {dates[0]}" if dates else "")) + ".")
+    open_q = [f"Only one mention so far: ask about {a['title']} in the next recording."] if a["stub"] else []
+    open_q += [f"{e['event']} — confidence {e['confidence']}" for e in events if e.get("confidence") == "low"]
+    return {**a, "lead": lead, "lead_by": "me" if edits.get("lead") else "derived", "notes": edits.get("notes", ""),
+            "infobox": {"type": a["type"], "dates": ", ".join(dict.fromkeys(dates)) or "unknown",
+                        "places": sorted({e["place"] for e in events if e.get("place")})},
+            "tiers": tiers, "mentions": mentions[:80], "stories": list(stories.values()),
+            "units": [{"id": u["id"], "title": u["title"]} for u in units],
+            "backlinks": backlinks, "open_questions": open_q, "links": sorted(index.keys())}
+
+
+def engine_save_article(project, slug, patch):
+    d = project.root / "data" / "familypedia"
+    d.mkdir(parents=True, exist_ok=True)
+    p = d / f"{slug}.json"
+    cur = json.loads(p.read_text()) if p.exists() else {}
+    for k in ("lead", "notes"):
+        if k in patch:
+            cur[k] = patch[k]
+    cur.setdefault("history", []).append({"at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                                          "by": "me", "fields": sorted(k for k in patch if k in ("lead", "notes"))})
+    p.write_text(json.dumps(cur, indent=1, ensure_ascii=False))
+    return cur
 
 # ---------------------------------------------------------------- jobs (timed, with progress)
 JOBS = {}
@@ -769,6 +1021,41 @@ def drive_sync(project):
     return report
 
 
+# ---------------------------------------------------------------- family (owner-only management)
+# Members and invites live in <project>/.lineage/family.json. Until the project is hosted, an
+# invite link only works on this machine; the server validates it, the UI says so.
+FAMILY_ROLES = ("contributor", "reader", "editor")
+
+
+def family_load(project):
+    p = project.root / ".lineage" / "family.json"
+    return json.loads(p.read_text()) if p.exists() else {"members": [], "invites": []}
+
+
+def family_save(project, data):
+    p = project.root / ".lineage" / "family.json"
+    p.write_text(json.dumps(data, indent=1, ensure_ascii=False))
+    os.chmod(p, 0o600)
+
+
+def family_view(project):
+    data = family_load(project)
+    now = time.time()
+    contributions = {}
+    for row in engine_sources(project):
+        by = (row.get("added_by") or "")
+        if by:
+            contributions[by] = contributions.get(by, 0) + 1
+    for m in data["members"]:
+        m["contributions"] = contributions.get(m["name"], 0)
+        live = [i for i in data["invites"] if i["member"] == m["id"] and not i.get("revoked") and i["expires"] > now]
+        m["invite"] = ({"url": f"http://127.0.0.1:{PORT}/join/{live[-1]['token']}",
+                        "expires": datetime.fromtimestamp(live[-1]["expires"], timezone.utc).isoformat(timespec="minutes")}
+                       if live else None)
+    data["review_queue"] = []          # contributions from others land here first (none until hosted)
+    data["roles"] = FAMILY_ROLES
+    return data
+
 # ---------------------------------------------------------------- terminal (a PTY per session)
 class Terminal:
     """One shell-like session in a pseudo-terminal. This is a shell: localhost + token only."""
@@ -1057,10 +1344,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self.send_error(403, "localhost only")
         u = urllib.parse.urlparse(self.path)
         path, query = u.path, urllib.parse.parse_qs(u.query)
-        if method == "GET" and not path.startswith("/api/") and not path.startswith("/oauth/"):
+        if method == "GET" and not path.startswith(("/api/", "/oauth/", "/join/")):
             return self.serve_static("index.html" if path == "/" else path.lstrip("/"))
         if path == "/oauth/google/callback":
             return self.google_callback(query)
+        if method == "GET" and path.startswith("/join/"):
+            return self.join(path.split("/join/", 1)[1])
         if not self.token_ok(query):
             return self.send_json({"error": "missing or wrong session token"}, 403)
         fn = ROUTES.get((method, path))
@@ -1113,6 +1402,44 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self.send_json({"job": engine_run(self.project, stage)})
         except ValueError as e:
             return self.send_json({"error": str(e)}, 400)
+
+    def e_stories(self, q):
+        return self.send_json({"stories": engine_stories(self.project), "states": STORY_STATES})
+
+    def e_story_state(self, q):
+        d = self.read_json()
+        try:
+            return self.send_json({"states": engine_set_story_state(self.project, d.get("id"), d.get("state"))})
+        except ValueError as e:
+            return self.send_json({"error": str(e)}, 400)
+
+    def e_story_render(self, q):
+        sid = str(self.read_json().get("id", ""))
+        jid = start_job([("Compiling the story with the book template", 0.1)],
+                        lambda: engine_render_story(self.project, sid))
+        return self.send_json({"job": jid})
+
+    def e_familypedia(self, q):
+        return self.send_json({"articles": engine_familypedia(self.project)})
+
+    def e_article(self, q):
+        try:
+            return self.send_json(engine_article(self.project, (q.get("slug") or [""])[0]))
+        except KeyError as e:
+            return self.send_json({"error": str(e)}, 404)
+
+    def e_article_save(self, q):
+        d = self.read_json()
+        return self.send_json(engine_save_article(self.project, d.get("slug", ""), d))
+
+    def e_episodes(self, q):
+        out = self.project.root / "output"
+        eps = []
+        for f in sorted(out.glob("podcast-*.md")) + sorted((out / "audio").glob("*.mp3") if (out / "audio").exists() else []):
+            eps.append({"id": f.relative_to(self.project.root).as_posix(), "name": f.stem,
+                        "kind": "script" if f.suffix == ".md" else "audio", "bytes": f.stat().st_size,
+                        "text": f.read_text(encoding="utf-8")[:20000] if f.suffix == ".md" else None})
+        return self.send_json({"episodes": eps})
 
     # ======================= dashboard state (settings, uploads, files) =======================
     def upload(self, q):
@@ -1358,6 +1685,67 @@ class Handler(http.server.BaseHTTPRequestHandler):
             GOOGLE_TOKEN_FILE.unlink()
         return self.send_json({"ok": True, **drive_status()})
 
+    # ---- family (owner-only)
+    def family_get(self, q):
+        return self.send_json(family_view(self.project))
+
+    def family_member(self, q):
+        d = self.read_json()
+        data = family_load(self.project)
+        if d.get("role") and d["role"] not in FAMILY_ROLES:
+            return self.send_json({"error": f"role must be one of {FAMILY_ROLES}"}, 400)
+        if d.get("id"):
+            m = next((m for m in data["members"] if m["id"] == d["id"]), None)
+            if not m:
+                return self.send_json({"error": "no such member"}, 404)
+            for k in ("name", "relationship", "email", "role", "status"):
+                if k in d:
+                    m[k] = d[k]
+        else:
+            if not d.get("name"):
+                return self.send_json({"error": "a name is needed"}, 400)
+            data["members"].append({"id": uuid.uuid4().hex[:10], "name": d["name"], "relationship": d.get("relationship", ""),
+                                    "email": d.get("email", ""), "role": d.get("role", "contributor"), "status": "invited",
+                                    "added": datetime.now(timezone.utc).isoformat(timespec="seconds")})
+        family_save(self.project, data)
+        return self.send_json(family_view(self.project))
+
+    def family_invite(self, q):
+        d = self.read_json()
+        data = family_load(self.project)
+        if not any(m["id"] == d.get("member") for m in data["members"]):
+            return self.send_json({"error": "no such member"}, 404)
+        for i in data["invites"]:
+            if i["member"] == d["member"]:
+                i["revoked"] = True
+        data["invites"].append({"token": secrets.token_urlsafe(24), "member": d["member"],
+                                "expires": time.time() + 86400 * int(d.get("days", 14)), "revoked": False})
+        family_save(self.project, data)
+        return self.send_json(family_view(self.project))
+
+    def family_revoke(self, q):
+        d = self.read_json()
+        data = family_load(self.project)
+        for i in data["invites"]:
+            if i["member"] == d.get("member"):
+                i["revoked"] = True
+        family_save(self.project, data)
+        return self.send_json(family_view(self.project))
+
+    def join(self, token):
+        """An invite link. Validated server-side; the contributor view arrives with hosting."""
+        data = family_load(self.project)
+        inv = next((i for i in data["invites"] if secrets.compare_digest(i["token"], token)), None)
+        ok = inv and not inv.get("revoked") and inv["expires"] > time.time()
+        m = next((m for m in data["members"] if inv and m["id"] == inv["member"]), None)
+        msg = (f"This invitation for {m['name']} ({m['role']}) is valid. The page where relatives add "
+               f"their material arrives when the project is hosted." if ok and m else
+               "This invitation has expired or been revoked. Ask for a new link.")
+        body = (f"<!doctype html><meta charset='utf-8'><title>Lineage</title><body style='font-family:system-ui;"
+                f"background:#F7F3EC;color:#1C1A17;max-width:560px;margin:15vh auto;padding:0 20px'>"
+                f"<h1 style='font-family:Georgia,serif'>Lineage</h1><p>{html_escape(msg)}</p></body>").encode()
+        return self.serve_bytes(body, "text/html; charset=utf-8", {"Cache-Control": "no-store"})
+
     # ---- terminal
     def term_info(self, q):
         return self.send_json(TERMINAL.info())
@@ -1421,6 +1809,13 @@ ROUTES = {
     ("POST", "/api/engine/page"): Handler.e_page,
     ("GET", "/api/engine/approvals"): Handler.e_approvals,
     ("GET", "/api/engine/status"): Handler.e_status,
+    ("GET", "/api/engine/stories"): Handler.e_stories,
+    ("POST", "/api/engine/story/state"): Handler.e_story_state,
+    ("POST", "/api/engine/story/render"): Handler.e_story_render,
+    ("GET", "/api/engine/familypedia"): Handler.e_familypedia,
+    ("GET", "/api/engine/article"): Handler.e_article,
+    ("POST", "/api/engine/article"): Handler.e_article_save,
+    ("GET", "/api/engine/episodes"): Handler.e_episodes,
     # dashboard state
     ("GET", "/api/bootstrap"): Handler.bootstrap,
     ("GET", "/api/settings"): Handler.get_settings,
@@ -1443,6 +1838,10 @@ ROUTES = {
     ("POST", "/api/google/device/poll"): Handler.google_device_poll,
     ("GET", "/api/google/browser-url"): Handler.google_browser_url,
     ("POST", "/api/google/disconnect"): Handler.google_disconnect,
+    ("GET", "/api/family"): Handler.family_get,
+    ("POST", "/api/family/member"): Handler.family_member,
+    ("POST", "/api/family/invite"): Handler.family_invite,
+    ("POST", "/api/family/revoke"): Handler.family_revoke,
     ("GET", "/api/term"): Handler.term_info,
     ("POST", "/api/term/start"): Handler.term_start,
     ("POST", "/api/term/input"): Handler.term_input,
