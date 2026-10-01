@@ -130,7 +130,8 @@ async function showArticle(slug){
   if(a.error){ box.innerHTML=`<div class="card"><p class="empty">${esc(a.error)}</p></div>`; return; }
   S.article=a;
   const chip = c => c ? (/^https?:/.test(c)?`<a class="cite" href="${esc(c)}" target="_blank" rel="noopener">source ↗</a>`:`<a class="cite" data-cite="${esc(c)}">${esc(c)}</a>`) : '';
-  const lead = a.photos.find(p=>p.thumb && !p.illustration) || a.photos.find(p=>p.thumb);
+  // a person's picture is never an illustration; other subjects may lead with one, marked
+  const lead = a.photos.find(p=>p.thumb && !p.illustration) || (a.type==='person' ? null : a.photos.find(p=>p.thumb));
   const ibv = v => v.slug?artLink(v.slug,v.text,null,v.note):(v.record?`<a class="wl" href="#familypedia?view=records&focus=${encodeURIComponent(v.record)}">${esc(v.text)}</a>`:wikiLink(v.text,{skip:a.slug}));
   const sec = (title, body, extra='') => body ? `<section class="tier"><div class="row"><h4>${title}</h4><span class="spacer"></span>${extra}</div>${body}</section>` : '';
   const rec = r => `<tr><td>${esc(r.type)}</td><td>${r.url?`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a>`:esc(r.title)}${r.description&&r.description!==r.title?`<div class="sub" style="margin:2px 0 0;font-size:12.6px">${esc(r.description.slice(0,240))}</div>`:''}</td>

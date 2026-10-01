@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Lineage — a local dashboard for turning recorded interviews into a family book.
+"""Lineage — a local dashboard for a family's own record: sources, research, genealogy, timeline,
+Familypedia, and stories and a book as exports.
 
     python3 server.py                                   # http://127.0.0.1:8777
     python3 server.py --port 9000 --project ~/books/grandma
@@ -292,7 +293,8 @@ def engine_sources(project):
                 "doc_kind": (eff or {}).get("doc_kind"), "content_date": (eff or {}).get("date_range") or "",
                 "people": (eff or {}).get("people") or [], "added_by": (ir or {}).get("added_by", "me"),
                 "transcription": (ir or {}).get("transcription"), "in_drive": bool((ir or {}).get("drive_id")),
-                "notes": (ir or {}).get("notes", ""),
+                "notes": (ir or {}).get("notes", ""), "illustration": bool(ir and is_illustration(ir)),
+                "places": (eff or {}).get("places") or [], "provenance": ((ir or {}).get("fields") or {}).get("provenance", ""),
                 "id": rel, "name": f.name, "kind": kind, "bytes": st.st_size,
                 "added": datetime.fromtimestamp(st.st_mtime, timezone.utc).isoformat(timespec="seconds"),
                 "duration": media_duration(f) if kind in ("audio", "video") else None,
@@ -389,7 +391,19 @@ def engine_make_page(project, source_id):
 INTAKE_LOCK = threading.Lock()
 INTAKE_STAGES = ("ingest", "extract", "understand", "index", "drive")
 STRUCTURED = ("what", "who", "about", "provenance")
-DOC_KINDS = ("letter", "photo", "certificate", "record", "transcript", "recording", "notes", "other")
+DOC_KINDS = ("letter", "photo", "illustration", "certificate", "record", "transcript", "recording", "notes", "other")
+ILLUSTRATION = re.compile(r"\b(illustration|generated|artist'?s rendering|ai[- ]made|reconstruction)\b", re.I)
+
+
+def is_illustration(row):
+    """A generated or drawn picture, never a photograph of the real thing. It may illustrate a story; it is
+    never anyone's portrait, and never counted as a photograph of them."""
+    e = effective(row)
+    if e.get("doc_kind") == "illustration":
+        return True
+    text = " ".join(str(x or "") for x in (e.get("summary"), e.get("accepted_name"), row.get("original_name"),
+                                           (row.get("fields") or {}).get("what"), (row.get("fields") or {}).get("provenance")))
+    return bool(ILLUSTRATION.search(text))
 INTAKE_MODEL = "claude-haiku-4-5-20251001"
 
 
@@ -1125,6 +1139,56 @@ def engine_stories(project):
     return rows
 
 
+CITE_TOKEN = re.compile(r"\[S\d+ \d\d:\d\d:\d\d\]|\bR\d{3,}\b|https?://\S+")
+PLATE = re.compile(r'#(?:plate|photo|plate-pair)\(\s*"([^"]+)"(.*?)\)\s*$')
+
+
+def story_apparatus(project, story_id):
+    """What a story rests on: each cited paragraph with its citation chips, and each image with its
+    caption, provenance and whether it is an illustration. Read from the generated story file."""
+    st = _story_by_id(project, story_id)
+    if not st:
+        raise KeyError("no such story")
+    f = project.root / st["file"]
+    if not f.is_file():
+        raise KeyError("this story has no draft yet")
+    photos = {r.get("id"): r for r in csv.DictReader(open(project.root / "photos" / "photo_index.csv", encoding="utf-8"))} \
+        if (project.root / "photos" / "photo_index.csv").exists() else {}
+    paras, images, buf = [], [], []
+    for line in f.read_text(encoding="utf-8", errors="ignore").splitlines():
+        t = line.strip()
+        if t.startswith("// src:"):
+            src = t[len("// src:"):].strip()
+            text = re.sub(r"#\w[\w.-]*\(\s*\"[^\"]*\"\s*\)", "", " ".join(buf)).replace("][", " ")
+            text = re.sub(r"#\w+\[|[\[\]]|#\w+", "", text)
+            chips = CITE_TOKEN.findall(src)
+            rest = CITE_TOKEN.sub("", src).strip(" ;,-")
+            paras.append({"excerpt": re.sub(r"\s+", " ", text).strip()[:220], "cites": chips, "note": rest})
+            buf = []
+            continue
+        m = PLATE.match(t)
+        if m:
+            path, args = m.group(1).lstrip("/"), m.group(2)
+            cap = re.search(r'caption:\s*"([^"]*)"', args)
+            pid = re.search(r'id:\s*"([^"]*)"', args)
+            row = photos.get(pid.group(1) if pid else "", {})
+            caption = cap.group(1) if cap else row.get("subject", "")
+            illus = bool(ILLUSTRATION.search(" ".join([caption, row.get("subject", ""), row.get("kind", ""), row.get("needs_attention", "")])))
+            images.append({"path": path, "id": pid.group(1) if pid else "", "caption": caption, "illustration": illus,
+                           "exists": (project.root / path).is_file(), "people": row.get("people", ""),
+                           "people_basis": row.get("people_basis", ""), "date": row.get("date", ""),
+                           "date_basis": row.get("date_basis", ""), "location": row.get("location", ""),
+                           "holder": row.get("holder", ""), "source_file": row.get("source_file", ""),
+                           "placeholder": "placeholder" in (caption + row.get("kind", "")).lower()})
+            buf = []
+            continue
+        if t.startswith("//") or t.startswith("#show") or t.startswith("#import"):
+            continue
+        if t:
+            buf.append(t)
+    return {"id": st["id"], "title": st["title"], "paragraphs": paras, "images": images}
+
+
 def engine_set_story_state(project, story_id, state):
     if state not in STORY_STATES:
         raise ValueError(f"state must be one of {STORY_STATES}")
@@ -1465,7 +1529,8 @@ def genealogy_graph(project):
     for r in intake_load(project).values():
         if not r.get("trashed"):
             for nm in effective(r).get("people") or []:
-                sources_by_person.setdefault(_pid(nm), []).append(r.get("thumb") if r.get("kind") == "image" else None)
+                # a person's picture is a real photograph or scan, never an illustration
+                sources_by_person.setdefault(_pid(nm), []).append(r.get("thumb") if r.get("kind") == "image" and not is_illustration(r) else None)
     stories = engine_stories(project)
     for pid, p in people.items():
         p["note"] = mine.get("notes", {}).get(pid, "")
@@ -1688,7 +1753,7 @@ def home_relative(project, reroll=0):
         except KeyError:
             art = None
     photos = sum(1 for r in intake_load(project).values() if not r.get("trashed") and r.get("kind") == "image"
-                 and p.get("name") in (effective(r).get("people") or []))
+                 and not is_illustration(r) and p.get("name") in (effective(r).get("people") or []))
     return {"id": p["id"], "name": p.get("name"), "dates": p.get("dates") or (art or {}).get("infobox", {}).get("dates", ""),
             "photo": p.get("photo"), "relationship": _relationship(graph, graph.get("subject"), p["id"]),
             "line": (art or {}).get("lead", ""), "article": p.get("article"),
@@ -2308,7 +2373,7 @@ PROVIDERS = {
                "check": ("https://api.openai.com/v1/models", lambda k: {"Authorization": f"Bearer {k}"})},
     "elevenlabs": {"label": "ElevenLabs", "use": "Podcast voice", "prefix": "",
                    "check": ("https://api.elevenlabs.io/v1/voices", lambda k: {"xi-api-key": k})},
-    "github": {"label": "GitHub", "use": "Push the book repo", "prefix": "",
+    "github": {"label": "GitHub", "use": "Push the lineage repo", "prefix": "",
                "check": ("https://api.github.com/user",
                          lambda k: {"Authorization": f"Bearer {k}", "Accept": "application/vnd.github+json",
                                     "User-Agent": "Lineage"})},
@@ -3152,6 +3217,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def e_fp_map(self, q):
         return self.send_json(familypedia.map_data(self.project, (q.get("focus") or [None])[0]))
 
+    def e_story_apparatus(self, q):
+        try:
+            return self.send_json(story_apparatus(self.project, (q.get("id") or [""])[0]))
+        except (KeyError, StopIteration) as e:
+            return self.send_json({"error": str(e) or "no such story"}, 404)
+
     def e_fp_story(self, q):
         return self.send_json({"subjects": familypedia.story_subjects(self.project, (q.get("id") or [""])[0])})
 
@@ -3763,6 +3834,7 @@ ROUTES = {
     ("GET", "/api/engine/familypedia/catalogue"): Handler.e_fp_catalogue,
     ("GET", "/api/engine/familypedia/map"): Handler.e_fp_map,
     ("GET", "/api/engine/familypedia/story"): Handler.e_fp_story,
+    ("GET", "/api/engine/story/apparatus"): Handler.e_story_apparatus,
     ("GET", "/api/engine/tags"): Handler.e_tags,
     ("POST", "/api/engine/tags"): Handler.e_tags_set,
     ("GET", "/api/engine/home"): Handler.h_home,

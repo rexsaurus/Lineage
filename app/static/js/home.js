@@ -101,7 +101,7 @@ function drawRequests(reqs){
 async function draftRequest(spec){
   const d = await api('/api/engine/request/draft',{method:'POST',body:spec});
   if(d.error){ alertNote(d.error); return; }
-  const intro = d.to_name ? `Hi ${d.to_name},\n\nFor the family book, could you help with any of these?\n\n` : 'For the family book, could you help with any of these?\n\n';
+  const intro = d.to_name ? `Hi ${d.to_name},\n\nFor the family record, could you help with any of these?\n\n` : 'For the family record, could you help with any of these?\n\n';
   const text = intro + (d.questions.length ? d.questions.map((q,i)=>`${i+1}. ${q}`).join('\n') : '(nothing is flagged as open here yet)') + '\n\nAnything at all helps: a sentence, a photo, a name.\n';
   openModal(d.title + (d.to_name?` · to ${d.to_name}`:''), `
     <p class="sub">Assembled from open questions, timeline gaps, unconfirmed links and missing photographs. Edit before you send it.</p>
@@ -110,7 +110,7 @@ async function draftRequest(spec){
       ${d.to_email?`<a class="btn ghost" id="rq-mail" style="text-decoration:none">Open in email</a>`:`<a class="btn ghost" id="rq-mail" style="text-decoration:none">Open in email</a>`}
       <span class="spacer"></span><button class="btn go" id="rq-save">Save as asked</button></div>
     <p class="sub" style="margin-top:8px;font-size:12.4px">"Save as asked" records it with today's date${d.to_name?` on ${esc(d.to_name)}'s page`:''}, so Home can remind you what's outstanding. Lineage never sends it for you.</p>`);
-  const mail=()=>`mailto:${encodeURIComponent(d.to_email||'')}?subject=${encodeURIComponent(d.title+' — for the family book')}&body=${encodeURIComponent($('#rq-text').value)}`;
+  const mail=()=>`mailto:${encodeURIComponent(d.to_email||'')}?subject=${encodeURIComponent(d.title+' — for the family record')}&body=${encodeURIComponent($('#rq-text').value)}`;
   $('#rq-mail').onclick=e=>{ e.currentTarget.href=mail(); };
   $('#rq-copy').onclick=()=>copyText($('#rq-text').value);
   $('#rq-save').onclick=async()=>{ await api('/api/engine/request/save',{method:'POST',body:{...d, text:$('#rq-text').value}}); closeOverlay(); alertNote('Saved as asked.'); if(S.tab==='home') BUILDERS.home($('#tab-home')); };

@@ -56,6 +56,16 @@ Recordings, scans, letters and documents, each scanned, named, summarized and in
 lands, with who added it and when. Recordings get transcripts with speaker labels and
 timestamps, so every sentence later can point back at the tape.
 
+<img src="docs/images/sources-gallery.png" alt="The Sources gallery">
+
+The same sources as a gallery: scans, letters and photographs at a glance, with who added
+each one. Select several and tag them all to a person, a place or a ship at once.
+
+<img src="docs/images/source-lightbox.png" alt="A source in the lightbox">
+
+Click one to see it full size, step through the rest with the arrow keys, and read or edit
+its summary, people, places, provenance and notes beside it.
+
 <img src="docs/images/source-drawer.png" alt="A source open in the drawer, with its subjects">
 
 Open a source and everything about it is editable, and everything derived is marked as
@@ -111,9 +121,17 @@ paragraph cited) and can be narrated. The player follows you around the dashboar
 
 <img src="docs/images/story.png" alt="A story set as book pages">
 
-Read a story as the book's own pages. A sentence the writer wanted to add that the material
-didn't give it is a *bridge*: highlighted in the draft, and the final build refuses to
-compile while one is unapproved.
+Read a story as the book's own pages, with what it rests on above them: every paragraph and
+its citation chips (click one to hear that moment of the recording, or open the record), and
+the people and places in it, each linked to their Familypedia article. A sentence the writer
+wanted to add that the material didn't give it is a *bridge*: highlighted in the draft, and
+the final build refuses to compile while one is unapproved.
+
+<img src="docs/images/story-images.png" alt="A story's images with provenance and a toolbar">
+
+Each image in a story carries its provenance (its date and the basis for it, who is in it and
+how we know, who holds it) and a toolbar to open it, tag it or find it among the
+photographs. An illustration says so, everywhere.
 
 ### Contributors and connectors
 

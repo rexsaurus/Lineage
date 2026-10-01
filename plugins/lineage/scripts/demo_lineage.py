@@ -14,6 +14,7 @@ illustrations in sources/, which are made once and committed.
 """
 import csv
 import hashlib
+import re
 import json
 import shutil
 import subprocess
@@ -62,6 +63,16 @@ def copy_sample():
     if not (SAMPLE / "chapters").is_dir():
         sys.exit("run `make sample` first: the demo reuses the sample's generated stories")
     shutil.copytree(SAMPLE / "chapters", OUT / "chapters", dirs_exist_ok=True)
+    # The sample's stories hold grey placeholders where photographs go; the demo puts its (marked)
+    # illustrations there instead, as a book would before the real photographs turn up.
+    for f, old, new, cap in (("02-the-ore-dock.typ", "/photos/print/P001.png", "/sources/ore-dock-1946-illustration.jpg",
+                              "Illustration (generated): an ore boat loading at a Duluth ore dock in winter"),
+                             ("03-walt-and-the-cabin.typ", "/photos/print/P002.png", "/sources/pike-lake-cabin-illustration.jpg",
+                              "Illustration (generated): the cabin half built, about 1965")):
+        p = OUT / "chapters" / f
+        t = p.read_text()
+        t = re.sub(r'#plate\("' + re.escape(old) + r'", caption: "[^"]*"', f'#plate("{new}", caption: "{cap}"', t)
+        p.write_text(t)
     shutil.copy2(PLUGIN / "book" / "template.typ", OUT / "book" / "template.typ")
     shutil.copy2(SAMPLE / "book.yaml", OUT / "book.yaml")
     shutil.copy2(SAMPLE / "data" / "chapters.csv", OUT / "data" / "chapters.csv")
@@ -426,7 +437,7 @@ def sources_index():
          ["Henrik Calder", "Ruth Calder", "Pete", "Anders Calder"], ["France", "Duluth, Minnesota"], "1944"),
         ("sources/1944-letter-henrik-to-ruth-transcription.txt", "transcript", "June Calder Moe", "June's typed transcription of Henrik's letter of Sept. 3, 1944.",
          ["Henrik Calder", "Ruth Calder"], ["France"], "1944"),
-    ] + [(f"sources/{f}", "photo", "Sam Calder", cap.replace("Illustration: ", "Generated illustration: "),
+    ] + [(f"sources/{f}", "illustration", "Sam Calder", cap.replace("Illustration: ", "Generated illustration: "),
           [], [place], date) for f, cap, ppl, place, date in ILLUSTRATIONS]   # nobody is pictured by an illustration
     for i, (rel, kind, who, summary, people, places, dr) in enumerate(spec):
         p = OUT / rel

@@ -13,7 +13,7 @@ and the trains ran right out on top of it. Whether it frightened her, she never 
 settled: "No. Well, yeah. A little."
 // src: [S1 00:00:29]-[S1 00:00:47]
 
-#plate("/photos/print/P001.png", caption: "Placeholder: a photograph of the ore dock", width: 3.6in, id: "P001")
+#plate("/sources/ore-dock-1946-illustration.jpg", caption: "Illustration (generated): an ore boat loading at a Duluth ore dock in winter", width: 3.6in, id: "P001")
 
 // ---- U003 The big snow (U003-the-big-snow.md)
 #sectionbreak

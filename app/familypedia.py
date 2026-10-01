@@ -540,7 +540,7 @@ def _build(project):
         eff = HOST.effective(row)
         text = " ".join([eff.get("summary") or "", " ".join(eff.get("people") or []), " ".join(eff.get("places") or [])])
         photos.append({"id": "src:" + row["id"], "caption": eff.get("accepted_name") or row["original_name"],
-                       "thumb": row.get("thumb") or "", "illustration": False, "provenance": "source: " + row["path"],
+                       "thumb": row.get("thumb") or "", "illustration": HOST.is_illustration(row), "provenance": "source: " + row["path"],
                        "date": eff.get("date_range") or "", "subjects": sorted(_hits(rx, keys, text)), "origin": "sources"})
     ph_by_id = {p["id"]: p for p in photos}
     for target, tl in tags.items():
