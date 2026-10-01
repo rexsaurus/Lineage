@@ -1,0 +1,4 @@
+// Shared sample text for the story-template previews (the invented sample project).
+#let ore = [When she was seven or eight, as best she remembered, Ruth walked her father's lunch down to the ore dock in a tin pail. The dock was so tall "you had to tip your head all the way back," and the trains ran right out on top of it. Whether it frightened her, she never quite settled: "No. Well, yeah. A little."]
+#let snow = [The big snow came around 1950, as Ruth remembered it. The school closed for a week, and she and her brother Pete dug a tunnel from the porch to the street. Pete proposed that they live in it. "Mother did not agree."]
+#let cabin = [Starting in 1964 or so, Ruth and Walt built a cabin on Pike Lake with their own hands. It took four summers. Walt did the walls and Ruth did the roof, because Walt was afraid of heights. "Nobody believes that," she said.]
