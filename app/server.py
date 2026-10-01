@@ -22,7 +22,7 @@ Stages that need a model are PROTOTYPE: they write realistic artifacts on a time
 leave a clearly named hook where the Lineage skills get wired in.
 """
 import argparse, base64, csv, fcntl, hashlib, http.server, json, mimetypes, os, pty, queue, re
-import secrets, shlex, shutil, signal, socketserver, struct, subprocess, termios, threading, time
+import random, secrets, shlex, shutil, signal, socketserver, struct, subprocess, termios, threading, time
 import urllib.error, urllib.parse, urllib.request, uuid, warnings
 from html import escape as html_escape, unescape as html_unescape
 from datetime import datetime, timezone
@@ -1471,7 +1471,8 @@ def genealogy_graph(project):
     subject = project.read().get("subject") or ""
     return {"people": list(people.values()), "links": list(links.values()), "conflicts": d.get("conflicts", []),
             "subject": _pid(subject) if subject else None, "note": d.get("note", ""), "applied": d.get("applied"),
-            "pending": genealogy_diff(project).get("pending", False), "history": _gload(project, "history", [])[-30:]}
+            "pending": genealogy_diff(project).get("pending", False), "history": _gload(project, "history", [])[-30:],
+            "merges": mine.get("merges", [])}
 
 
 def genealogy_edit(project, op, data):
@@ -1508,6 +1509,9 @@ def genealogy_gedcom(project):
     ids = {p["id"]: f"@I{i + 1}@" for i, p in enumerate(g["people"])}
     out = ["0 HEAD", "1 SOUR LINEAGE", "1 GEDC", "2 VERS 5.5.1", "1 CHAR UTF-8"]
     for p in g["people"]:
+        if p.get("living"):                                   # living people stay out of exports
+            out += [f"0 {ids[p['id']]} INDI", "1 NAME Living /Person/"]
+            continue
         out += [f"0 {ids[p['id']]} INDI", f"1 NAME {p.get('name') or p['id']}"]
         if p.get("dates"):
             out += ["1 NOTE dates as the evidence supports: " + p["dates"]]
@@ -1583,6 +1587,339 @@ def genealogy_import_gedcom(project, text, filename):
     _ghistory(project, "imported GEDCOM", {"file": filename, "people": len(indi), "links": n})
     return genealogy_graph(project)
 
+# ---------------------------------------------------------------- home (surfaces what exists; writes nothing)
+def _daily(seq, salt, reroll=0):
+    if not seq:
+        return None
+    base = random.Random(f"{datetime.now().date().isoformat()}:{salt}").randrange(len(seq))
+    return seq[(base + reroll) % len(seq)]           # stable all day; each reroll steps to the next
+
+
+def _lead_photo(project, st):
+    raw = (project.root / st["file"]).read_text(encoding="utf-8", errors="ignore")
+    for m in re.finditer(r'#(?:plate|photo|plate-pair)\(\s*"([^"]+)"', raw):
+        rel = m.group(1).lstrip("/")
+        if (project.root / rel).is_file():
+            return rel
+    return None
+
+
+def _opening(project, st, n=3):
+    raw = (project.root / st["file"]).read_text(encoding="utf-8", errors="ignore")
+    text = _plain_story(st, raw, drop_bridges=True)
+    body = next((para for para in text.split("\n\n") if len(para.split()) > 12), text)
+    body = re.sub(r"\s+", " ", body)
+    sentences = re.findall(r"[^.!?]+[.!?]+[”\"’']?", body)
+    out = sentences[:n]
+    while len(out) > 1 and (" ".join(out).count('"') % 2 or " ".join(out).count("“") != " ".join(out).count("”")):
+        out = out[:-1]                                # never stop inside a quotation
+    return " ".join(x.strip() for x in out) or body[:400]
+
+
+def home_story(project, reroll=0):
+    drafts = [st for st in engine_stories(project) if st["exists"]]
+    st = _daily(drafts, "story", reroll)
+    if not st:
+        return None
+    return {"id": st["id"], "title": st["title"], "dates": st["dates"], "photo": _lead_photo(project, st),
+            "opening": _opening(project, st), "has_audio": st.get("has_audio"), "audio": st.get("audio"),
+            "reading_minutes": st["reading_minutes"], "of": len(drafts)}
+
+
+def _relationship(graph, subject, pid):
+    """Neutral kinship words from the derived tree, or None when no traced path exists."""
+    if not subject or subject == pid:
+        return "the subject" if subject == pid else None
+    up, down, side = {}, {}, {}
+    for l in graph["links"]:
+        if l["rel"] == "parent":
+            up.setdefault(l["b"], []).append(l["a"]); down.setdefault(l["a"], []).append(l["b"])
+        else:
+            side.setdefault(l["a"], []).append((l["b"], l["rel"])); side.setdefault(l["b"], []).append((l["a"], l["rel"]))
+    from collections import deque
+    seen, q = {subject: []}, deque([subject])
+    while q:
+        cur = q.popleft()
+        steps = [(n, "u") for n in up.get(cur, [])] + [(n, "d") for n in down.get(cur, [])] + \
+                [(n, "s" if r == "spouse" else "b") for n, r in side.get(cur, [])]
+        for n, k in steps:
+            if n not in seen and len(seen[cur]) < 6:
+                seen[n] = seen[cur] + [k]; q.append(n)
+    path = "".join(seen.get(pid, [])) if pid in seen else None
+    if path is None:
+        return None
+    def gen(n, word):
+        return ("great-" * (n - 2) + "grand" + word) if n >= 2 else word
+    if set(path) == {"u"}:
+        return gen(len(path), "parent")
+    if set(path) == {"d"}:
+        return gen(len(path), "child")
+    if path in ("s",):
+        return "spouse"
+    if path in ("b", "ud"):
+        return "sibling"
+    if re.fullmatch(r"u+b", path) or re.fullmatch(r"u+ud", path):
+        return "sibling of a " + gen(len(path) - (1 if path.endswith("b") else 2), "parent") if len(path) > 2 else "aunt or uncle"
+    if re.fullmatch(r"u+s", path):
+        return "spouse of a " + gen(len(path) - 1, "parent")
+    return "relative (" + " → ".join({"u": "parent", "d": "child", "s": "spouse", "b": "sibling"}[c] for c in path) + ")"
+
+
+def home_relative(project, reroll=0):
+    graph = genealogy_graph(project)
+    people = graph["people"] or [{"id": _pid(a["title"]), "name": a["title"], "dates": "", "article": a["slug"], "photo": None,
+                                  "n_sources": 0, "has_story": False}
+                                 for a in engine_familypedia(project) if a["type"] == "person"]
+    if not people:
+        return None
+    nudge = [p for p in people if not p.get("has_story") and (p.get("n_sources") or p.get("article"))]
+    p = _daily(nudge or people, "relative", reroll)
+    art = None
+    if p.get("article"):
+        try:
+            art = engine_article(project, p["article"])
+        except KeyError:
+            art = None
+    photos = sum(1 for r in intake_load(project).values() if not r.get("trashed") and r.get("kind") == "image"
+                 and p.get("name") in (effective(r).get("people") or []))
+    return {"id": p["id"], "name": p.get("name"), "dates": p.get("dates") or (art or {}).get("infobox", {}).get("dates", ""),
+            "photo": p.get("photo"), "relationship": _relationship(graph, graph.get("subject"), p["id"]),
+            "line": (art or {}).get("lead", ""), "article": p.get("article"),
+            "counts": {"sources": p.get("n_sources", 0), "mentions": len((art or {}).get("mentions", [])), "photographs": photos},
+            "has_story": p.get("has_story"), "nudge": bool(nudge) and p in nudge}
+
+
+def _questions(project):
+    pth = project.root / "data" / "questions.json"
+    return json.loads(pth.read_text()) if pth.exists() else []
+
+
+def home_needs(project):
+    """Specific, one-click things, ordered by what they unblock."""
+    items = []
+    stories = engine_stories(project)
+    br = [s for s in stories if s.get("bridges")]
+    if br:
+        n = sum(s["bridges"] for s in br)
+        items.append({"weight": 90, "text": f"{n} bridge{'s' if n != 1 else ''} awaiting approval in {len(br)} stor{'y' if len(br) == 1 else 'ies'}",
+                      "action": "review", "go": "#stories?filter=bridges"})
+    rows = [r for r in intake_load(project).values() if not r.get("trashed")]
+    pending = [r for r in rows if (r.get("stages") or {}).get("index", {}).get("state") != "done"]
+    loose = []
+    srcdir = project.root / "sources"
+    if srcdir.is_dir():
+        known = {r["path"] for r in intake_load(project).values()}
+        loose = [f for f in srcdir.rglob("*") if f.is_file() and not f.name.startswith(".")
+                 and ".trash" not in f.parts and f.relative_to(project.root).as_posix() not in known]
+    if pending or loose:
+        n = len(pending) + len(loose)
+        items.append({"weight": 80, "text": f"{n} source{'s' if n != 1 else ''} not yet ingested", "action": "ingest",
+                      "go": "#sources?filter=pending", "op": "ingest-all"})
+    queue = family_view(project).get("review_queue") or []
+    for q in queue[:3]:
+        items.append({"weight": 85, "text": f"{q.get('by', 'A contributor')}'s upload is waiting for review", "action": "review queue",
+                      "go": "#/settings/contributors"})
+    stale = [s for s in stories if s.get("stale")]
+    if stale:
+        items.append({"weight": 70, "text": f"{len(stale)} stor{'y is' if len(stale) == 1 else 'ies are'} stale since you added a source",
+                      "action": "regenerate", "go": "#stories?filter=stale"})
+    if genealogy_diff(project).get("pending"):
+        items.append({"weight": 65, "text": "A rebuilt family tree is waiting for your review", "action": "review", "go": "#genealogy?review=1"})
+    tl = engine_timeline(project)
+    conf = [e for e in tl["events"] if e.get("conflict")]
+    if conf:
+        items.append({"weight": 50, "text": f"{len(conf)} timeline event{'s' if len(conf) != 1 else ''} with conflicting sources",
+                      "action": "review", "go": "#timeline?filter=conflicts"})
+    tagged = set()
+    for r in rows:
+        if r.get("kind") == "image":
+            tagged |= set(effective(r).get("people") or [])
+    persons = [a["title"] for a in engine_familypedia(project) if a["type"] == "person"]
+    nophoto = [x for x in persons if x not in tagged]
+    if nophoto:
+        items.append({"weight": 30, "text": f"{len(nophoto)} {'person has' if len(nophoto) == 1 else 'people have'} no photograph",
+                      "action": "tag photos", "go": "#sources?kind=image"})
+    asked = {q["text"] for q in _questions(project)}
+    for g in tl["gaps"]:
+        text = f"Nothing recorded between {g['from']} and {g['to']}"
+        if text not in asked:
+            items.append({"weight": 40 - min(g["to"] - g["from"], 30) / 100, "text": text, "action": "add to question list",
+                          "op": "question", "question": f"What happened between {g['from']} and {g['to']}?", "source": f"timeline gap {g['from']}–{g['to']}"})
+    items.sort(key=lambda x: -x["weight"])
+    return items
+
+
+def _requests(project):
+    pth = project.root / "data" / "requests.json"
+    return json.loads(pth.read_text()) if pth.exists() else []
+
+
+def _save_requests(project, data):
+    (project.root / "data").mkdir(exist_ok=True)
+    (project.root / "data" / "requests.json").write_text(json.dumps(data, indent=1, ensure_ascii=False))
+
+
+def request_draft(project, kind, about=None, to=None):
+    """Assemble a question list from what the project already flags as open. Nothing invented."""
+    qs = []
+    if kind == "person":
+        a = next((x for x in engine_familypedia(project) if x["slug"] == about or x["title"] == about), None)
+        if not a:
+            raise KeyError("no article for that person")
+        art = engine_article(project, a["slug"])
+        qs += art.get("open_questions", [])
+        g = genealogy_graph(project)
+        pid = _pid(a["title"])
+        if g["people"] and not any(l["rel"] == "parent" and l["b"] == pid for l in g["links"]):
+            qs.append(f"Who were {a['title']}'s parents?")
+        for l in g["links"]:
+            if pid in (l["a"], l["b"]) and l["tier"] in ("lore", "unconfirmed"):
+                other = l["b"] if l["a"] == pid else l["a"]
+                other = next((x.get("name") for x in g["people"] if x["id"] == other), other)
+                qs.append(f"Is there anything that confirms the {l['rel']} link between {a['title']} and {other}?")
+        tl = engine_timeline(project)
+        mine = [e for e in tl["events"] if a["title"] in e["people"]]
+        for x, y in zip(mine, mine[1:]):
+            if y["year"] - x["year"] >= 6:
+                qs.append(f"What was {a['title']} doing between {x['year']} and {y['year']}?")
+        title = f"More about {a['title']}"
+    elif kind == "source":
+        tl = engine_timeline(project)
+        for e in tl["events"]:
+            if e.get("conflict"):
+                qs.append(f"A document that settles: {e['title']} ({e['date']}) — {e['conflict']}")
+            elif e.get("confidence") == "low":
+                qs.append(f"Any record of: {e['title']} ({e['date']})")
+        g = genealogy_graph(project)
+        nm = {x["id"]: x.get("name") or x["id"] for x in g["people"]}
+        for l in g["links"]:
+            if l["tier"] in ("lore", "told"):
+                qs.append(f"A record of the {l['rel']} link between {nm.get(l['a'], l['a'])} and {nm.get(l['b'], l['b'])} (now {l['tier']})")
+        tagged = set()
+        for r in intake_load(project).values():
+            if r.get("kind") == "image" and not r.get("trashed"):
+                tagged |= set(effective(r).get("people") or [])
+        for a in engine_familypedia(project):
+            if a["type"] == "person" and a["title"] not in tagged:
+                qs.append(f"A photograph of {a['title']}")
+            elif a["type"] == "place" and not a.get("stub"):
+                qs.append(f"A photograph of {a['title']}")
+        title = "Missing sources"
+    else:
+        raise ValueError("kind must be person or source")
+    qs = list(dict.fromkeys(qs))[:12]
+    member = None
+    if to:
+        member = next((m for m in family_load(project)["members"] if m["id"] == to or m["name"] == to), None)
+    return {"kind": kind, "about": about, "to": member["id"] if member else None, "to_name": member["name"] if member else None,
+            "to_email": member.get("email") if member else None, "title": title, "questions": qs}
+
+
+def request_save(project, draft):
+    data = _requests(project)
+    draft = {**draft, "id": secrets.token_hex(4), "made": _now(), "status": "asked"}
+    data.append(draft)
+    _save_requests(project, data)
+    return draft
+
+
+def request_mark(project, rid, status):
+    if status not in ("asked", "answered"):
+        raise ValueError("status is asked or answered")
+    data = _requests(project)
+    for r in data:
+        if r["id"] == rid:
+            r["status"] = status
+            r[f"{status}_at"] = _now()
+    _save_requests(project, data)
+    return data
+
+
+def _pdf_pages(path):
+    if not path.exists():
+        return None
+    if shutil.which("pdfinfo"):
+        out = subprocess.run(["pdfinfo", str(path)], capture_output=True, text=True).stdout
+        m = re.search(r"^Pages:\s+(\d+)", out, re.M)
+        if m:
+            return int(m.group(1))
+    return len(re.findall(rb"/Type\s*/Page[^s]", path.read_bytes())) or None
+
+
+def home_glance(project):
+    rows = [r for r in intake_load(project).values() if not r.get("trashed")]
+    stories = engine_stories(project)
+    tl = engine_timeline(project)
+    arch = project.root / "data" / "archives.csv"
+    records = sum(1 for _ in csv.DictReader(open(arch, encoding="utf-8"))) if arch.exists() else 0
+    g = genealogy_graph(project)
+    people = len(g["people"]) or sum(1 for a in engine_familypedia(project) if a["type"] == "person")
+    years = [e["year"] for e in tl["events"]]
+    return {"sources": len(rows) or len(engine_sources(project)), "people": people,
+            "stories": sum(1 for s in stories if s["exists"]), "photographs": sum(1 for r in rows if r.get("kind") == "image"),
+            "records": records, "events": len(tl["events"]) + len(tl["undated"]),
+            "words": sum(s["words"] for s in stories), "audio_minutes": round(sum((s.get("audio_duration") or 0) for s in stories) / 60),
+            "range": [min(years), max(years)] if years else None,
+            "pages": _pdf_pages(project.root / "output" / "book-draft.pdf")}
+
+
+def home_activity(project, limit=25):
+    feed = []
+    for r in intake_load(project).values():
+        for h in r.get("history", []):
+            feed.append({"at": h["at"], "by": h.get("by", "me"), "text": f"{h['event']}: {r['original_name']}",
+                         "go": f"#sources?open={r['id']}"})
+    for st in engine_stories(project):
+        if st.get("mtime"):
+            feed.append({"at": datetime.fromtimestamp(st["mtime"], timezone.utc).isoformat(timespec="seconds"), "by": "",
+                         "text": f"story written or revised: {st['title']}", "go": f"#stories?read={st['id']}"})
+        if st.get("audio_made"):
+            feed.append({"at": st["audio_made"], "by": "", "text": f"narrated: {st['title']}", "go": f"#stories?listen={st['id']}"})
+    for h in _gload(project, "history", []):
+        feed.append({"at": h["at"], "by": h.get("by", "me"), "text": f"family tree: {h['event']}", "go": "#genealogy"})
+    for q in _requests(project):
+        feed.append({"at": q["made"], "by": "me", "text": f"asked{(' ' + q['to_name']) if q.get('to_name') else ''}: {q['title']}", "go": "#home"})
+    for m in family_load(project)["members"]:
+        if m.get("joined"):
+            feed.append({"at": m["joined"], "by": m["name"], "text": f"{m['name']} joined as {m.get('role', 'contributor')}",
+                         "go": "#/settings/contributors"})
+    fp = project.root / "data" / "familypedia"
+    if fp.is_dir():
+        for f in fp.glob("*.json"):
+            feed.append({"at": datetime.fromtimestamp(f.stat().st_mtime, timezone.utc).isoformat(timespec="seconds"), "by": "me",
+                         "text": f"edited article: {f.stem.replace('-', ' ')}", "go": f"#familypedia/{f.stem}"})
+    feed.sort(key=lambda x: x["at"], reverse=True)
+    return feed[:limit]
+
+
+def attention(project):
+    """Why the settings gear shows a dot."""
+    out = []
+    keys = load_config()["keys"]
+    if not keys.get("anthropic"):
+        out.append({"section": "connectors", "text": "No Anthropic key: intake and the tree run without the model"})
+    drive = (project.read()["settings"].get("drive_folder") or "")
+    if drive and not GOOGLE_TOKEN_FILE.exists():
+        out.append({"section": "connectors", "text": "Google Drive is set up for this project but not connected"})
+    if family_view(project).get("review_queue"):
+        out.append({"section": "contributors", "text": "A contributor's upload is awaiting review"})
+    return out
+
+
+def engine_home(project, reroll_story=0, reroll_relative=0):
+    glance = home_glance(project)
+    transcripts = list((project.root / "transcript").glob("clean/*.md"))
+    empty = not (glance["sources"] or glance["stories"] or glance["people"] or transcripts)
+    if empty:
+        return {"empty": True}
+    feed = home_activity(project)
+    reqs = _requests(project)
+    return {"empty": False, "story": home_story(project, reroll_story), "relative": home_relative(project, reroll_relative),
+            "needs": home_needs(project), "glance": glance, "activity": feed, "updated": feed[0]["at"] if feed else None,
+            "requests": sorted(reqs, key=lambda r: r["made"], reverse=True)[:10],
+            "members": [{"id": m["id"], "name": m["name"], "email": m.get("email")} for m in family_load(project)["members"]],
+            "attention": attention(project)}
+
 # ---------------------------------------------------------------- narration (ElevenLabs)
 # One story is one episode. The script is the story's own prose; an unapproved bridge is
 # never read aloud, so narration refuses until it is approved.
@@ -1619,12 +1956,19 @@ def story_script(project, story_id):
     raw = (project.root / st["file"]).read_text(encoding="utf-8")
     if st["bridges"]:
         raise PermissionError(f"approve {st['bridges']} bridge{'s' if st['bridges'] != 1 else ''} first: an unapproved bridge is never narrated")
+    return st, _plain_story(st, raw)
+
+
+def _plain_story(st, raw, drop_bridges=False):
     if st["file"].endswith(".md"):
+        if drop_bridges:
+            raw = re.sub(r"⟦BRIDGE: .*?⟧", "", raw)
         text = re.sub(r"^#+\s*", "", raw, flags=re.M)
-        return st, re.sub(r"[*_`]", "", text).strip()
+        return re.sub(r"[*_`]", "", text).strip()
     raw = re.sub(r"(?m)^\s*//.*$", "", raw)
     out, i = [], 0
-    drop = ("show", "import", "plate", "plate-pair", "photo", "descent", "records", "photo-addendum", "idx", "idx-see", "note", "set", "let")
+    drop = ("show", "import", "plate", "plate-pair", "photo", "descent", "records", "photo-addendum", "idx", "idx-see", "note", "set", "let") \
+        + (("bridge",) if drop_bridges else ())
     while i < len(raw):
         m = re.compile(r"#([a-zA-Z][\w-]*)").match(raw, i)
         if raw[i] == "#" and m:
@@ -1650,7 +1994,7 @@ def story_script(project, story_id):
     text = re.sub(r"\\([#\[\]*_$@])", r"\1", text)
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n\s*\n+", "\n\n", text).strip()
-    return st, text
+    return text
 
 
 def _audio_paths(project, st):
@@ -2640,8 +2984,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if f.name == "index.html":
             data = data.replace(b"__LINEAGE_TOKEN__", TOKEN.encode())
             return self.serve_bytes(data, "text/html; charset=utf-8", {"Cache-Control": "no-store"})
-        return self.serve_bytes(data, mimetypes.guess_type(f.name)[0] or "application/octet-stream",
-                                {"Cache-Control": "max-age=300"})
+        cache = "no-cache" if f.suffix in (".js", ".css") else "max-age=300"
+        return self.serve_bytes(data, mimetypes.guess_type(f.name)[0] or "application/octet-stream", {"Cache-Control": cache})
 
     # ---- routing
     def route(self, method):
@@ -2783,6 +3127,32 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def e_question(self, q):
         d = self.read_json()
         return self.send_json({"questions": add_question(self.project, d.get("text", ""), d.get("source", ""))})
+
+    def h_home(self, q):
+        return self.send_json(engine_home(self.project, int(q.get("story", ["0"])[0] or 0), int(q.get("relative", ["0"])[0] or 0)))
+
+    def h_attention(self, q):
+        return self.send_json(attention(self.project))
+
+    def h_request_draft(self, q):
+        d = self.read_json()
+        try:
+            return self.send_json(request_draft(self.project, d.get("kind"), d.get("about"), d.get("to")))
+        except (KeyError, ValueError) as e:
+            return self.send_json({"error": str(e)}, 400)
+
+    def h_request_save(self, q):
+        return self.send_json(request_save(self.project, self.read_json()))
+
+    def h_request_mark(self, q):
+        d = self.read_json()
+        try:
+            return self.send_json(request_mark(self.project, d.get("id"), d.get("status")))
+        except ValueError as e:
+            return self.send_json({"error": str(e)}, 400)
+
+    def h_requests(self, q):
+        return self.send_json(_requests(self.project))
 
     def g_graph(self, q):
         return self.send_json(genealogy_graph(self.project))
@@ -3429,6 +3799,12 @@ ROUTES = {
     ("POST", "/api/engine/story/state"): Handler.e_story_state,
     ("POST", "/api/engine/story/render"): Handler.e_story_render,
     ("GET", "/api/engine/familypedia"): Handler.e_familypedia,
+    ("GET", "/api/engine/home"): Handler.h_home,
+    ("GET", "/api/engine/attention"): Handler.h_attention,
+    ("GET", "/api/engine/requests"): Handler.h_requests,
+    ("POST", "/api/engine/request/draft"): Handler.h_request_draft,
+    ("POST", "/api/engine/request/save"): Handler.h_request_save,
+    ("POST", "/api/engine/request/mark"): Handler.h_request_mark,
     ("GET", "/api/engine/genealogy"): Handler.g_graph,
     ("POST", "/api/engine/genealogy/rebuild"): Handler.g_rebuild,
     ("GET", "/api/engine/genealogy/review"): Handler.g_review,

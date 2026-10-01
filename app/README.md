@@ -1,13 +1,14 @@
 # Lineage dashboard
 
 A local dashboard for the Lineage pipeline: turn recorded interviews with a relative into a
-book (and a podcast) without the machine making things up. It runs on your own computer and
+book (and an audiobook) without the machine making things up. It runs on your own computer and
 binds to `127.0.0.1` only.
 
 ```bash
 ./lineage                         # http://127.0.0.1:8777, project ~/lineage-books/my-book
 ./lineage ~/books/grandma         # point it at a project folder
 python3 server.py --command bash  # use a different terminal command
+python3 server.py --demo          # invented sample content, with a banner; never the default
 ```
 
 Python 3.10+, standard library only. The page loads xterm.js and fonts from a CDN.
@@ -15,42 +16,62 @@ Python 3.10+, standard library only. The page loads xterm.js and fonts from a CD
 ## Layout of the code
 
 ```
-server.py           ENGINE (sources, pages, approvals, stage jobs: /api/engine/*, /api/run/*)
-                    AUTHOR-ONLY SURFACE (terminal, keys, repo, Drive, CLIs)
-                    HTTP (routing, session token, static files)
-static/index.html   the dashboard
-static/logo.svg     the mark
-~/.lineage/         keys (config.json) and the Google token, chmod 600, this machine only
-<project>/lineage.json        settings and stage status
-<project>/.lineage/terminal.log   terminal scrollback (capped at 1 MB)
+server.py             ENGINE (/api/engine/*: sources, stories, narration, timeline, Familypedia,
+                      genealogy, home, requests), dashboard state, AUTHOR-ONLY SURFACE (terminal,
+                      keys, repo, Drive, CLIs, contributors), HTTP (routing, session token, static)
+static/index.html     the page shell
+static/css/app.css    the styles
+static/js/core.js     labels, routing, the settings gear, the dock (player + terminal), overlays
+static/js/<tab>.js    one file per surface: home, sources, familypedia, genealogy, stories,
+                      timeline, settings (the four settings pages), terminal (the drawer)
+~/.lineage/           keys (config.json) and the Google token, chmod 600, this machine only
+<project>/lineage.json            settings
+<project>/data/genealogy/         derived.json (approved rebuild), mine.json (my edits),
+                                  proposed.json (a rebuild awaiting review), history.json
+<project>/data/requests.json      what you've asked for, with dates and status
+<project>/.lineage/               terminal log, rendered pages, thumbnails, crest attempts
 ```
 
-The engine endpoints use plain vocabulary ("sources", "page", "approvals") so a simpler,
-non-technical front end can sit on the same server later. Everything technical is grouped
-under the author-only surface, marked as such in both files.
+The engine endpoints use plain vocabulary so a simpler front end can sit on the same server
+later. Everything technical is grouped under the author-only surface, marked as such in the code.
 
-## The tabs
+## The surfaces
 
 No wizard: every tab works whenever you open it and says plainly what it still needs.
 
+**Tabs (the working surfaces):**
+
 | Tab | What it's for |
 |---|---|
-| **Settings** | The lineage's identity (family name, title, subtitle, summary, subject, covers, crest), the book's trim and printer, narrator and writing style, story templates with rendered previews, photo formats, repo and Drive folder, the terminal command, resolved paths |
-| **Sources** | The sources table: kind, size, duration, status, transcript drawer with audio jump, open/file/Drive links, drag-and-drop upload |
-| **Familypedia** | An encyclopedia of the family built from the project's own material: people, places and events, wiki links laid over the text, backlinks, search, A–Z, random article, stubs under "Needs more", citation chips that open the transcript line, notes marked as yours |
-| **Transcribe History** | The working surface: the embedded terminal ("Chat with the Genealogist") with a composer and quick prompts, the pipeline actions, the story map, everything awaiting approval |
-| **Read About It** | The stories, oldest first in era bands, each rendered as real book pages through the Typst template; state per story (draft · in the book · kept aside) and its place in the book |
-| **Listen To It** | Voice (live from ElevenLabs), episode length, episodes with their scripts and players |
-| **Connectors** | Google Drive, GitHub, Anthropic, OpenAI, ElevenLabs, agent CLIs on this machine; honest "not wired up" cards |
-| **Family** | Members, roles (contributor, reader, editor), expiring and revocable invite links, the review queue |
+| **Home** | The landing page. Story of the day (seeded by the date; "Another" steps through), a featured relative (people with material but no story first), **Needs you** (one-click actions ordered by what they unblock), **Request more** (question lists built from open questions, gaps and unconfirmed links, saved as asked/answered), counts at a glance, and a plain activity feed. An empty project shows one card: what to add first. |
+| **Sources** | Recordings, scans, letters. Intake runs visibly (Saved → Reading → Understanding → Indexed), with edit, rename, re-ingest, trash and restore, bulk actions. |
+| **Familypedia** | An encyclopedia built only from the project's material: people, places, events (with date, precision, tier, the passages they rest on, before and after, conflicts), wiki links, backlinks, stubs, notes marked as yours. |
+| **Genealogy** | The tree, derived from the sources. Every link carries its quoted evidence; no evidence, no link. Rebuild with a review of what changed (contradictions kept, never resolved silently); pan/zoom tree with descendant, ancestor and hourglass layouts, unknown-parent nodes and line styles by tier; Cast view; merge, split, add links and notes (kept across rebuilds); GEDCOM in and out (imports arrive unconfirmed); SVG, PNG and a printable chart. Living people are left out of exports. |
+| **Stories** | Every story, oldest first in era bands. Read (real book pages through the Typst template) and Listen on the same row; Narrate / Re-narrate with ElevenLabs, a voice per story, stale-audio marks, Narrate all with a character count, a pinned player, audio download. Unapproved bridges are never narrated. "Generate" hands work to the Genealogist. |
+| **Timeline** | A vertical spine with decade bands and a year rail; cards with date and precision, tier, people, place, citations and story links; stars; conflict cards; gap cards with "Add to questions"; an undated drawer; filters and search; SVG, PNG and a printable appendix. |
+
+**Behind the gear** (`#/settings/<section>`, each with its own section list; Esc or Done
+returns to the tab you came from; a dot on the gear means something needs attention):
+
+| Page | What it holds |
+|---|---|
+| **Family details** | Lineage title, family name, subtitle, summary (with a draft button), subject, date range and places, and the crest: None (default) · Generate (four candidates per try, every attempt kept) · Upload (original kept; background removal and one-colour copies), a show toggle per surface, previews in context, provenance. |
+| **Connectors** | Google Drive, GitHub, Anthropic, OpenAI, ElevenLabs, agent CLIs; honest "not wired up" cards. |
+| **Contributors** | People who add material (the family is the subject; contributors are who adds to it): roles, invite links, requests outstanding, the shared folder, the review queue. |
+| **Project settings** | Repo, Drive folder, narration voice, narrator and writing style, story templates, trim and printer, the terminal command, resolved paths. |
+
+**The terminal** is a drawer, not a tab: the **Terminal** button in the header (or Ctrl+`)
+opens it over any tab. It holds the Genealogist, quick prompts, the pipeline actions and the
+approvals list. Old addresses (`#read`, `#listen`, `#transcribe`, `#family`, `#connectors`,
+`#settings`) redirect to their new homes.
 
 The UI calls the written pieces **stories**; the printed book still has chapters, and the files
 keep their names (`chapters/`, `data/chapters.csv`). The mapping lives in one place, the `L`
-labels object at the top of the page's script.
+labels object in `static/js/core.js`.
 
 ## The terminal: security model
 
-Transcribe History embeds a real terminal (a PTY running `claude`, or whatever you choose). It is a
+The drawer embeds a real terminal (a PTY running `claude`, or whatever you choose). It is a
 shell on your machine, so:
 - the server binds to `127.0.0.1` only, and there is no option to change that;
 - every `/api/*` call needs a session token minted at server start and injected into the page;
@@ -61,37 +82,21 @@ shell on your machine, so:
 Output streams to the browser over Server-Sent Events; keystrokes go up with POST. No
 websockets, no extra dependencies.
 
-## What is real and what is a prototype
+## What is real, and what isn't yet
 
-**Real:**
-- the server and security model;
-- the PTY terminal (start, restart, Ctrl-C, resize, exit codes, scrollback saved per project);
-- settings shared by every tab, and the lineage identity (covers filled from the timeline,
-  summary drafted from the project's own counts, crest, stale marks);
-- repo verification and `git init`;
-- file upload (originals never overwritten);
-- the Sources table and transcript drawer;
-- "page" drafts from a source's exact words;
-- the approvals list;
-- the Familypedia, built from units, timeline and transcripts, with notes and leads you edit
-  saved as yours and never overwritten;
-- the stories index with states and per-story rendering to book pages;
-- family members and invite links, validated server-side;
-- live key checks for Anthropic, OpenAI, ElevenLabs and GitHub;
-- the live ElevenLabs voice list with previews;
-- agent CLI and `gh` detection, and push.
+**Real and tested:**
+- the server, security model and PTY terminal;
+- intake end to end (PDF, image, audio, text) with dedupe, trash and restore;
+- the Familypedia, timeline and event pages, built from units, timeline and transcripts;
+- the genealogy rebuild (Claude, evidence checked against the material, no evidence no link),
+  review and apply, my edits, GEDCOM round trip;
+- Home: story of the day, featured relative, Needs you, requests, counts, activity;
+- stories with states, rendering to pages, and narration script extraction (bridges refused);
+- settings, identity, stale marks, repo verification, live key checks, voice list.
 
-**Written but not tested end to end** (no Google credentials on the test machine): Google
-Drive device-flow and browser sign-in, folder verification, and two-way sync.
+**Written, not tested end to end on the build machine:** ElevenLabs narration (no key used in
+tests), crest generation (OpenAI), Google Drive sign-in and sync.
 
-**Prototype:**
-- The pipeline stages (records, genealogy, story map, writing, podcast) return demonstration
-  content on a timed job. Each is one function in `server.py` (`demo_records`,
-  `demo_genealogy`, `demo_chapters`, and the branches in `engine_run`); that is where the
-  Lineage skills get wired in.
-- Narration audio isn't rendered yet.
-- "Beyond the family" in the Familypedia isn't wired up.
-- The contributor-facing page behind an invite link arrives with hosting.
-- Grok and ChatGPT cards are placeholders and say so.
-
-See `ROADMAP.md` for what is queued.
+**Not built yet:** see `ROADMAP.md` (annotation and people tagging on photos, the public records
+catalogue, the impact pass and "update everything this affects", hyperlinked stories with images
+editable in place, "Beyond the family", the contributor-facing page behind an invite link).
