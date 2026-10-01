@@ -115,6 +115,8 @@ async function readStory(id){
     ${s.has_audio?`<div class="row" style="margin-bottom:14px"><audio controls src="${fileUrl(s.audio)}" style="flex:1"></audio>${s.audio_stale?'<span class="pill warn">audio is stale</span>':''}</div>`:''}
     <div class="pages" id="rd-pages"><p class="empty">Setting the pages…</p></div>`);
   $$('[data-nav]').forEach(b=>b.onclick=()=>readStory(b.dataset.nav));
+  api('/api/engine/familypedia/story?id='+encodeURIComponent(s.id)).then(r=>{ const box=$('#rd-pages'); if(!box||!r.subjects.length) return;
+    box.insertAdjacentHTML('beforebegin', `<div class="row fp-instory" style="gap:5px;margin:-4px 0 14px"><span class="derived">In this ${esc(L.story)}:</span>${r.subjects.map(x=>`<a class="chiplink" href="#familypedia/${encodeURIComponent(x.slug)}" onclick="closeOverlay()">${TYPE_ICON[x.type]||''} ${esc(x.title)}</a>`).join('')}</div>`); });
   const r = await api('/api/engine/story/render',{method:'POST',body:{id:s.id}});
   pollJob(r.job, null, res=>{ const box=$('#rd-pages'); if(box) box.innerHTML = res.pages.map(p=>`<img src="${fileUrl(p)}&v=${Date.now()}" alt="page">`).join(''); },
     err=>{ const box=$('#rd-pages'); if(box) box.innerHTML=`<div class="note">Couldn't set this ${L.story} as pages: ${esc(err)}</div>`; });

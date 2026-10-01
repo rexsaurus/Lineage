@@ -19,6 +19,8 @@ Python 3.10+, standard library only. The page loads xterm.js and fonts from a CD
 server.py             ENGINE (/api/engine/*: sources, stories, narration, timeline, Familypedia,
                       genealogy, home, requests), dashboard state, AUTHOR-ONLY SURFACE (terminal,
                       keys, repo, Drive, CLIs, contributors), HTTP (routing, session token, static)
+familypedia.py        the Familypedia engine: nine article types, infoboxes, tiers, records,
+                      tagging, links, search and the map (server.py routes to it)
 static/index.html     the page shell
 static/css/app.css    the styles
 static/js/core.js     labels, routing, the settings gear, the dock (player + terminal), overlays
@@ -45,7 +47,7 @@ No wizard: every tab works whenever you open it and says plainly what it still n
 |---|---|
 | **Home** | The landing page. Story of the day (seeded by the date; "Another" steps through), a featured relative (people with material but no story first), **Needs you** (one-click actions ordered by what they unblock), **Request more** (question lists built from open questions, gaps and unconfirmed links, saved as asked/answered), counts at a glance, and a plain activity feed. An empty project shows one card: what to add first. |
 | **Sources** | Recordings, scans, letters. Intake runs visibly (Saved → Reading → Understanding → Indexed), with edit, rename, re-ingest, trash and restore, bulk actions. |
-| **Familypedia** | An encyclopedia built only from the project's material: people, places, events (with date, precision, tier, the passages they rest on, before and after, conflicts), wiki links, backlinks, stubs, notes marked as yours. |
+| **Familypedia** | An article for every subject the material names: person · place · event · vessel/vehicle · organization/unit · object · publication · occupation/trade · theme. Each has a lead from the material, a typed infobox, tier sections (witnessed · told · lore · what the records show), the passages that mention it, sources with thumbnails, typed records with archive, number, link and retrieval date, photographs and marked illustrations, stories, related articles, backlinks, open questions and a separate “Beyond the family”. Browse by type, A–Z, most material and needs more; full-text search with type filters; `[[links]]` across types; a map drawn from the records' own coordinates; Records and Photographs views with bulk tagging. |
 | **Genealogy** | The tree, derived from the sources. Every link carries its quoted evidence; no evidence, no link. Rebuild with a review of what changed (contradictions kept, never resolved silently); pan/zoom tree with descendant, ancestor and hourglass layouts, unknown-parent nodes and line styles by tier; Cast view; merge, split, add links and notes (kept across rebuilds); GEDCOM in and out (imports arrive unconfirmed); SVG, PNG and a printable chart. Living people are left out of exports. |
 | **Stories** | Every story, oldest first in era bands. Read (real book pages through the Typst template) and Listen on the same row; Narrate / Re-narrate with ElevenLabs, a voice per story, stale-audio marks, Narrate all with a character count, a pinned player, audio download. Unapproved bridges are never narrated. "Generate" hands work to the Genealogist. |
 | **Timeline** | A vertical spine with decade bands and a year rail; cards with date and precision, tier, people, place, citations and story links; stars; conflict cards; gap cards with "Add to questions"; an undated drawer; filters and search; SVG, PNG and a printable appendix. |
@@ -87,7 +89,10 @@ websockets, no extra dependencies.
 **Real and tested:**
 - the server, security model and PTY terminal;
 - intake end to end (PDF, image, audio, text) with dedupe, trash and restore;
-- the Familypedia, timeline and event pages, built from units, timeline and transcripts;
+- the Familypedia (all nine types), timeline and event pages, built from units, timeline,
+  transcripts, the knowledge graph, records, photo index and routes; tagging of sources,
+  records, photographs and events to any article, with suggestions that need acceptance;
+  the evidence-coded map (tested on a 1,344-article project: index 0.5 s, cached reads 10 ms);
 - the genealogy rebuild (Claude, evidence checked against the material, no evidence no link),
   review and apply, my edits, GEDCOM round trip;
 - Home: story of the day, featured relative, Needs you, requests, counts, activity;
@@ -100,3 +105,29 @@ tests), crest generation (OpenAI), Google Drive sign-in and sync.
 **Not built yet:** see `ROADMAP.md` (annotation and people tagging on photos, the public records
 catalogue, the impact pass and "update everything this affects", hyperlinked stories with images
 editable in place, "Beyond the family", the contributor-facing page behind an invite link).
+
+## Familypedia: what it reads and writes
+
+Articles come only from the project's files. Everything is optional; a project with none of
+these simply has fewer articles.
+
+| Input | Gives |
+|---|---|
+| `content/units/*.md` front matter `people`, `places`, `subjects` (`"vessel: Hannibal"`) | subjects, and which units mention them |
+| `facts/timeline.csv` | events, their people and places, tiers, conflicts |
+| `facts/people/*.md` (`# Name`, `Also called:`, `Relationship to …:`, `Dates:`) | person profiles and other names |
+| `knowledge/graph.json` (or `nodes.csv` + `edges.csv`) | typed subjects (`person, place, event, voyage, vessel, organization, unit, object, publication, occupation, theme`), records (`record, letter, photograph, document`) and relations (`crew_on`, `master_of`, `voyage_of`, `served_in`, `held_by`, `part_of`, `mentions`, …) |
+| `data/archives.csv` | the records catalogue (records-archives skill) |
+| `facts/records/**/sources.csv` (`id, title, url, holder, type, date_retrieved`) and `**/sources.json` | research sources and retrieval dates by URL |
+| `facts/**/*track*.csv`, `*route*.csv` (make_route_map.py columns) | ports and positions; coordinates for the map. A new `leg`, `gap_before`, or a row without coordinates is an unrecorded leg |
+| `photos/photo_index.csv` | photographs; rows whose subject starts "Illustration" are marked as generated |
+| `facts/gaps.md`, `facts/records/**/context_*.md` | open questions; public background offered under "Beyond the family" |
+| `facts/records/_raw/geo/*.geojson` (or `facts/records/sources/geo/`) | coastlines for the map. No map tiles are ever fetched |
+
+What it writes, all under `data/familypedia/` and all the author's own:
+`<slug>.json` (lead, notes, infobox values, other names, type, coordinates, "same as" merges,
+background), `subjects.json` (subjects created with "New subject…"), `tags.json` (tags on
+`source:`, `record:`, `photo:` and `event:` targets, each with state and evidence), and
+`routes.json` (which article a route belongs to when its file name matches more than one).
+Suggested tags come only from names written in the item, with the words that name them; no
+faces, no resemblance, nothing tagged until accepted.

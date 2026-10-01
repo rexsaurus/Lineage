@@ -27,10 +27,14 @@ import urllib.error, urllib.parse, urllib.request, uuid, warnings
 from html import escape as html_escape, unescape as html_unescape
 from datetime import datetime, timezone
 from pathlib import Path
+import sys
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*fork.*")
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import familypedia  # noqa: E402  (the Familypedia engine; reads helpers from this module)
+familypedia.HOST = sys.modules[__name__]
 STATIC = HERE / "static"
 CONFIG_DIR = Path.home() / ".lineage"
 CONFIG_FILE = CONFIG_DIR / "config.json"
@@ -1223,6 +1227,7 @@ def engine_timeline(project):
         if (project.root / "data" / "timeline_stars.json").exists() else set()
     stories = {s["id"]: s["title"] for s in engine_stories(project)}
     slugs = {a["title"]: a["slug"] for a in engine_familypedia(project)}
+    ev_subjects = familypedia.event_subjects(project)
     photos = {}
     for r in intake_load(project).values():
         if r.get("kind") == "image" and r.get("thumb") and not r.get("trashed"):
@@ -1242,7 +1247,9 @@ def engine_timeline(project):
               "story": stories.get(str(e.get("chapter") or "")), "story_id": str(e.get("chapter") or "") or None,
               "slug": slugs.get(e["event"].rstrip(".")), "person_slugs": {p: slugs.get(p) for p in people},
               "place_slug": slugs.get(e.get("place") or ""), "type": _event_type(e["event"]),
-              "starred": e["event_id"] in stars, "photo": photos.get(e["event_id"])}
+              "starred": e["event_id"] in stars, "photo": photos.get(e["event_id"]),
+              "subjects": [x for x in ev_subjects.get(e["event_id"], []) if x["type"] not in ("person", "event")
+                           and x["title"] != (e.get("place") or "")]}
         ev["highlight"] = ev["starred"] or bool(PIVOTAL.search(e["event"]))
         (events if ev["year"] else undated).append(ev)
     events.sort(key=lambda x: (x["year"], x["id"]))
@@ -2111,123 +2118,19 @@ def _mention_key(article, transcripts):
 
 
 def engine_familypedia(project):
-    """Index of every article the project can support, with its type and how much material it has."""
-    arts = {}
-
-    def add(name, kind):
-        name = name.strip()
-        if not name:
-            return None
-        a = arts.setdefault(_slug(name), {"slug": _slug(name), "title": name, "type": kind,
-                                           "units": set(), "events": set(), "mentions": 0})
-        return a
-
-    units = _unit_frontmatter(project)
-    for u in units:
-        for n in u["people"]:
-            add(n, "person")["units"].add(u["id"])
-        for n in u["places"]:
-            add(n, "place")["units"].add(u["id"])
-    tl = project.root / "facts" / "timeline.csv"
-    events = list(csv.DictReader(open(tl, encoding="utf-8"))) if tl.exists() else []
-    for e in events:
-        ev = add(e["event"].rstrip("."), "event")
-        if ev:
-            ev["events"].add(e["event_id"])
-        for n in re.split(r";\s*", e.get("people", "")):
-            if n:
-                add(n, "person")["events"].add(e["event_id"])
-        if e.get("place"):
-            add(e["place"], "place")["events"].add(e["event_id"])
-    transcripts = "\n".join(t for _, t in _texts(project, ["transcript/clean/*.md"]))
-    for a in arts.values():
-        a["mentions"] = len(re.findall(re.escape(_mention_key(a, transcripts)), transcripts)) if _mention_key(a, transcripts) else 0
-        a["stub"] = (len(a["units"]) + len(a["events"]) + a["mentions"]) <= 1
-        a["units"], a["events"] = sorted(a["units"]), sorted(a["events"])
-    return sorted(arts.values(), key=lambda a: (a["type"], a["title"].lower()))
+    """Index of every article the project can support, with its type and how much material it has.
+    The engine is app/familypedia.py: nine article types, built only from the project's material."""
+    return familypedia.summaries(project)
 
 
 def engine_article(project, slug):
-    """One article: lead, infobox, tiers, mentions with citations, stories, sources, backlinks."""
-    index = {a["slug"]: a for a in engine_familypedia(project)}
-    a = index.get(slug)
-    if not a:
-        raise KeyError("no such article")
-    units = [u for u in _unit_frontmatter(project) if u["id"] in a["units"]]
-    tl = project.root / "facts" / "timeline.csv"
-    events = [e for e in (csv.DictReader(open(tl, encoding="utf-8")) if tl.exists() else []) if e["event_id"] in a["events"]]
-    key = _mention_key(a, "\n".join(t for _, t in _texts(project, ["transcript/clean/*.md"])))
-    mentions = []
-    for p, text in _texts(project, ["transcript/clean/*.md"]):
-        for line in text.splitlines():
-            pm = PARA.match(line)
-            if pm and key and key in pm["text"]:
-                mentions.append({"speaker": pm["spk"], "cite": f"[{pm['sid']} {pm['ts']}]", "session": pm["sid"],
-                                 "t": pm["ts"], "text": pm["text"]})
-    tiers = {"witnessed": [], "told": [], "lore": [], "documented": []}
-    for e in events:
-        basis = (e.get("date_basis", "") + " " + e.get("event", "")).lower()
-        tier = "lore" if "family account" in basis or "lore" in basis else ("told" if "told" in basis else "witnessed")
-        tiers[tier].append({"text": e["event"], "date": e.get("date_display", ""), "cite": e.get("source", ""),
-                            "confidence": e.get("confidence", "")})
-    stories = {}
-    for s in engine_stories(project):
-        f = project.root / s["file"]
-        if key and f.is_file() and key in f.read_text(encoding="utf-8", errors="ignore"):
-            stories[s["id"]] = {"id": s["id"], "title": s["title"]}
-    for u in units:
-        if u["chapter"]:
-            st = next((s for s in engine_stories(project) if s["id"] == u["chapter"]), None)
-            if st:
-                stories[st["id"]] = {"id": st["id"], "title": st["title"]}
-    backlinks = sorted({o["title"] for o in index.values() if o["slug"] != slug and (set(o["units"]) & set(a["units"]) or set(o["events"]) & set(a["events"]))})
-    dates = [e.get("date_display") for e in events if e.get("date_display")]
-    edits_p = project.root / "data" / "familypedia" / f"{slug}.json"
-    edits = json.loads(edits_p.read_text()) if edits_p.exists() else {}
-    lead = edits.get("lead") or (
-        f"{a['title']} appears in {len(units)} stor{'y' if len(units) == 1 else 'ies'} of the recordings"
-        + (f" and {len(events)} timeline event{'s' if len(events) != 1 else ''}" if events else "")
-        + (f", between {dates[0]} and {dates[-1]}" if len(set(dates)) > 1 else (f", {dates[0]}" if dates else "")) + ".")
-    open_q = [f"Only one mention so far: ask about {a['title']} in the next recording."] if a["stub"] else []
-    open_q += [f"{e['event']} — confidence {e['confidence']}" for e in events if e.get("confidence") == "low"]
-    extra = {}
-    if a["type"] == "event":
-        tl = engine_timeline(project)
-        me = next((e for e in tl["events"] + tl["undated"] if e["title"] == a["title"]), None)
-        if me:
-            others = [e for e in tl["events"] if e["id"] != me["id"] and set(e["people"]) & set(me["people"])]
-            before = [e for e in others if (e["year"] or 0) < (me["year"] or 0) or ((e["year"] == me["year"]) and e["id"] < me["id"])]
-            after = [e for e in others if e not in before]
-            passages = [x for x in (_transcript_line(project, c) for c in me["cites"]) if x]
-            extra = {"event": me, "passages": passages,
-                     "before": [{"title": e["title"], "date": e["date"], "slug": e["slug"]} for e in before[-3:]],
-                     "after": [{"title": e["title"], "date": e["date"], "slug": e["slug"]} for e in after[:3]],
-                     "conflicts": [me["conflict"]] if me["conflict"] else []}
-            lead = edits.get("lead") or (f"{me['title']}, {me['date']}" + (f", in {me['place']}" if me["place"] else "")
-                                         + f". The material calls this {('family lore' if me['tier'] == 'lore' else me['tier'])}"
-                                         + (f"; confidence {me['confidence']}." if me["confidence"] else "."))
-            a["infobox_extra"] = {"date": me["date"], "precision": me["precision"], "place": me["place"],
-                                  "people": me["people"], "type": me["type"]}
-    return {**a, **extra, "lead": lead, "lead_by": "me" if edits.get("lead") else "derived", "notes": edits.get("notes", ""),
-            "infobox": {"type": a["type"], "dates": ", ".join(dict.fromkeys(dates)) or "unknown",
-                        "places": sorted({e["place"] for e in events if e.get("place")})},
-            "tiers": tiers, "mentions": mentions[:80], "stories": list(stories.values()),
-            "units": [{"id": u["id"], "title": u["title"]} for u in units],
-            "backlinks": backlinks, "open_questions": open_q, "links": sorted(index.keys())}
+    """One article: lead, infobox by type, tiers, passages, sources, records, photos, stories,
+    related articles, backlinks, open questions and "Beyond the family"."""
+    return familypedia.article(project, slug)
 
 
 def engine_save_article(project, slug, patch):
-    d = project.root / "data" / "familypedia"
-    d.mkdir(parents=True, exist_ok=True)
-    p = d / f"{slug}.json"
-    cur = json.loads(p.read_text()) if p.exists() else {}
-    for k in ("lead", "notes"):
-        if k in patch:
-            cur[k] = patch[k]
-    cur.setdefault("history", []).append({"at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                                          "by": "me", "fields": sorted(k for k in patch if k in ("lead", "notes"))})
-    p.write_text(json.dumps(cur, indent=1, ensure_ascii=False))
-    return cur
+    return familypedia.save_edit(project, slug, patch)
 
 # ---------------------------------------------------------------- jobs (timed, with progress)
 JOBS = {}
@@ -3196,7 +3099,61 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def e_article_save(self, q):
         d = self.read_json()
-        return self.send_json(engine_save_article(self.project, d.get("slug", ""), d))
+        try:
+            return self.send_json(engine_save_article(self.project, d.get("slug", ""), d))
+        except ValueError as e:
+            return self.send_json({"error": str(e)}, 400)
+
+    def e_fp_meta(self, q):
+        return self.send_json({"types": [{"type": t, "label": familypedia.TYPE_LABELS[t], "singular": familypedia.TYPE_SINGULAR[t],
+                                          "infobox": familypedia.INFOBOX[t]} for t in familypedia.TYPES],
+                               "links": familypedia.link_table(self.project)})
+
+    def e_fp_search(self, q):
+        types = [t for t in ((q.get("types") or [""])[0]).split(",") if t]
+        return self.send_json({"hits": familypedia.search(self.project, (q.get("q") or [""])[0], types or None)})
+
+    def e_fp_picker(self, q):
+        return self.send_json({"groups": familypedia.picker(self.project, (q.get("q") or [""])[0])})
+
+    def e_fp_subject(self, q):
+        d = self.read_json()
+        try:
+            return self.send_json(familypedia.new_subject(self.project, d.get("title", ""), d.get("type", ""),
+                                                          d.get("aliases") or [], d.get("kind", "")))
+        except ValueError as e:
+            return self.send_json({"error": str(e)}, 400)
+
+    def e_tags(self, q):
+        return self.send_json(familypedia.tags_for(self.project, (q.get("target") or [""])[0]))
+
+    def e_tags_set(self, q):
+        """Tag sources, records, photographs or timeline events to any article. Accepting a suggestion
+        is the same call with state=accepted; nothing is tagged without my say."""
+        d = self.read_json()
+        targets = d.get("targets") or ([d["target"]] if d.get("target") else [])
+        if not targets or not all(re.match(r"^(source|record|photo|event):.+", t) for t in targets):
+            return self.send_json({"error": "targets must look like source:<id>, record:<id>, photo:<id> or event:<id>"}, 400)
+        subject = d.get("subject")
+        try:
+            if not subject and d.get("new"):
+                subject = familypedia.new_subject(self.project, d["new"].get("title", ""), d["new"].get("type", ""))["slug"]
+            if not subject:
+                return self.send_json({"error": "choose a subject"}, 400)
+            r = familypedia.set_tags(self.project, targets, subject, d.get("state", "accepted"), d.get("evidence", ""))
+        except ValueError as e:
+            return self.send_json({"error": str(e)}, 400)
+        return self.send_json({**r, "subject": subject})
+
+    def e_fp_catalogue(self, q):
+        what = (q.get("what") or ["records"])[0]
+        return self.send_json({"items": familypedia.catalogue(self.project, "photos" if what == "photos" else "records")})
+
+    def e_fp_map(self, q):
+        return self.send_json(familypedia.map_data(self.project, (q.get("focus") or [None])[0]))
+
+    def e_fp_story(self, q):
+        return self.send_json({"subjects": familypedia.story_subjects(self.project, (q.get("id") or [""])[0])})
 
     def e_episodes(self, q):
         out = self.project.root / "output"
@@ -3799,6 +3756,15 @@ ROUTES = {
     ("POST", "/api/engine/story/state"): Handler.e_story_state,
     ("POST", "/api/engine/story/render"): Handler.e_story_render,
     ("GET", "/api/engine/familypedia"): Handler.e_familypedia,
+    ("GET", "/api/engine/familypedia/meta"): Handler.e_fp_meta,
+    ("GET", "/api/engine/familypedia/search"): Handler.e_fp_search,
+    ("GET", "/api/engine/familypedia/picker"): Handler.e_fp_picker,
+    ("POST", "/api/engine/familypedia/subject"): Handler.e_fp_subject,
+    ("GET", "/api/engine/familypedia/catalogue"): Handler.e_fp_catalogue,
+    ("GET", "/api/engine/familypedia/map"): Handler.e_fp_map,
+    ("GET", "/api/engine/familypedia/story"): Handler.e_fp_story,
+    ("GET", "/api/engine/tags"): Handler.e_tags,
+    ("POST", "/api/engine/tags"): Handler.e_tags_set,
     ("GET", "/api/engine/home"): Handler.h_home,
     ("GET", "/api/engine/attention"): Handler.h_attention,
     ("GET", "/api/engine/requests"): Handler.h_requests,

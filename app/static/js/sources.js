@@ -15,7 +15,7 @@ BUILDERS.sources = function(el, rest, q={}){
       <label class="toggle" style="padding:0;margin:0"><input type="checkbox" id="src-group" checked><div><b>Group by kind</b></div></label>
       <span id="src-hfilter"></span><span class="spacer"></span><span class="pill" id="src-count"></span></div>
       <div class="row hidden" id="src-bulk" style="margin-bottom:10px;background:#F3EEE4;border-radius:9px;padding:8px 12px"><b id="src-nsel"></b>
-        <button class="btn ghost sm" id="bulk-reingest">Re-ingest</button><button class="btn ghost sm" id="bulk-tag">Tag…</button><button class="btn ghost sm" id="bulk-del">Delete…</button><button class="btn ghost sm" id="bulk-clear">Clear selection</button></div>
+        <button class="btn ghost sm" id="bulk-reingest">Re-ingest</button><button class="btn ghost sm" id="bulk-tag">Tag…</button><button class="btn ghost sm" id="bulk-subject">Tag to a subject…</button><button class="btn ghost sm" id="bulk-del">Delete…</button><button class="btn ghost sm" id="bulk-clear">Clear selection</button></div>
       <div id="src-table"><p class="empty">Loading…</p></div></div>`);
   el.querySelector('.head').insertAdjacentHTML('beforeend','<div id="src-queue" style="margin-top:8px"></div>');
   S.sel = new Set();
@@ -23,6 +23,7 @@ BUILDERS.sources = function(el, rest, q={}){
   $('#bulk-reingest').onclick=async()=>{ await api('/api/engine/source/bulk',{method:'POST',body:{action:'reingest', rids:[...S.sel]}}); alertNote(`Re-ingesting ${S.sel.size} source(s). Your edits are kept.`); S.sel.clear(); loadSources(); };
   $('#bulk-del').onclick=()=>confirmDelete([...S.sel]);
   $('#bulk-tag').onclick=bulkTag;
+  $('#bulk-subject').onclick=()=>bulkTagTo([...S.sel].map(r=>'source:'+r), loadSources);
   const drop=$('#drop');
   drop.ondragover=e=>{e.preventDefault();drop.classList.add('over')}; drop.ondragleave=()=>drop.classList.remove('over');
   drop.ondrop=e=>{e.preventDefault();drop.classList.remove('over');upload(e.dataTransfer.files)};
@@ -160,11 +161,14 @@ async function editSource(path, focus){
       ${m.vision?`<p class="sub" style="margin-top:8px"><b>Vision description (inferred):</b> ${esc(m.vision.text)}</p>`:''}
       <textarea id="ed-text" rows="10" style="margin-top:8px;font-family:var(--mono);font-size:12.4px">${esc(m.extracted_text||'')}</textarea>
       <div class="row" style="margin-top:6px"><button class="btn ghost sm" id="ed-text-save">Save my text</button><span class="sub" style="margin:0;font-size:12.4px">Paste a transcription here when there's no text layer.</span></div></details>
+    <details open style="margin-top:12px"><summary style="cursor:pointer;font-weight:600">Subjects <span class="derived">any article: person, place, ship, regiment, object…</span></summary><div id="ed-subj"><p class="empty">Loading…</p></div></details>
     <details style="margin-top:12px"><summary style="cursor:pointer;font-weight:600">History</summary>
       <ul style="font-size:13px">${(m.history||[]).map(h=>`<li>${esc(h.at.replace('T',' ').slice(0,16))} · ${esc(h.by)} · ${esc(h.event)}${h.fields?' ('+esc(h.fields.join(', '))+')':''}</li>`).join('')}</ul></details>
     <details style="margin-top:12px"><summary style="cursor:pointer;font-weight:600">Links to · ${(m.links_to||[]).length}</summary>
       <ul style="font-size:13px">${(m.links_to||[]).map(l=>`<li>${esc(l.type)} · ${esc(l.label)}</li>`).join('')}</ul></details>`);
   $('#ed-accept').onclick=()=>{ $('#ed-name').value=d.suggested_name||''; };
+  const fillSubjects=async()=>{ await ensureFP(); const r=await api('/api/engine/tags?target='+encodeURIComponent('source:'+m.id)); const b=$('#ed-subj'); if(!b) return; b.innerHTML=tagPanelHtml(r); bindTagPanel('source:'+m.id, fillSubjects); };
+  fillSubjects();
   if(focus==='name'){ $('#ed-name').focus(); $('#ed-name').select(); }
   const split=v=>v.split(/;\s*/).map(s=>s.trim()).filter(Boolean);
   const collect=()=>{ const p={rid:m.id, notes:$('#ed-notes').value, what:$('#ed-what').value, who:$('#ed-who').value, about:$('#ed-about').value, provenance:$('#ed-prov').value, store_in_drive:$('#ed-drive').checked};

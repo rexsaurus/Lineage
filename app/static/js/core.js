@@ -102,6 +102,7 @@ async function boot(){
   if(!location.hash) history.replaceState(null,'','#home');
   refreshAttention();
   route();
+  if(typeof ensureFP==='function') ensureFP();   // names for [[links]] everywhere
 }
 function parseHash(){
   let raw = decodeURIComponent(location.hash.replace(/^#/,''));
@@ -130,7 +131,7 @@ function route(){
   TABS.forEach(([x])=>$('#tab-'+x).classList.toggle('hidden', x!==t));
   const always = ['home','sources','stories','genealogy','timeline'];
   if(!S.built[t] || always.includes(t)){ BUILDERS[t]($('#tab-'+t), rest, q); S.built[t]=true; }
-  else { syncMirrors(); if(t==='familypedia' && rest.length) openArticle(decodeURIComponent(rest[0])); }
+  else { syncMirrors(); if(t==='familypedia'){ if(rest.length) openArticle(decodeURIComponent(rest[0])); else showView(q.view||'articles', q); } }
   window.scrollTo(0,0);
 }
 function syncMirrors(){

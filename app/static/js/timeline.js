@@ -48,7 +48,9 @@ function evCard(e){
     ${e.conflict?`<div class="note" style="padding:7px 10px;margin:6px 0;font-size:12.8px;background:#FBF4E4"><b>The sources disagree:</b> ${esc(e.conflict)}</div>`:''}
     <div class="tags">${e.people.map(pl).join('')}${e.place?(e.place_slug?`<a class="chiplink" href="#familypedia/${encodeURIComponent(e.place_slug)}">⌖ ${esc(e.place)}</a>`:`<span class="chiplink">⌖ ${esc(e.place)}</span>`):''}
       ${e.cites.map(c=>`<a class="cite" data-cite="${esc(c)}">${esc(c)}</a>`).join('')}
-      ${e.story_id&&e.story?`<a class="chiplink" href="#stories?read=${encodeURIComponent(e.story_id)}">${esc(L.Story)}: ${esc(e.story)}</a>`:''}</div></div>`;
+      ${e.story_id&&e.story?`<a class="chiplink" href="#stories?read=${encodeURIComponent(e.story_id)}">${esc(L.Story)}: ${esc(e.story)}</a>`:''}
+      ${(e.subjects||[]).map(s=>`<a class="chiplink" href="#familypedia/${encodeURIComponent(s.slug)}">${TYPE_ICON[s.type]||''} ${esc(s.title)}</a>`).join('')}
+      <button class="chiplink" data-evtag="${esc(e.id)}" title="Tag this event to any article">Tag…</button></div></div>`;
 }
 function drawTimeline(){
   const d=S.timeline, list=tlFiltered(), spine=$('#tl-spine');
@@ -72,6 +74,7 @@ function drawTimeline(){
   $$('[data-cite]',spine).forEach(c=>c.onclick=e=>{ e.preventDefault(); openCitation(c.dataset.cite); });
   $$('[data-star]',spine).forEach(b=>b.onclick=async()=>{ const e=d.events.find(x=>x.id===b.dataset.star); e.starred=!e.starred; e.highlight=e.starred||e.highlight;
     await api('/api/engine/timeline/star',{method:'POST',body:{id:e.id, star:e.starred}}); drawTimeline(); });
+  $$('[data-evtag]',spine).forEach(b=>b.onclick=()=>openTagPanel('event:'+b.dataset.evtag, async()=>{ S.timeline=await api('/api/engine/timeline'); }));
   $$('[data-gapq]',spine).forEach(b=>b.onclick=async()=>{ const [a,z]=b.dataset.gapq.split('-');
     await api('/api/engine/question',{method:'POST',body:{text:`What happened between ${a} and ${z}?`, source:`timeline gap ${a}–${z}`}}); b.textContent='Added'; b.disabled=true; });
   // the rail follows the scroll
