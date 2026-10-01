@@ -5,6 +5,18 @@ Every entry says whether it changes anything that would alter already-generated 
 (templates, the book template, style guides, skills); when it does, a project updating to it
 marks those stories stale rather than regenerating them.
 
+## 0.3.1 — 2026-10-01
+
+**Alters generated stories: no.** Dashboard engine only (`app/familypedia.py`).
+
+Familypedia fixes found while building a real project's articles:
+- After two articles are folded together ("same as"), the names of the folded one now find
+  the surviving article, so its coordinates, routes, events and relations carry over.
+- The person article's link into the genealogy tree reads the tree's people as a mapping
+  (as the Genealogy tab writes it), not a list. Articles no longer fail on that.
+- `Also called:` in a person profile keeps the names (and names in quotation marks) and drops
+  commentary written on the same line.
+
 ## 0.3.0 — 2026-10-01
 
 **Alters generated stories: no.** Nothing under `templates/`, `book/`, `plugins/lineage/book/`,

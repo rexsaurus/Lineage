@@ -209,9 +209,21 @@ def _profiles(project):
         rel = re.search(r"^Relationship to [^:]*:\s*(.+)$", text, re.M | re.I)
         dates = re.search(r"^Dates:\s*(.+)$", text, re.M | re.I)
         out.append({"title": m.group(1).strip(), "file": p.relative_to(project.root).as_posix(),
-                    "aliases": [a.strip().strip('"“”') for a in re.split(r"[;,]", also.group(1))] if also else [],
+                    "aliases": _profile_aliases(also.group(1)) if also else [],
                     "relationship": rel.group(1).strip() if rel else "", "dates": dates.group(1).strip() if dates else ""})
     return out
+
+
+def _profile_aliases(line):
+    """'Also called:' holds names and sometimes a note about them. Keep the short name-like parts
+    and any name in quotation marks; drop the commentary."""
+    out = []
+    for part in re.split(r"[;,]", line):
+        part = part.strip().strip('"“”').strip()
+        if part and len(part) <= 40 and not re.search(r"[\[\]—:]|\b(says|said|spelling|unverified|leave)\b", part, re.I):
+            out.append(part)
+    out += re.findall(r'[“"]([^”"]{2,40})[”"]', line)
+    return list(dict.fromkeys(out))
 
 
 def _retrieved_by_url(project):
@@ -377,6 +389,9 @@ def _build(project):
         subs.pop(other, None)
     for kid, slug in list(kg_subject.items()):
         kg_subject[kid] = merged.get(slug, slug)
+    for key, slug in list(by_norm.items()):     # names of a folded article now find the one it was folded into
+        if slug in merged:
+            by_norm[key] = merged[slug]
 
     # mention keys: title, title before a comma, aliases; first names only when unique among people
     keys = {}
@@ -858,10 +873,12 @@ def article(project, slug):
 
 
 def _genealogy_id(project, s):
-    g = _read_json(project.root / "data" / "genealogy" / "derived.json", {})
-    for p in g.get("people", []):
-        if norm(p.get("name")) in {norm(s["title"]), *(norm(a) for a in s["aliases"])}:
-            return p.get("id")
+    names = {norm(s["title"]), *(norm(a) for a in s["aliases"])}
+    for f in ("mine", "derived"):
+        people = _read_json(project.root / "data" / "genealogy" / f"{f}.json", {}).get("people") or {}
+        for pid, p in (people.items() if isinstance(people, dict) else ((x.get("id"), x) for x in people)):
+            if isinstance(p, dict) and ({norm(p.get("name"))} | {norm(a) for a in p.get("aliases") or []}) & names:
+                return p.get("id") or pid
     return None
 
 
