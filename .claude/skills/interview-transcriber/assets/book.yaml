@@ -1,0 +1,29 @@
+# BookAssembler project config. Every skill reads this first.
+# Fill in what you know; leave the rest blank and the skills will ask.
+title: ""
+subtitle: ""
+narrator:               # the subject of the book (the person interviewed)
+  name: ""              # full name as it should print, e.g. "Ruth Calder"
+  label: ""             # speaker label in the transcripts, e.g. "Grandma"
+  pronoun: ""           # she | he | they (used in generated back matter)
+  birth_year:           # anchors "when I was twelve" style dates
+  birthplace: ""
+interviewer:            # the family member who recorded the interviews and writes the book
+  name: ""              # e.g. "Sam Calder"
+  label: ""             # speaker label in the transcripts, e.g. "Sam"
+  relation: ""          # to the subject, e.g. "grandson" (used in the introduction only)
+other_speakers: []      # e.g. [{name: "May Calder", label: "May"}] if anyone else talks on tape
+family_figures: []      # relatives who get family-history chapters, e.g. ["Tobias Calder"]
+proper_nouns: []        # a FEW names ASR will misspell; keep the initial prompt short
+transcription_locked: false   # true once timestamps are cited: never re-run ASR after that
+print:
+  trim: "7x10"          # 6x9 | 7x10 | 8x10 | 8.5x11
+  color: "bw"           # bw | color  (color interiors cost several times more on POD)
+  printer: "kdp"        # kdp | ingramspark | lulu | blurb
+  in_chapter_contents: false   # print an "in this chapter" line under each chapter title
+draft: true
+narration:
+  mode: "third_person"  # a biography written about the subject by the interviewer
+  subject_name: ""      # how the narrative names the subject after first mention, e.g. "Ruth"
+front:
+  introduction_title: "Introduction"   # or "Preface" / "About This Book"

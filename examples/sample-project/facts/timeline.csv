@@ -1,0 +1,8 @@
+event_id,date_start,date_end,date_display,precision,date_basis,event,people,place,generation,source,quote,confidence,conflicts,chapter
+E001,1900,,about 1900,approx,"No date given; 'at sixteen' only. Placeholder estimate for ordering, never printed as fact.",Anders Calder crosses from Norway (family account).,Anders Calder,Norway,ancestors,[S1 00:00:05],came over on a ship when he was sixteen,low,,1
+E002,1900,,about 1900,approx,Follows E001.,Anders works on the ore boats at Duluth (family account).,Anders Calder,"Duluth, Minnesota",ancestors,[S1 00:00:21],He ended up on the ore boats,low,,1
+E003,1945,1946,about 1945,approx,"'maybe seven or eight' + birth year 1938",Ruth walks her father's lunch to the ore dock.,Ruth Calder,"Duluth, Minnesota",subject,[S1 00:00:29],maybe seven or eight,medium,,2
+E004,1950,,around 1950,approx,"'around 1950, I think'",The big snow; school closed for a week.,Ruth Calder; Pete,"Duluth, Minnesota",subject,[S1 00:00:48],"around 1950, I think",medium,,2
+E005,1956,1959,1956,year,stated,Ruth begins three years of nursing school.,Ruth Calder,"Minneapolis, Minnesota",subject,[S2 00:00:03],nursing school in 1956,high,,3
+E006,1959,,1959,year,stated,Ruth meets Walt at a church dance.,Ruth Calder; Walt,"Minneapolis, Minnesota",subject,[S2 00:00:19],"A church dance, in 1959",high,,3
+E007,1964,1968,1964 or so,approx,"'oh, 1964 or so' + 'four summers'",Ruth and Walt build the cabin on Pike Lake.,Ruth Calder; Walt,"Pike Lake, Minnesota",subject,[S2 00:00:36],1964 or so,medium,,3

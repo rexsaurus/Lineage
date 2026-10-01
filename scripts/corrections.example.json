@@ -1,0 +1,41 @@
+{
+  "_note": "Copy to <project>/transcript/corrections.json. Applied by render_transcripts.py at render time; transcript/raw/*.json is never edited, so re-renders are reproducible and timestamps never move. Every entry here is invented. Keys starting with _ are comments.",
+  "approved_by": "Sam",
+  "approved_on": "2026-01-15",
+  "speaker_map": {
+    "_note": "Confirmed by ear, per session if needed: listen to the first minute and decide which cluster is the narrator. Values must match narrator.label / interviewer.label in book.yaml.",
+    "SPEAKER_00": "Grandma",
+    "SPEAKER_01": "Sam"
+  },
+  "spelling": [
+    {
+      "_why": "place name Whisper heard as a common word",
+      "find": "\\bTanner Creek\\b",
+      "replace": "Tannacreek"
+    },
+    {
+      "_why": "family surname",
+      "find": "\\b[Cc]aulder\\b",
+      "replace": "Calder"
+    },
+    {
+      "find": "\\bdoll sheep\\b",
+      "replace": "Dall sheep"
+    }
+  ],
+  "drop_segments": {
+    "_note": "Whole raw segments that are Whisper echoing the initial_prompt back as speech. Confirm each one first: re-transcribe that stretch with no prompt and check the phrase does not reappear.",
+    "patterns": [
+      "^\\s*Calder, Tannacreek, Halvorsen\\.?\\s*$"
+    ]
+  },
+  "scrub_inline": {
+    "_note": "A prompt echo embedded inside an otherwise real paragraph: strip the echo, keep the speech. Matched against the paragraph text, which may contain [?word?] low-confidence markers.",
+    "patterns": [
+      {
+        "find": "\\s*Calder,\\s*(\\[\\?)?Tannacreek,?(\\?\\])?\\s*",
+        "replace": " "
+      }
+    ]
+  }
+}

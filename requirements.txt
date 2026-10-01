@@ -1,0 +1,5 @@
+# Build tools (make install). Transcription extras are in requirements-transcribe.txt.
+pyyaml>=6.0
+pillow>=10.0
+matplotlib>=3.8
+openpyxl>=3.1

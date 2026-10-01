@@ -1,0 +1,29 @@
+# Optional transcription stack for BookAssembler (transcribe.sh, wx.py,
+# diarize.py, diarize_chunked.py). Not needed to build a book from existing
+# transcripts. Install into the same venv as the build deps:
+#
+#     $BOOKASSEMBLER/.venv/bin/python -m pip install -r requirements-transcribe.txt
+#
+# Also needed, outside pip: ffmpeg/ffprobe on PATH, and for speaker labels a
+# Hugging Face read token (HF_TOKEN) with the licences accepted for
+# pyannote/speaker-diarization-3.1 and pyannote/segmentation-3.0.
+#
+# These are the exact versions the pipeline was last run with (Python 3.13,
+# macOS arm64, CPU). Two of them need the shims in scripts/hf_compat.py:
+#   * huggingface-hub >= 1.0 dropped `use_auth_token`; pyannote.audio 3.4 still
+#     passes it.
+#   * torch >= 2.6 loads with weights_only=True, which rejects pyannote
+#     checkpoints (pickled omegaconf objects).
+# Do not "fix" either by pinning backwards: older torch/huggingface-hub break
+# whisperx 3.7 / faster-whisper. Use the shims (wx.py imports them).
+
+whisperx==3.7.2
+faster-whisper==1.2.1
+ctranslate2==4.8.2
+pyannote.audio==3.4.0
+torch==2.8.0
+torchaudio==2.8.0
+huggingface-hub==1.32.0
+omegaconf==2.3.1
+numpy==2.2.6
+pandas==2.2.3

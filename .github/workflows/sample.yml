@@ -1,0 +1,25 @@
+name: Build the sample book
+on: [push, pull_request]
+jobs:
+  sample:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: typst-community/setup-typst@v4
+      - name: Install poppler (pdfinfo)
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - name: Install BookAssembler build tools
+        run: make install
+      - name: Build the sample project and the example chapter
+        run: make sample
+      - name: Check the scripts compile
+        run: .venv/bin/python -m py_compile scripts/*.py .claude/skills/*/scripts/*.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sample-pdfs
+          path: |
+            examples/sample-project/output/book-draft.pdf
+            examples/erasthus-burnham/erasthus-burnham.pdf
