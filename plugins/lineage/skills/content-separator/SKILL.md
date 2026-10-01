@@ -15,7 +15,8 @@ relative gets their own chapter). Because chapters are generated from units
 editing happens in units.
 
 Read first: `book.yaml`, `transcript/clean/*.md`, `facts/timeline.csv`,
-`facts/glossary.md`, and the **memoir-style-guide** and **family-history-chapters** skills.
+`facts/glossary.md`, `voice/verbatim.md` if it exists (passages the author has locked word for
+word), and the **memoir-style-guide** and **family-history-chapters** skills.
 
 ## Output
 ```

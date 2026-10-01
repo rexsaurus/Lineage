@@ -43,7 +43,7 @@ python .claude/skills/chapter-generator/scripts/assemble.py --list   # every cha
 | summary_line | short poetic line in the old-book manner ("On Looms, Floods and Such"); not a list |
 | epigraph, epigraph_source | optional public-domain epigraph, verified (style guide §2b) |
 | columns | `1` for narrative chapters, `2` for research-dense ones (per chapter) |
-| contents | optional "in this chapter" line; printed only if `book.yaml` → `print.in_chapter_contents: true` |
+| contents | optional "in this chapter" line of short plain nouns from the chapter's units; printed only if `book.yaml` → `print.in_chapter_contents: true` |
 
 The `summary` column (2–4 neutral sentences) is for the spreadsheet and introduction, not
 the opener.

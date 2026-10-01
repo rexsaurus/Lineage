@@ -28,6 +28,12 @@ evidence; check whether it belongs to the photo above or below). Re-running appe
 never reused or renumbered, because chapters cite them. Scans of a photo's **back** are
 linked to the front (`needs_attention: back: P017`) and read.
 
+**Intake.** New images arrive in `photos/inbox/` (prefix `01-`, `02-` to fix their order);
+extract from there. Afterwards move the originals to `photos/archive/originals/<date>-<set>/`,
+download duplicates ("photo (1).jpg") to `photos/archive/duplicates/`, and a set that a newer
+one replaces to `photos/archive/superseded/`. When the author supplies the same set more than
+once, use the **newest** files. `photos/inbox/` and `photos/archive/` stay out of git.
+
 ## 2. Catalogue every image
 Set `kind`: **photograph**, **illustration** (AI-generated or artist's rendering),
 **map**, or **placeholder** (a stand-in box until the real photograph is found; never in a final
@@ -35,7 +41,9 @@ build). Then fill the row. Every identification carries its **basis**, strongest
 1. **inscription**: writing on the photo or its back, a printed lab date
 2. **document**: a caption in the photos document, an archive catalogue, the author/owner
 3. **transcript**: the subject describes this scene (cite `[S2 00:31:05]`)
-4. **visual estimate**: clothing, cars, print format, signage, landscape
+4. **visual estimate**: clothing, hairstyles, cars (model years), print format (deckled
+   edges ≈ 1940s–50s, square rounded-corner prints ≈ 1960s–70s, dated lab stamps on
+   borders), signage, landscape
 
 | Column | Rule |
 |---|---|
@@ -101,7 +109,11 @@ environment variable for the one command; never write them to disk.
   `// REVIEW:`.
 - An author may place an image on a given page; floats land on or after their anchor's
   page, so move the call to a paragraph on (or just before) that page and re-render.
-- Images with no matching story go on a candidates list, not into random chapters.
+- If a chapter has more good photos than text, propose an **album** section at its end (a
+  grid of two: `#grid(columns: 2, gutter: 0.8em, photo(...), photo(...))`) rather than
+  crowding the running text.
+- Images with no matching story go on a candidates list, not into random chapters; the
+  author may want them as an album chapter in the back matter, or cut.
 - Record each placement as `chapter`, `placement_anchor` ("ch 03, after ¶ citing [S1 00:22:10]").
 
 ## 6. The photographs page (`#photo-addendum`)
@@ -136,5 +148,7 @@ batched questions.
 
 ## Consistency
 - When a chapter moves, update `chapter` and anchors. When a caption is corrected, fix the
-  CSV first, then the call. A replaced image keeps a new ID; the old one becomes a candidate.
+  CSV first, then the call. A replaced image keeps a new ID; the old one becomes a candidate
+  and its file goes to `photos/archive/superseded/`. An image removed from a chapter becomes
+  a candidate too.
 - People named in confirmed captions get `#idx` entries next to the call.

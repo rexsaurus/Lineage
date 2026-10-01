@@ -23,6 +23,8 @@ IGNORE = """# Lineage project
 audio/
 photos/source/
 photos/print/
+photos/inbox/
+photos/archive/
 transcript/work/
 output/
 .venv/

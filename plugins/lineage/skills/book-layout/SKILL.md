@@ -20,17 +20,23 @@ the project copy silently. Read the template for exact function signatures.
 make -C "$LINEAGE" draft PROJECT="$PWD"     # output/book-draft.pdf
 make -C "$LINEAGE" final PROJECT="$PWD"     # output/book-final.pdf (fails on any unapproved #bridge)
 python .claude/skills/book-layout/scripts/preflight.py output/book-final.pdf --trim 7x10 --printer kdp --color bw
+python .claude/skills/book-generator/scripts/build_book.py chapter chapters/03-x.typ    # one chapter: output/preview-03-x.pdf
+python .claude/skills/book-generator/scripts/build_book.py chapter chapters/03-x.typ --final --pages   # + page images to share
 ```
 Draft mode shows image IDs, editor notes and highlighted bridges. Final mode **refuses to
 compile while any unapproved `#bridge` remains**, by design. After every build, render
 pages (`pdftoppm -r 60 -png`) and look: a chapter opener, a page with a plate, a verso/recto
-spread, the contents and the index.
+spread, the contents and the index. While working on one chapter, preview it alone with
+`build_book.py chapter` instead of rebuilding the book. To share pages outside the PDF,
+`--pages` writes one JPEG per page to `output/pages/<name>/`, at the largest ppi that keeps
+the long side within 2048 px (the limit of most photo-sharing sites; `--ppi N` to change);
+build `--final` so no draft marks show, and label any illustrations in the post as such.
 
 ## Design
 | Element | Spec |
 |---|---|
 | Trim | `book.yaml` → `print.trim`; default **7×10 in** (6×9 if nearly text-only) |
-| Margins | inside 0.875 in, outside 0.625 in, top and bottom 0.85 in |
+| Margins | inside 0.875 in, outside 0.625 in, top and bottom 0.85 in; raise the inside (gutter) to 1 in above 400 pages |
 | Body | EB Garamond (installed name "EB Garamond 12"), justified, hyphenated, old-style figures; 11 pt single-column, 10.5 pt two-column; first-line indent, no space between paragraphs |
 | Columns | **per chapter**: `columns: 1` for narrative chapters, `columns: 2` for research-dense ones (`data/chapters.csv` → `columns`) |
 | Chapter opener | **always starts on a recto**; **no running head**; "Chapter N" in spaced caps, title in spaced capitals with a short rule, then the **place-and-years line** (setting · dates), the poetic summary in italic, **optional epigraphs** (italic, source in spaced small caps); the opener spans both columns |
@@ -57,6 +63,8 @@ photo-processor inserts the calls; this skill decides how they sit.
   in running text; never a page that is only a plate in the middle of a chapter.
 - Portraits about 3.9 in wide, landscapes about 4.4 in, maps full width; never wider than
   `max_print_width_in`.
+- `#photo(..., width: 60%, placement: none)` pins a small or portrait photo exactly where it
+  sits in the text: use it for a photo the text points to ("this one here").
 - **Resolution: 300 ppi at printed size; 200 ppi is a hard floor** (preflight computes it).
   Below 200: print smaller or get a better scan. Never upscale.
 - Illustration captions must carry their marking ("illustration" / "as the family told

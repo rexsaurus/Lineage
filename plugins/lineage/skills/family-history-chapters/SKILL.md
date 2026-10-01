@@ -85,6 +85,10 @@ Put it in the first unit's Shaped text, right after the opening paragraph.
   mule", not "Tobias came west with nothing but a mule." Quote the subject where the
   telling is the point ("That's what they always said," she'd add).
 - Lore stays lore: keep the hedges ("I don't know if it's true").
+- **Two tellings by the subject:** don't resolve them in the prose. If they told it both
+  ways, the book holds both, each attributed to its session.
+- The author may add a short italic introduction to the part or a chapter, marked
+  `#bridge[...]` until they approve it.
 
 ## 5. Records beside the family's version
 Research beyond the tape **is allowed** in these chapters: census, military rosters and

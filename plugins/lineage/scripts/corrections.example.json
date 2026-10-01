@@ -29,6 +29,12 @@
       "^\\s*Calder, Tannacreek, Halvorsen\\.?\\s*$"
     ]
   },
+  "drop_word_runs": {
+    "_note": "A prompt echo inside an otherwise real segment, removed word by word from the raw word arrays before paragraphs are built. Each run is a phrase or a list of words; case and edge punctuation are ignored, so \"Calder, Tannacreek\" matches \"calder tannacreek.\". Confirm each run is an echo, not speech.",
+    "runs": [
+      "Calder, Tannacreek, Halvorsen"
+    ]
+  },
   "scrub_inline": {
     "_note": "A prompt echo embedded inside an otherwise real paragraph: strip the echo, keep the speech. Matched against the paragraph text, which may contain [?word?] low-confidence markers.",
     "patterns": [

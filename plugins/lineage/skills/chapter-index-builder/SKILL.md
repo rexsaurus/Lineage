@@ -64,7 +64,8 @@ gets a home or a recorded decision to leave it out.
 
 ## 2. Summaries
 For each drafted chapter, 2–4 sentences, neutral, third person, past tense, naming key
-people, places and years. They describe; they don't interpret or praise.
+people, places and years. They go in the spreadsheet and are reused for the introduction or
+the back-cover copy if the author wants. They describe; they don't interpret or praise.
 
 ## 3. Marking index terms
 Index terms are marked **in the text as it is written**, with `#idx(...)` right after the

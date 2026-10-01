@@ -21,3 +21,6 @@ __pycache__/
 lineage.tmp
 data/search_index.json
 data/extracted/
+# photo intake and archive (originals and superseded copies stay local)
+photos/inbox/
+photos/archive/

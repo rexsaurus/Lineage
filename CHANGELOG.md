@@ -5,6 +5,35 @@ Every entry says whether it changes anything that would alter already-generated 
 (templates, the book template, style guides, skills); when it does, a project updating to it
 marks those stories stale rather than regenerating them.
 
+## Unreleased (on `development`)
+
+**Alters generated stories: yes**, for projects that use Lineage's skills: the writing rules
+below changed. Projects that carry their own copies of the skills are not affected
+(`lineage update` knows the difference).
+
+Dashboard:
+- Sources: a gallery and a lightbox (arrow keys, summary, people and places linked, provenance,
+  notes, subject tagging). Roadmap #5.
+- Stories: what each story rests on, above its pages: every paragraph's citation chips, and every
+  image's provenance with a toolbar (open, tag, copy reference). Roadmap #12.
+- An illustration is never a person's picture (tree, featured relative, person articles);
+  "illustration" is a kind of source.
+- Wording: the dashboard speaks of the family's record; "the book" only where the export is meant.
+
+Skills and scripts (generic improvements brought up from a working project):
+- Writing rules: locked passages (`voice/verbatim.md`) go in `#verbatim` word for word; never
+  silently correct the subject; public-domain status checked per edition for epigraphs; an
+  author's introduction to a part is a `#bridge` until approved; when the subject told a story
+  two ways, keep both, attributed; contents lines are short plain nouns; propose an album
+  section when a chapter has more good photographs than text.
+- Photo intake and archive workflow (`photos/inbox/` → `photos/archive/originals/…`); dating cues;
+  relative dates chained to the event they hang on.
+- `make chapter PROJECT=… CHAPTER=…` builds one story as a preview; `PAGES=1` exports each page
+  as an image for sharing. build_book.py falls back to the `typst` Python package without the CLI.
+- `transcript/corrections.json` → `drop_word_runs`: remove phrases the speech model echoed from
+  its prompt, word by word.
+- `lineage update`: skill changes don't mark stories stale in projects with their own skills.
+
 ## 0.5.0 — 2026-10-01
 
 **Alters generated stories: no.** Eight skills' `description:` lines changed (what triggers

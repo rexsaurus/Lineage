@@ -77,7 +77,7 @@ loaded. A log is appended to `transcript/work/transcribe.log`.
   from `proper_nouns` and the script warns above 120 characters. A long list
   of names was observed coming back as fake "speech" (the list read out in
   the middle of a real answer). Keep it to a few surnames; fix any echo that
-  slips through with `drop_segments`/`scrub_inline` at render time.
+  slips through with `drop_segments`/`drop_word_runs`/`scrub_inline` at render time.
 - *Re-running ASR shifts timestamps.* Two runs of the same audio do not
   produce the same segment boundaries, so every `[S2 00:14:07]` citation
   downstream would break. Hence: idempotent (existing JSON is skipped),
@@ -235,6 +235,9 @@ into the project and edit. Keys:
 - `drop_segments.patterns` - regexes; a raw segment matching one is dropped
   whole (a prompt echo). Confirm first by re-transcribing that stretch
   without a prompt.
+- `drop_word_runs.runs` - phrases (or word lists) removed word by word from
+  each segment's word array, case and edge punctuation ignored: an echo inside
+  an otherwise real segment, before paragraphs are built
 - `scrub_inline.patterns` - `[{find, replace}]` for an echo embedded inside a
   real paragraph (text may contain `[?word?]` markers)
 

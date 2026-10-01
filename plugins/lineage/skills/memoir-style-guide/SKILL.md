@@ -18,7 +18,9 @@ Two ways this goes wrong, and every rule below guards against one of them:
    words." Their phrasing, humor and opinions have to survive, mostly through quotation.
 
 Read first: `book.yaml` (`narrator.name`, `narrator.label`, `narration.subject_name`,
-`interviewer`), `facts/glossary.md`, `facts/timeline.csv`. A finished, annotated chapter is
+`interviewer`), `facts/glossary.md`, `facts/timeline.csv`, and `voice/verbatim.md` if it
+exists (passages the author has locked; anything in it goes in `#verbatim[...]` word for
+word). A finished, annotated chapter is
 in `docs/EXAMPLE-CHAPTER.md`; copy its shape.
 
 Examples below use an invented subject, **Ruth Calder** (speaker label "Grandma"),
@@ -80,6 +82,9 @@ what was changing, what things cost, what a reader in fifty years won't know.
   presence they didn't state ("Like many young women, she felt…", "The news must have…").
   **Juxtaposition, not causation:** "That spring the mill cut its hours" is fine; "so she
   left" is not, unless she said so.
+- **Never silently correct the subject.** Where a record or context disagrees with what they
+  said, don't fix it in the narration: print both where it matters, attributed, and add a
+  `// REVIEW:` and a line in `facts/gaps.md`.
 - **Local to the chapter's place and years.** No national headlines or another place's
   history unless it bears directly on what the subject was doing.
 - **Every fact is sourced** from a reliable source (government, university, museum,
@@ -102,6 +107,10 @@ what was changing, what things cost, what a reader in fifty years won't know.
   "Author, Work". Never from memory: save the source text in the project and verify the
   exact wording with `$LINEAGE/scripts/verify_quotes.py <chapter file>`. Note the text
   you used: `// epigraph: <work> — <URL of the text>`.
+- **Public-domain status is per edition**, not per author: a poet's early editions can be
+  free while later revisions or collections are not. Check the publication date of the
+  edition you quote against the public-domain cutoff where the book is printed, and record
+  the edition and year in the `// epigraph:` note.
 - Copyrighted writers only with written permission, recorded in `data/archives.csv`.
 - The epigraph is juxtaposition: the narrator never says the subject felt what the line
   says. Avoid lines that imply the subject's death or doom.

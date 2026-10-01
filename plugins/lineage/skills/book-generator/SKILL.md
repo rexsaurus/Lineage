@@ -71,13 +71,15 @@ python .claude/skills/book-generator/scripts/version.py diff v1.0 v1.3
 python .claude/skills/book-generator/scripts/version.py show v1.0 -- content/units/U014-the-flood.md
 ```
 - **Inputs in git with tags**: book.yaml, transcripts, facts, units, data, chapters, book/,
-  `photos/photo_index.csv`. Commit at the end of every stage with a plain message.
+  `photos/photo_index.csv`, and the project instructions (`CLAUDE.md`, `local-overrides/`).
+  Commit at the end of every stage with a plain message.
 - **Outputs snapshotted**: each snapshot tags the inputs (`v0.3`) and copies PDFs and
   spreadsheets to `output/versions/v0.3-<label>/` with a `MANIFEST.json` **pinning the exact
   input commit** (plus output checksums and page/word/bridge counts); `CHANGES.md` gets a line.
 - Snapshot at every gate (minor version) and **always a major version (`--major`) before
   anything is sent to anyone**: a family review copy, a proof order, the final print.
   Feedback ("page 41, line 3") only makes sense against the exact version received.
+- Run `index_tools.py wordcount` and a build before snapshotting, so the stats are current.
 - **Originals are never modified; checksums are recorded.** `audio/` and `photos/source/`
   are never edited; `init` records their SHA-256 and `snapshot` stops if one changed. With
   `transcription_locked: true` in book.yaml, `transcript/raw/` is protected the same way.

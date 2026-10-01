@@ -375,6 +375,7 @@ few surnames and unusual place names, and fix every other misspelling afterwards
 After every run, search the output for your prompt text. If an echo slips through, cut it at
 render time in `transcript/corrections.json`:
 - `drop_segments.patterns` drops a whole raw segment that is nothing but echo;
+- `drop_word_runs.runs` removes an echoed phrase word by word from inside a real segment;
 - `scrub_inline.patterns` strips an echo embedded inside a real paragraph.
 
 #### Long recordings: chunked diarization
@@ -1274,6 +1275,10 @@ Drafts show bridges highlighted, editor notes in red and image IDs. Afterwards, 
 at the title page, the contents, a part page, two chapter openers, a spread with a plate, and
 the index. Fix anything wrong at its source (a unit, `chapters.csv`, `book.yaml`), never in a
 generated file.
+
+To look at one chapter without building the whole book, run `build_book.py chapter
+chapters/NN-x.typ` (→ `output/preview-NN-x.pdf`); add `--final --pages` for one image per page
+in `output/pages/` to share outside the PDF.
 
 #### Front matter
 
