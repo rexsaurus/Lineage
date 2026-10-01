@@ -50,7 +50,8 @@ def load_whisperx_to_md():
     cands = [Path.cwd() / SKILL_REL]
     if os.environ.get("BOOKASSEMBLER"):
         cands.append(Path(os.environ["BOOKASSEMBLER"]).expanduser() / SKILL_REL)
-    cands.append(HERE.parent / SKILL_REL)  # the checkout these scripts live in
+    cands.append(HERE.parent / SKILL_REL)  # a repo checkout (.claude/skills)
+    cands.append(HERE.parent / "skills" / SKILL_REL.relative_to(".claude/skills"))  # the plugin itself
     for c in cands:
         if c.exists():
             spec = importlib.util.spec_from_file_location("whisperx_to_md", c)

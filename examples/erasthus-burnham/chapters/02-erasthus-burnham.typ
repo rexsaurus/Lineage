@@ -1,13 +1,13 @@
 #import "/book/template.typ": *
 // Chapter 2, "Those Who Came Before": Erasthus Burnham. Built by CHAPTER-PLAYBOOK.md.
-// One timeline through his life (Rex, 2026-09-29: "sequential, not chunky"). The record
+// One timeline through his life (the author, 2026-09-29: "sequential, not chunky"). The record
 // is the spine; the family's account (via Grandfather Krug) is told at the point where it
 // differs, attributed, and never silently merged.
 // Record: Wood Memorial Library & Museum, South Windsor (The Watershed History Collective):
 //   person — https://woodmemorial.pastperfectonline.com/byperson?keyword=Burnham,%20Erastus%20W.
 //   Civil War letters 2004.09.001 — https://woodmemorial.pastperfectonline.com/archive/16189AD5-F215-484A-A16F-832648071170
 //   letters from the sea 2004.09.023 — https://woodmemorial.pastperfectonline.com/archive/D4DF8581-E3E9-4D8F-BF82-019820964640
-// Name: Dad says Erasthus (spelling unverified, Rex: leave as heard); the record spells it
+// Name: Dad says Erasthus (spelling unverified, the author: leave as heard); the record spells it
 // Erastus Williams Burnham. The chapter uses Erasthus, the family's name for him.
 
 #show: chapter.with("Erasthus Burnham", columns: 2,
@@ -24,11 +24,11 @@
 // epigraphs: Melville, Moby-Dick (1851) — https://www.gutenberg.org/ebooks/2701 ;
 // Whitman, "The Wound-Dresser" (Drum-Taps, 1865) — https://www.gutenberg.org/ebooks/1322
 
-#opening[This chapter is family lore.][It is the story of Daniel's
+#opening[This chapter is family lore.][It is the story of Dad's
 great-great-grandfather, Erasthus Burnham, as it came down the family: from the old man to
-his grandson, William Burnham Krug, who spent years at his side, and from Krug to Daniel,
+his grandson, William Burnham Krug, who spent years at his side, and from Krug to Dad,
 who spent much of his own boyhood with Krug. A story that travels that far changes on the
-way, and Daniel knew it. "My thought was, oh, yes, my grandfather taught me that and told
+way, and Dad knew it. "My thought was, oh, yes, my grandfather taught me that and told
 me that," he said, and he wondered how anyone could prove it. As it turns out, a good deal
 of it can be proved and some of it cannot. Where the records and the family part company,
 this chapter says so.]
@@ -39,15 +39,15 @@ this chapter says so.]
   ([*Erasthus (Erastus W.) Burnham Jr.* (1834–1921)], [Mary Graham Devine, m. 1855]),
   ([*Agnes Maria Burnham*], [Wilhelm Friedrich Krug (d. 1938)]),
   ([*William Burnham Krug* (1894–1967), "Grandfather Krug"], none),
-  ([*Daniel's mother* (b. 1920)], [John St. John (b. 1921)]),
-  ([*Daniel St. John* (b. 1943)], [Regina]),
-  ([*Alex, Rex and Yana*], none),
+  ([*Dad's mother* (b. 1920)], [John St. John (b. 1921)]),
+  ([*Dad* (b. 1943)], [Mom]),
+  ([*their three children*], none),
 )
 // descent: record (Erastus Sr. and Emeline Parsons Burnham, parents; Mary Graham Devine,
 // m. May 15 1855; "Agnes Maria Burnham Krug" in the 1865 letters, 2004.09.001);
 // timeline E012 (W. B. Krug b. 1894 to Wilhelm Krug and "a Burnham daughter"); people
 // files (Wilhelm d. 1938; W. B. Krug d. 1967; John St. John b. 1921); E016 (Dad's mother
-// b. 1920); book.yaml (Daniel b. 1943); Regina per Rex.
+// b. 1920); book.yaml (Dad b. 1943); Mom's name per the author.
 // REVIEW: Dad's mother's name is not on the tape; Grandfather Krug's wife not established
 // (Dad mentions a grandmother from Midlothian, VA [S5 00:18:40]); the daughter who married
 // Wilhelm Krug is Agnes in the museum's letter index (Dad also says "Mary" [S5 00:32:00]).
@@ -56,7 +56,7 @@ this chapter says so.]
 through farm country all the way down to Long Island Sound, and at its mouth stood New
 London, one of the great whaling ports of the world. For a time only New Bedford sent more
 ships after whales. Whale oil lit the lamps of America, and sperm oil, which burned clean
-and ran fine and slick, greased its machines. Daniel put it more grandly: whaling "actually
+and ran fine and slick, greased its machines. Dad put it more grandly: whaling "actually
 encouraged the Industrial Revolution by being able to oil gears and so forth."
 // src: context; [S5 00:05:17]; [S5 00:07:26]
 // context: New London the second-largest whaling port in the mid-1800s — https://www.nlchs.org/online-exhibits/whaling-out-of-new-london/
@@ -65,7 +65,7 @@ encouraged the Industrial Revolution by being able to oil gears and so forth."
 Up the river, in South Windsor, on April 28, 1834, Erastus Williams Burnham and his wife,
 Emeline, had a son and gave him his father's name. The family would call him Erasthus; his
 wife, one day, would call him Bill. It was farm country, and farm work was what a boy could
-look forward to. Daniel understood the appeal of the alternative. "Say you're 12, 14 years
+look forward to. Dad understood the appeal of the alternative. "Say you're 12, 14 years
 old and you want to do something," he said. "And all you have to look for is drudgery on a
 farm."
 // src: [S5 00:40:39]; [S5 00:07:36]; record (born Apr 28 1834, South Windsor; parents Erastus Williams Burnham and Emeline Parsons Burnham; called "Bill" by his wife)
@@ -76,7 +76,7 @@ farm."
 #sectionbreak
 
 #plate("/photos/print/P036-withheld.png", caption: "A New England whaleship", width: 4.6in)
-// photo: P036 — supplied by Rex; not identified as the Hannibal; baked-in caption cropped off
+// photo: P036 — supplied by the author; not identified as the Hannibal; baked-in caption cropped off
 
 In the summer of 1851 he went to sea. On June 21 a clerk at New London wrote him onto the
 crew list of the whaleship _Hannibal_ as "Erastus W. Brunham," of South Windsor, eighteen
@@ -143,7 +143,7 @@ deck, and the blubber, sliced into what the men called Bible leaves, was boiled 
 try-works, great iron pots set in brick amidships, whose fires at night made the ship look as
 if she were burning. The men fried their biscuit in the boiling oil, and made fritters from
 the whale's brains when the steward was feeling generous. The rest --- the offal, the rot,
-the smell --- had to be lived with. "So the main thing it took," Daniel said, "was a good
+the smell --- had to be lived with. "So the main thing it took," Dad said, "was a good
 iron stomach." The pay was worse. A green hand's share, or lay, was about one two-hundredth
 of the catch, which worked out to around twenty cents a day, when a laborer ashore made
 ninety; and a man could finish four years at sea owing the ship for the clothes he had bought
@@ -162,7 +162,7 @@ captain, Edward Howes, whom the family knew as Captain House. Howes came from Gl
 the next town down the river from South Windsor, and on July 15 that summer he had been
 killed by a whale. The Kamchatka Sea was Russian water; Alaska itself would stay Russian
 until 1867, when the United States bought it for \$7.2 million. The whalers sailed past the
-Pribilof Islands, where, more than a century later, Daniel would spend three years of his own.
+Pribilof Islands, where, more than a century later, Dad would spend three years of his own.
 // src: record (Letters From the Sea no. 4: 1852 Sep 29 to his parents from the "Kamchatka Sea"; refs "Captain House", "Ship Vesper", Arctic Ocean, Bering Strait); [S5 00:10:19]-[S5 00:11:09]
 // context: Vesper of New London (AV15129), master Edward M. Howes, b. Glastonbury CT 1818, killed by a whale Jul 15 1852 — https://whalinghistory.org/?s=AV15129
 // context: Alaska Purchase, treaty Mar 30 1867, $7.2 million — https://guides.loc.gov/alaska-treaty
@@ -182,23 +182,23 @@ their ship begging for tobacco. In January the _Hannibal_ left for Hong Kong, an
 // src: The Polynesian, 1853 May 14, p. 3 ("Arrivals at Ascension Island, 1852 … Nov. 20. Hannibal"); 1853 Nov 19, p. 2 (Ronkiti Harbor list: "Nov 20, '52, Hannibal … Jan 13, '53 … for Hongkong"; OCR poor); 1853 Jun 4, p. 2 (Hong Kong: arrived "4th [Feb.], wh ship Hannibal, Lester" with Monongahela, Bart Gosnold, John Wells) — https://www.loc.gov/resource/sn82015408/1853-06-04/ed-1/?sp=2
 // context: David Hanlon, Upon a Stone Altar: A History of the Island of Pohnpei to 1890 (1988), pp. 74–76 (Rohnkiti; hog $5 in tobacco; ~150 beachcombers; the bathtub), pp. 92–93 (ABCFM missionaries arrived Sep 6 1852; "rowdy group of beachcombers") — https://scholarspace.manoa.hawaii.edu/server/api/core/bitstreams/e02874d4-99dc-40d6-865d-5cf44dc18c69/content
 
-Hong Kong, as Daniel explained, was a common stop for the whalers: it was British, so money
+Hong Kong, as Dad explained, was a common stop for the whalers: it was British, so money
 could be changed and stores taken on. It was there that Erasthus and the _Hannibal_ parted
 company. The family's version is that the crew, unhappy with their treatment, mutinied.
-Daniel guessed it was the quiet kind: they went ashore for supplies and never went back. "But
+Dad guessed it was the quiet kind: they went ashore for supplies and never went back. "But
 that's something that could be seen from his letters," he said. If so, he had plenty of
 company. The average whaleship of the time lost nearly two-thirds of the crew she sailed with
 before she got home, and about three men in ten deserted.
 // src: [S5 00:09:43]; [S5 00:13:20]; record (1852 letter refs Hong Kong; police force in Hong Kong, 1853); The Polynesian 1853 Jun 4 p. 2 (Hannibal at Hong Kong Feb 4 1853)
 // context: Hohman (1928), p. 64 (turnover nearly two-thirds; about three in ten deserted)
 // REVIEW: that he deserted is inferred from his leaving the ship at Hong Kong; the family calls
-// it a mutiny. Rex to confirm the wording.
+// it a mutiny. The author to confirm the wording.
 
 Hong Kong in 1853 was a raw place to land. Britain had taken it from China only eleven years
 before, and the colony's police were, by the force's own later account, "chaotic,
 disorganised and made up of largely suspect individuals." Pirates worked the harbor and
 burglars the streets at night. A stranded Yankee sailor who could stand up straight was,
-evidently, police material, and Erasthus joined the force: a British bobby, as Daniel put it.
+evidently, police material, and Erasthus joined the force: a British bobby, as Dad put it.
 // src: [S5 00:00:30]; record (served on the police force in Hong Kong, 1853)
 // context: Treaty of Nanking Aug 29 1842 — https://www.britannica.com/event/Treaty-of-Nanjing
 // context: Police Ordinance May 1 1844; early force "chaotic, disorganised and made up of largely suspect individuals"; piracy and night burglary — https://www.police.gov.hk/info/doc/history/chapter01_en.pdf
@@ -206,7 +206,7 @@ evidently, police material, and Erasthus joined the force: a British bobby, as D
 One day on patrol, as the family told it, seven bandits jumped him. They stabbed him seven
 times in the back and threw him off a bridge. He lived, and years later he could still
 show his grandson the scars. It was the day on which everything after it depended. "If he
-hadn't made it through this," Daniel said, "none of us would exist."
+hadn't made it through this," Dad said, "none of us would exist."
 // src: [S5 00:00:30]-[S5 00:01:49]
 // REVIEW: the museum confirms the Hong Kong police service; the stabbing is the family's
 // account (via Grandfather Krug).
@@ -229,7 +229,7 @@ abandoned in Cumberland Inlet, off Baffin Island.
 
 By 1855 he was home and working as a moulder in a brass foundry in Holyoke, Massachusetts, a
 new city built a few years earlier to harness the Connecticut River, and on May 15 of that
-year he married Mary Graham Devine, a Scot. Daniel had remembered him marrying at about
+year he married Mary Graham Devine, a Scot. Dad had remembered him marrying at about
 twenty-one, and he was right. The sea still had a hold on him. In 1857 and 1858 he was
 writing home to Mary from the sloop _Mary Elizabeth_, working the coast and the rivers, from
 the Hudson to Fall River. Then he settled back in South Windsor and worked
@@ -373,10 +373,10 @@ a parade. "No speeches were made," the _Hartford Times_ reported, with evident a
 
 The family remembered his war differently. In their telling he was a surgeon, drafted for
 his first term and paid for his second, to go in the place of a man who did not want to, and
-the money bought the farm. The surgery Daniel described was brutal: first aid, then a saw
+the money bought the farm. The surgery Dad described was brutal: first aid, then a saw
 through a man's leg, a shot of whiskey, and tar to seal the stump. He had seen the picture
 books of the battlefields, and the evidence the war left walking around afterwards: "there
-were all these peg-legged people." Whatever else Erasthus was, Daniel said, he "had the guts
+were all these peg-legged people." Whatever else Erasthus was, Dad said, he "had the guts
 to do it." The letters and the regiment's records describe a soldier, and there was no Union
 draft until 1863. The money, though, was real: it was the bounty that came with the second
 enlistment. It is the
@@ -390,9 +390,9 @@ and two tellers to do it in.
 #plate("/photos/print/P041-withheld.png", caption: "The surgeon's tent, as the family told it", width: 4.4in)
 // photo: P041 — AI illustration generated from the museum tintype (2004.09.013); see IMAGE-STYLE.md
 
-The war ran through the family on both sides. Daniel's grandfather married a woman from
+The war ran through the family on both sides. Dad's grandfather married a woman from
 Midlothian, Virginia, whose own grandfather --- the name comes through as Khofer --- was an
-officer for the South. The two of them, Daniel said, were "fighting each other in the same
+officer for the South. The two of them, Dad said, were "fighting each other in the same
 battlefield."
 // src: [S5 00:18:40]-[S5 00:19:24]
 // REVIEW: surname heard as Khofer/Kofor; left as heard per the glossary.
@@ -411,7 +411,7 @@ froze, and men went into them, drunk or fighting or simply unlucky, and stayed t
 the thaw, when the water was let down through the sluices and the bodies came with it.
 Someone had to go in after them. Erasthus went, lowered on a rope in a little chair, because
 nobody else could stand the stench. Whaling and war had left him with a stronger stomach than
-most. Daniel's verdict was brief: "Erastus was happy to do it."
+most. Dad's verdict was brief: "Erastus was happy to do it."
 // src: [S5 00:52:53]-[S5 00:53:50]
 // REVIEW: not in the museum record; his fire-company membership is documented.
 
@@ -425,11 +425,11 @@ and was buried in the town's Center Cemetery.
 #sectionbreak
 
 He left more behind than stories. His Civil War uniform and sword stood for years in the
-living room of Daniel's grandparents, next to a crank phonograph that Daniel used to play as
+living room of Dad's grandparents, next to a crank phonograph that Dad used to play as
 a boy. They did not survive the family: "Oh, people in the family pillaged them, you know,"
-Daniel said. The letters did. Relatives gave them to the Wood Memorial Library and Museum in
+Dad said. The letters did. Relatives gave them to the Wood Memorial Library and Museum in
 South Windsor, more than seventy-five from the war and a handful from the sea, each with a
-transcription. "People wrote a lot to each other then," Daniel said, "even these wonderful
+transcription. "People wrote a lot to each other then," Dad said, "even these wonderful
 letters from the Civil War. Very eloquent and very good handwriting." With eight
 grandchildren coming along, he meant to drive over one day with a cousin and scan them, so
 that everybody could read them.

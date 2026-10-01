@@ -1,126 +1,248 @@
-# BookAssembler
+# Book Assembler Factory Skill
 
-[![Build the sample book](https://github.com/rexsaurus/BookAssembler/actions/workflows/sample.yml/badge.svg)](https://github.com/rexsaurus/BookAssembler/actions/workflows/sample.yml)
+**Turn recorded interviews with a relative into a real printed book — without the AI making things up.**
 
-You sat down with a parent or grandparent and recorded them. Now you have hours of audio
-and want a real book: chapters in order, their own words quoted exactly, the family's old
-stories set beside the records, a few photographs, an index, and something you can order
-in print and hand to the grandchildren.
+[![Build the sample book](https://github.com/rexsaurus/BookAssembler/actions/workflows/sample.yml/badge.svg)](https://github.com/rexsaurus/BookAssembler/actions)
+[![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](LICENSE)
 
-Getting there by hand takes months, and the usual shortcuts go wrong in two ways. Either
-the book invents things (feelings, weather, tidied-up quotes nobody said), or it sands the
-person down into someone bland. BookAssembler is a set of tools, Typst templates and
-[Claude Code](https://claude.com/claude-code) skills that carry you from recordings to a
-print-ready PDF. Every sentence it writes traces back to a timestamp on the tape, and you
-make the decisions only you can make.
+---
+
+This project came out of my own attempt to document my family's oral history. It started
+with a three-and-a-half hour interview with my dad. Then I fed that into AI — and spent
+the next while discovering every way that goes wrong.
+
+So I generalized the process and released it as a **Factory Skill** for Claude. Two
+skills, really, working together: one that writes the pipeline, and one that runs it. It
+covers the whole distance:
+
+| | |
+|---|---|
+| **Transcribe** | Speech to word-level timestamps on your own machine, with speaker labels, so every sentence in the book can point back at the tape |
+| **Research** | Family lore checked against archives, census rolls, regimental records and ship registers — and where they disagree, the book prints both |
+| **Illustrate** | Photographs catalogued with the evidence behind every name; AI illustrations allowed, but marked as illustrations so nobody mistakes one for a photograph |
+| **Write** | Third-person biography under strict rules: nothing invented, quotes exact, every paragraph cited |
+| **Assemble** | Chapters generated from story units, then typeset with front matter, index and a print-ready PDF |
+
+---
+
+## What it produces
+
+Here is one chapter, start to finish. It came from about twenty minutes of my dad talking
+about an ancestor he'd only ever heard stories about, plus a research pass that found the
+man's actual letters sitting in a museum forty minutes from where he was born.
+
+### The opening: say what kind of story this is
+
+<img src="docs/images/chapter-p1.png" width="420" align="right" alt="Chapter opening page">
+
+Every family-history chapter starts by telling the reader what they're holding. This one
+opens: *"This chapter is family lore."* It names the chain the story travelled down —
+old man to grandson to my dad — and promises that **where the records and the family part
+company, this chapter says so.**
+
+The **Line of Descent** box runs from the earliest confirmed ancestor to the living
+generation, so a reader who picks the book up in fifty years knows exactly who everyone is.
+
+Epigraphs are public domain and cited. The place-and-years line under the title comes from
+the timeline, never from a guess.
+
+<br clear="all">
+
+---
+
+### Evidence-coded maps
+
+<img src="docs/images/chapter-p3.png" width="420" align="right" alt="Page with the voyage map">
+
+The map of the whaling voyage distinguishes **recorded positions** (filled dots) from
+**the ship's track between them** (dashed). One leg of the Atlantic is labelled
+*"Route to the Pacific not recorded"* — because the sources don't say, and inventing a line
+there would be inventing history.
+
+Underneath it, in THE RECORDS: the shipping-news columns and logbook entries every dot
+came from.
+
+<br clear="all">
+
+---
+
+### Family lore, kept as lore
+
+<img src="docs/images/chapter-p5.png" width="420" align="right" alt="Page with the Hong Kong bridge story">
+
+Seven bandits, seven stab wounds, thrown off a bridge in Hong Kong in 1853. Nobody can
+prove it. So the page says *"as the family told it"* and keeps my dad's own verdict in his
+own words: **"If he hadn't made it through this, none of us would exist."**
+
+Around the story sits what *is* documented: that the average whaleship lost two-thirds of
+her crew, that three men in ten deserted. The desertion stops looking like a scandal and
+starts looking like a Tuesday.
+
+<br clear="all">
+
+---
+
+### Where the records win
+
+<img src="docs/images/chapter-p7.png" width="420" align="right" alt="Page on the Petersburg siege">
+
+The family remembered him as a drafted surgeon. The regimental rolls say private, Company
+A, 1st Connecticut Heavy Artillery — and they put him at the Crater at a quarter to five
+in the morning, among the guns that fired 3,833 rounds before breakfast.
+
+The book prints both versions and explains the gap, rather than silently correcting the
+family or silently repeating it: *"It is the way of family stories to improve a little with
+each telling, and this one had fifty years and two tellers to do it in."*
+
+<br clear="all">
+
+---
+
+### THE RECORDS
+
+<img src="docs/images/chapter-p9.png" width="420" align="right" alt="The records section">
+
+Every documented claim in the chapter ends up here: museum catalogue numbers, the crew
+list that spells his name wrong, regimental histories, the grave, the newspaper columns.
+
+Including the entry I'm proudest of — **a note on the name**, warning the next relative
+that there were two American whaleships called *Hannibal*, and the surviving logbook
+belongs to the other one.
+
+<br clear="all">
+
+---
+
+### The photographs page
+
+<img src="docs/images/chapter-p10.png" width="420" align="right" alt="The photographs page">
+
+The real photographs, with catalogue numbers and links, and a plain statement that **the
+illustrations in the chapter are artist's renderings** made from his Civil War tintype.
+
+A reader in 2075 should never have to wonder which pictures are real. This page is the
+rule, not a nicety.
+
+<br clear="all">
+
+---
 
 ## Try it in 60 seconds
 
-You need Python 3.10 or newer and [Typst](https://github.com/typst/typst#installation)
-(`brew install typst` on a Mac). The sample builds without any recordings, models or
-Claude account.
+No recordings, no models, no Claude account needed for the sample.
 
-```sh
+```bash
 git clone https://github.com/rexsaurus/BookAssembler.git
 cd BookAssembler
 make install
 make sample
 ```
 
-Then open the two PDFs it builds:
+You get two PDFs:
 
-- `examples/sample-project/output/book-draft.pdf`: a complete 30-page book about an
-  invented grandmother, Ruth Calder. It is built from two one-minute invented interviews
-  and has a family-history chapter, two life chapters, a timeline, a glossary, the records
-  appendix and an index. The yellow highlight in chapter 3 is a **bridge**: a sentence
-  waiting for the author's approval.
-- `examples/erasthus-burnham/erasthus-burnham.pdf`: a 10-page real family-history chapter,
-  published with the family's permission. It is annotated in
-  [docs/EXAMPLE-CHAPTER.md](docs/EXAMPLE-CHAPTER.md).
+- **`examples/sample-project/output/book-draft.pdf`** — a complete 30-page book about an
+  invented grandmother, built from two one-minute invented interviews: family-history
+  chapter, two life chapters, timeline, glossary, records appendix, index. The yellow
+  highlight in chapter 3 is a *bridge* — a sentence the machine wanted to add, held back
+  for the author to approve.
+- **`examples/erasthus-burnham/erasthus-burnham.pdf`** — the chapter above, annotated rule
+  by rule in [docs/EXAMPLE-CHAPTER.md](docs/EXAMPLE-CHAPTER.md).
 
-`make status PROJECT="$PWD/examples/sample-project"` shows where a book stands and what
-comes next.
+---
 
-## How a book gets made
+## How it works
 
 ```
-recordings ─► transcripts ─► timeline ─► story units ─► chapter map ─► shaped units ─► chapters ─► book
-   audio/      transcript/    facts/      content/       data/          content/        chapters/   output/
-            ▲                                         ▲                                              ▲
-         GATE 1                                    GATE 2                                         GATE 3
-     confirm speakers                        approve the chapter map                         final sign-off
+recordings ─► transcripts ─► timeline ─► story units ─► chapter map ─► chapters ─► book
+   audio/      transcript/    facts/      content/        data/        chapters/   output/
+            ▲                                         ▲                              ▲
+         GATE 1                                    GATE 2                         GATE 3
+   confirm the speakers                   approve the chapter map              final sign-off
 ```
 
-1. **Transcripts.** WhisperX turns each recording into a word-timestamped transcript on
-   your own computer, and pyannote works out who is speaking. Every later citation looks
-   like `[S2 00:14:07]`, so once anything cites a session, it is never re-transcribed.
-2. **Timeline.** "When I was twelve" becomes "about 1950", with the arithmetic written
-   down. When two tellings conflict, both are kept.
-3. **Story units.** The transcript is cut into one file per story, and a coverage check
-   proves no paragraph of the subject's speech was lost.
-4. **Chapter map.** Family history first, one chapter per relative, then the life in
-   order. You approve it before any writing happens.
-5. **Shaping.** Claude writes each unit as third-person biography under strict rules:
-   nothing added, quotes exact and checked by script, every paragraph cited, and any
-   interpretation held back as a bridge for you to approve.
-6. **Chapters and book.** Units are assembled into chapters. Typst sets the book with
-   front matter, back matter and a generated index, and a preflight checks it against
-   your printer's requirements (KDP, IngramSpark, Lulu or Blurb).
+**Story units are the trick.** The transcript is cut into one file per story — not per
+chapter — each carrying its source excerpt, its metadata and its written version. Chapters
+are *generated* from units. Moving a story to a different chapter is a one-line change and
+a rebuild, not a rewrite. A coverage check proves no part of your relative's speech got
+quietly dropped.
 
-The three gates are where the tools stop and wait for you: which voice is the subject,
-how the book is organized, and whether it's finished. The final build refuses to compile
-while any unapproved bridge remains.
+**Bridges are the other trick.** Anything the model wants to add that the tape didn't give
+it must be written as `#bridge[...]`. Those print highlighted in the draft, and **the final
+build refuses to compile while one is unapproved.** It is maybe forty lines of code and it
+is the reason you can trust the output.
+
+---
+
+## The Factory Skill
+
+BookAssembler is one instance of a general pattern, and the repo ships the generator too.
+Point it at a different kind of source material and it writes you a new pipeline.
+
+Only five things change:
+
+1. **What's the source**, and what does a citation look like?
+2. **What's a unit** — the smallest piece that stands alone and can move without a rewrite?
+3. **What are the evidence tiers** — witnessed / told / lore, documented / asserted / disputed?
+4. **What's the output**, and what builds it?
+5. **Where are the gates** — where does a human decide?
+
+Everything else is constant, because the constants are what make the output trustworthy:
+immutable sources, citations on every claim, generated outputs nobody hand-edits,
+quarantined inventions, coverage checks, versioning that pins every PDF to the exact text
+that produced it.
+
+```
+/plugin marketplace add rexsaurus/BookAssembler
+/plugin install bookassembler@rexsaurus-factory   # the book pipeline
+/plugin install factory@rexsaurus-factory         # the generator
+```
+
+---
 
 ## What you need for a real book
 
-- The recordings (any common audio or video format).
-- A Mac or Linux computer with ffmpeg, Typst and Python. The transcription models run
-  locally on CPU, or on an NVIDIA GPU if you have one.
-- A free Hugging Face account and token, used only to download the speaker-labelling model.
-- A Claude subscription for Claude Code, which does the writing with the skills in
-  `.claude/skills/`.
-- Time. Read [Honest limits](docs/HOWTO.md#14-honest-limits) before you start.
+- The recordings, in any common audio or video format.
+- A Mac or Linux machine with ffmpeg, Typst and Python. Transcription runs locally on CPU,
+  faster on an NVIDIA GPU.
+- A free Hugging Face token — only to download the speaker-labelling model, which then runs
+  on your machine.
+- A Claude subscription for Claude Code, which does the writing.
+- Patience at three points. The gates are the product, not an inconvenience.
 
-```sh
-make install-transcribe                        # speech recognition + diarization (large download)
-make new PROJECT="$HOME/books/grandma"         # a new book project, outside this repo
+```bash
+make install-transcribe                      # speech recognition + diarization
+make new PROJECT="$HOME/books/grandma"       # start a book, outside this repo
 ```
+
+---
+
+## Honest limits
+
+- Three and a half hours of tape makes roughly a 100–140 page book. More tape, more book.
+- The machine cannot check a fact that isn't on the tape or in a document you give it.
+- Your audio stays on your computer. The **transcript text goes to a cloud model** while
+  Claude writes. See [PRIVACY.md](PRIVACY.md).
+- Research chapters like the one above need a human who cares. The tools find the records;
+  deciding what they mean is yours.
+- Make your own book's repo private. Mine is.
+
+---
 
 ## Read next
 
-[docs/HOWTO.md](docs/HOWTO.md) walks through the whole process, from recordings to a
-printed book:
+- **[docs/HOWTO.md](docs/HOWTO.md)** — recordings to printed book, step by step.
+- **[docs/EXAMPLE-CHAPTER.md](docs/EXAMPLE-CHAPTER.md)** — the chapter above, annotated.
+- **[docs/FACTORY.md](docs/FACTORY.md)** — the pattern, and how to aim it at something else.
+- **[scripts/README.md](plugins/bookassembler/scripts/README.md)** — every tool, and the upstream breakage it works around.
 
-1. [What you need](docs/HOWTO.md#1-what-you-need)
-2. [Setup](docs/HOWTO.md#2-setup)
-3. [Transcription](docs/HOWTO.md#3-transcription)
-4. [The timeline](docs/HOWTO.md#4-the-timeline)
-5. [Story units](docs/HOWTO.md#5-story-units)
-6. [The chapter map](docs/HOWTO.md#6-the-chapter-map)
-7. [Writing](docs/HOWTO.md#7-writing) covers voice, quotation and sourcing, with a before-and-after example
-8. [Family-history chapters](docs/HOWTO.md#8-family-history-chapters)
-9. [Photos and illustrations](docs/HOWTO.md#9-photos-and-illustrations)
-10. [Assembling and building](docs/HOWTO.md#10-assembling-and-building)
-11. [Reviewing with the subject across a distance](docs/HOWTO.md#11-reviewing-with-the-subject-across-a-distance)
-12. [Printing](docs/HOWTO.md#12-printing)
-13. [Troubleshooting](docs/HOWTO.md#13-troubleshooting)
-14. [Honest limits](docs/HOWTO.md#14-honest-limits)
-
-Also:
-
-- [docs/EXAMPLE-CHAPTER.md](docs/EXAMPLE-CHAPTER.md): a finished family-history chapter,
-  annotated rule by rule.
-- [scripts/README.md](scripts/README.md): every command-line tool, its flags, and the
-  upstream breakage it works around.
-- [PRIVACY.md](PRIVACY.md): what stays on your computer (the audio) and what goes to a cloud
-  model (the transcript text, while Claude writes).
-- [CONTRIBUTING.md](CONTRIBUTING.md): how to help, and why real family material never goes
-  into issues or fixtures.
+---
 
 ## License
 
-The code, templates, skills and documentation are [MIT licensed](LICENSE). The license does
-**not** cover your recordings, transcripts, photographs or the books you make with
-BookAssembler. Those belong to you and your family. The worked example chapter in
-`examples/erasthus-burnham/` is published for reading and learning only. EB Garamond in
-`fonts/` is under the SIL Open Font License.
+Code, templates, skills and docs are MIT. The license does not cover your recordings,
+transcripts, photographs, or the books you make — those belong to you and your family. The
+example chapter in `examples/erasthus-burnham/` is published for reading and learning only.
+EB Garamond is under the SIL Open Font License.
+
+*Built for my dad. The letters are still in that museum, in his great-great-grandfather's
+very good handwriting, waiting for the family to come and read them.*

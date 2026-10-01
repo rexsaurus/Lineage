@@ -1,7 +1,8 @@
 # The worked example: "Erasthus Burnham"
 
 This is a real chapter, published with the family's permission, from the book BookAssembler
-was built for: a biography of Daniel St. John written by his son from recorded interviews.
+was built for: a biography of the author's father, written by his son from recorded interviews. Living
+family members' names are redacted: the subject appears as "Dad".
 It is a **family-history chapter**, the hardest kind: an ancestor nobody alive met, known
 through one grandson's stories, a museum's catalogue of his letters, and public records.
 
@@ -46,9 +47,9 @@ the chapter's whole audit trail.
 ## 2. Saying what kind of material this is
 
 ```typst
-#opening[This chapter is family lore.][It is the story of Daniel's
+#opening[This chapter is family lore.][It is the story of Dad's
 great-great-grandfather, Erasthus Burnham, as it came down the family: from the old man to
-his grandson, William Burnham Krug, who spent years at his side, and from Krug to Daniel, …
+his grandson, William Burnham Krug, who spent years at his side, and from Krug to Dad, …
 Where the records and the family part company, this chapter says so.]
 ```
 
@@ -84,18 +85,18 @@ silently corrected nor silently repeated, and the record confirms what it can (t
 
 - **Documented:** "On June 21 a clerk at New London wrote him onto the crew list of the
   whaleship _Hannibal_ as 'Erastus W. Brunham'…" (`// src: … crew list AC061341`)
-- **Told by the subject:** "Hong Kong, as Daniel explained, was a common stop for the whalers"
+- **Told by the subject:** "Hong Kong, as Dad explained, was a common stop for the whalers"
 - **Lore, attributed:** "One day on patrol, as the family told it, seven bandits jumped him."
   The `// REVIEW:` beneath records that the museum confirms the police service but not the
   stabbing.
 
 ## 6. The subject's voice
 
-Daniel is the subject of the book, and this chapter keeps his voice even though it's about
+Dad is the subject of the book, and this chapter keeps his voice even though it's about
 someone else. A few of his quotes:
-- "So the main thing it took," Daniel said, "was a good iron stomach."
-- "If he hadn't made it through this," Daniel said, "none of us would exist."
-- Daniel's verdict was brief: "Erastus was happy to do it."
+- "So the main thing it took," Dad said, "was a good iron stomach."
+- "If he hadn't made it through this," Dad said, "none of us would exist."
+- Dad's verdict was brief: "Erastus was happy to do it."
 
 Each one is exact from the clean transcript and cited with `// src: [S5 hh:mm:ss]`. They are
 the lines nobody else would phrase that way, which is why they are quoted, not paraphrased.
@@ -132,7 +133,7 @@ The chapter carries a dozen `// REVIEW:` notes for the author. Some examples:
 - the museum gives one discharge date and the 1889 state roster another, so the text follows
   the roster and the note records the conflict;
 - an inference ("that he deserted") the family calls a mutiny;
-- a detail Daniel gave that the medical record contradicts, left out and noted.
+- a detail Dad gave that the medical record contradicts, left out and noted.
 
 None of these notes print, and none of them is settled by the writer.
 

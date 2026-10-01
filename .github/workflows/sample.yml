@@ -16,7 +16,24 @@ jobs:
       - name: Build the sample project and the example chapter
         run: make sample
       - name: Check the scripts compile
-        run: .venv/bin/python -m py_compile scripts/*.py .claude/skills/*/scripts/*.py
+        run: .venv/bin/python -m py_compile plugins/bookassembler/scripts/*.py plugins/bookassembler/skills/*/scripts/*.py plugins/factory/skills/factory/scripts/*.py plugins/factory/skills/factory/templates/pipeline/scripts/*.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate the marketplace and both plugins
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude plugin validate .
+          claude plugin validate plugins/bookassembler
+          claude plugin validate plugins/factory
+      - name: The factory scaffolds a toy domain, and its fixture builds
+        run: |
+          .venv/bin/python plugins/factory/skills/factory/scripts/scaffold.py \
+            plugins/factory/skills/factory/examples/toy-minutes.yaml --out "$RUNNER_TEMP/toy"
+          make -C "$RUNNER_TEMP/toy" fixture PY="$PWD/.venv/bin/python"
+          test -f "$RUNNER_TEMP/toy/fixture/output/minutes-draft.md"
+          # the final build must refuse while a bridge is open and the sign-off gate is closed
+          ! (cd "$RUNNER_TEMP/toy/fixture" && PIPELINE_HOME="$RUNNER_TEMP/toy" "$GITHUB_WORKSPACE/.venv/bin/python" ../scripts/pl.py build --final)
       - uses: actions/upload-artifact@v4
         with:
           name: sample-pdfs

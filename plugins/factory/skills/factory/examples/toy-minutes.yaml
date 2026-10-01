@@ -1,0 +1,53 @@
+# A toy domain used by CI: meeting minutes from call transcripts.
+name: minutes
+title: "Minutes"
+domain: "meeting minutes written from call transcripts"
+source:
+  noun: transcript
+  dir: sources
+  citation: "[{source}:{line}]"
+unit:
+  noun: decision
+  plural: decisions
+  definition: "one decision or action item, with who owns it, that makes sense without the rest of the call"
+tiers:
+  - {id: stated, meaning: "said outright in the call"}
+  - {id: implied, meaning: "agreed by silence or implication; the minutes must say so"}
+output:
+  noun: minutes
+  format: markdown
+  builder: none
+  title: "Minutes of the planning call"
+gates:
+  - {id: G1, name: "transcripts complete", after: ingest, question: "Are these all the calls, and is each transcript the right one?"}
+  - {id: G2, name: "decisions approved", after: units, question: "Is every decision real, and is anything implied marked as implied?"}
+  - {id: G3, name: "final sign-off", after: build, question: "Can these minutes go to the team?"}
+rules:
+  - "Name the owner of every action item exactly as the transcript gives it."
+  - "Never turn a suggestion into a decision; if nobody agreed, it is not a decision."
+fixture:
+  sources:
+    call-1: |
+      Ana: We need the budget numbers by Friday.
+      Ben: I can have them Thursday.
+      Ana: Good, Ben owns the budget.
+      Cy: Should we move the launch?
+      Ana: No, the launch stays on the 12th.
+  units:
+    - id: U001
+      title: Budget numbers
+      spans: ["call-1:1-3"]
+      tier: stated
+      text: "Ben owns the budget numbers and will deliver them Thursday [call-1:2-3]."
+    - id: U002
+      title: Launch date
+      spans: ["call-1:4-5"]
+      tier: stated
+      text: |
+        The launch stays on the 12th [call-1:5].
+
+        [[bridge B1: Nobody objected, so the team appears to agree.]]
+      questions: ["Bridge B1 claims agreement from silence. Keep (marked implied) or cut?"]
+  map:
+    - [Decisions, U001]
+    - [Decisions, U002]

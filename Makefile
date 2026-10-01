@@ -17,7 +17,7 @@ SHELL   := /bin/bash
 BA      := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 VENV    := $(BA)/.venv
 PY      := $(VENV)/bin/python
-SKILLS  := $(BA)/.claude/skills
+SKILLS  := $(BA)/plugins/bookassembler/skills
 SAMPLE  := $(BA)/examples/sample-project
 EXAMPLE := $(BA)/examples/erasthus-burnham
 export BOOKASSEMBLER := $(BA)
@@ -52,14 +52,7 @@ sample:
 # ---- a real project ------------------------------------------------------------------
 new:
 	@test -n "$(PROJECT)" || { echo "usage: make new PROJECT=path/to/new-book"; exit 1; }
-	@test ! -e "$(PROJECT)/book.yaml" || { echo "$(PROJECT) already has a book.yaml; not overwriting"; exit 1; }
-	@mkdir -p "$(PROJECT)"/{audio,transcript,facts/records,content/units,data,chapters,book/front,photos/source,photos/print,output,.claude}
-	@cp $(SKILLS)/interview-transcriber/assets/book.yaml "$(PROJECT)/book.yaml"
-	@cp $(BA)/templates/project/CLAUDE.md "$(PROJECT)/CLAUDE.md"
-	@cp $(BA)/templates/project/gitignore "$(PROJECT)/.gitignore"
-	@ln -sfn $(SKILLS) "$(PROJECT)/.claude/skills"
-	@cp $(BA)/book/front/*.typ "$(PROJECT)/book/front/"
-	@echo "New project at $(PROJECT). Next: fill in book.yaml, put recordings in audio/, open Claude Code there."
+	@bash $(BA)/plugins/bookassembler/scripts/new_project.sh "$(PROJECT)"
 
 check-project:
 	@test -n "$(PROJECT)" || { echo "set PROJECT=path/to/your-book"; exit 1; }

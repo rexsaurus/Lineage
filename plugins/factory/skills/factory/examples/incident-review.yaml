@@ -1,0 +1,29 @@
+# A non-book example: a blameless incident review written from chat logs and alert history.
+name: postmortem
+title: "Incident Review"
+domain: "blameless incident reviews written from incident-channel chat logs, alert history and deploy logs"
+source:
+  noun: log export
+  dir: sources
+  citation: "[{source}:{line}]"        # e.g. [chat-0412:118] = line 118 of the chat export
+unit:
+  noun: timeline event
+  plural: timeline events
+  definition: "one thing that happened at one time (an alert, a decision, a change, an observation), with when and who, that can be moved in the timeline without rewriting the others"
+tiers:
+  - {id: logged, meaning: "recorded by a system (alert, deploy log, metric)"}
+  - {id: stated, meaning: "said by a person in the channel at the time"}
+  - {id: reconstructed, meaning: "inferred afterwards from several records; the review says so"}
+output:
+  noun: review
+  format: html
+  builder: none
+  title: "Incident review"
+gates:
+  - {id: G1, name: "logs complete", after: ingest, question: "Do we have every channel, alert and deploy log for the window?"}
+  - {id: G2, name: "timeline agreed", after: units, question: "Do the people involved agree the timeline is what happened?"}
+  - {id: G3, name: "blameless sign-off", after: build, question: "Does the review describe systems, not blame people? Can it be published?"}
+rules:
+  - "Blameless: describe what the system and process allowed, never who to blame."
+  - "Times in UTC, always with the source's own timestamp."
+  - "A cause is a bridge until someone with evidence approves it."

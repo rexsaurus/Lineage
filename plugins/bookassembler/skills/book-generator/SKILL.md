@@ -12,6 +12,17 @@ author, and how the pieces become one versioned book**.
 All commands run **from the project folder** (made by `make -C "$BOOKASSEMBLER" new
 PROJECT=~/books/<name>`), with the repo's venv (`$BOOKASSEMBLER/.venv`, from `make install`).
 
+
+## Where the tools are
+`$BOOKASSEMBLER` is the folder that holds `scripts/`, `book/`, `fonts/` and `skills/`:
+- **Repo checkout:** the clone (`make` sets it).
+- **Installed as a Claude Code plugin:** the plugin's own folder, two levels above this skill's
+  base directory (`<skill base>/../..`). Export it once per session:
+  `export BOOKASSEMBLER="<skill base>/../.."`.
+- **New project without make:** `bash "$BOOKASSEMBLER/scripts/new_project.sh" path/to/book`.
+  It links `skills/` into the project as `.claude/skills/`, so the
+  `.claude/skills/<skill>/scripts/...` paths in these skills work from the project root.
+
 ## Always start with status
 ```bash
 python .claude/skills/book-generator/scripts/pipeline.py status

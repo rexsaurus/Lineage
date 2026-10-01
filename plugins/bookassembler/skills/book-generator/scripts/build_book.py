@@ -14,7 +14,9 @@ from pathlib import Path
 import os
 import yaml
 
-HOME = Path(os.environ.get("BOOKASSEMBLER") or Path(__file__).resolve().parents[4])
+# The plugin root (it holds book/ and fonts/): plugins/bookassembler, or wherever Claude Code
+# installed the plugin. A repo checkout also works via its top-level symlinks.
+HOME = Path(os.environ.get("BOOKASSEMBLER") or Path(__file__).resolve().parents[3])
 
 BACK = [  # (file, label) in print order; included only if the file exists
     ("chapters/90-timeline.typ", "timeline"),
