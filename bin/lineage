@@ -1,0 +1,259 @@
+#!/usr/bin/env python3
+"""lineage: what a project runs, and moving it to a newer release.
+
+    lineage version   [--project DIR]
+    lineage update    [--project DIR] [--to vX.Y.Z]            show what an update would do
+    lineage update    [--project DIR] [--to vX.Y.Z] --apply    do it
+    lineage dashboard [--project DIR] [--port N]               the dashboard of the pinned release
+
+A project is a CONSUMER of Lineage. It records the release it runs in `lineage.lock`; releases
+are git tags, installed read-only under ~/.lineage/releases/<tag>. An update never touches the
+project's material (sources, transcripts, units, stories, people, records, photos, settings).
+It changes only lineage.lock, the installed release, the links in .claude/skills when they
+point at a release, and, when the release changes something that would alter stories already
+generated (the book template, fonts, skills), it marks those stories stale in
+data/stale_stories.json and lists them. It never regenerates anything.
+"""
+import argparse
+import csv
+import json
+import os
+import re
+import subprocess
+import sys
+from datetime import date, datetime, timezone
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent.parent          # this release (or the checkout)
+HOME = Path(os.environ.get("LINEAGE_HOME", Path.home() / ".lineage"))
+RELEASES = HOME / "releases"
+MIRROR = HOME / "cache" / "lineage.git"
+DEFAULT_SOURCE = "git@github.com:rexsaurus/Lineage.git"
+# Paths whose change can alter a story already generated: its text rules or its pages.
+STORY_PATHS = ("plugins/lineage/book/", "plugins/lineage/fonts/", "plugins/lineage/skills/")
+
+
+def this_version():
+    try:
+        return json.loads((HERE / "plugins/lineage/.claude-plugin/plugin.json").read_text())["version"]
+    except Exception:
+        return "unknown"
+
+
+def semver(tag):
+    m = re.match(r"^v?(\d+)\.(\d+)\.(\d+)$", tag)
+    return tuple(int(x) for x in m.groups()) if m else None
+
+
+def git(*args, cwd=None, check=True):
+    r = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
+    if check and r.returncode:
+        sys.exit(f"git {' '.join(args)} failed: {r.stderr.strip()}")
+    return r.stdout
+
+
+def read_lock(project):
+    p = project / "lineage.lock"
+    if not p.exists():
+        return None
+    return json.loads(p.read_text())
+
+
+def write_lock(project, lock):
+    (project / "lineage.lock").write_text(json.dumps(lock, indent=2) + "\n")
+
+
+def mirror(source):
+    MIRROR.parent.mkdir(parents=True, exist_ok=True)
+    if not MIRROR.exists():
+        git("clone", "--quiet", "--mirror", source, str(MIRROR))
+    else:
+        git("remote", "set-url", "origin", source, cwd=MIRROR)
+        git("fetch", "--quiet", "--prune", "--tags", "origin", cwd=MIRROR)
+    return MIRROR
+
+
+def tags(repo):
+    out = [t for t in git("tag", "--list", "v*", cwd=repo).split() if semver(t)]
+    return sorted(out, key=semver)
+
+
+def install(repo, tag):
+    dest = RELEASES / tag
+    if dest.exists() and (dest / "CHANGELOG.md").exists():
+        return dest
+    dest.mkdir(parents=True, exist_ok=True)
+    archive = subprocess.run(["git", "archive", tag], cwd=repo, capture_output=True, check=True).stdout
+    subprocess.run(["tar", "-x", "-C", str(dest)], input=archive, check=True)
+    return dest
+
+
+def changelog_between(repo, old, new):
+    text = git("show", f"{new}:CHANGELOG.md", cwd=repo, check=False)
+    out, keep = [], False
+    for line in text.splitlines():
+        m = re.match(r"^## (\d+\.\d+\.\d+)", line)
+        if m:
+            v = semver(m.group(1))
+            keep = v <= semver(new) and (not old or v > semver(old))
+        if keep:
+            out.append(line)
+    return "\n".join(out).strip()
+
+
+def generated_stories(project):
+    """Stories that exist as generated files: data/chapters.csv rows whose file is present."""
+    p = project / "data" / "chapters.csv"
+    rows = list(csv.DictReader(open(p, encoding="utf-8"))) if p.exists() else []
+    out = []
+    for r in rows:
+        f = r.get("file") or ""
+        if f and (project / f).is_file():
+            out.append({"id": str(r.get("chapter") or r.get("id") or f), "title": r.get("title", ""), "file": f})
+    if not rows:
+        for f in sorted((project / "chapters").glob("[0-8]*.typ")):
+            out.append({"id": f.stem.split("-")[0].lstrip("0") or f.stem, "title": f.stem, "file": f"chapters/{f.name}"})
+    return out
+
+
+def skills_links(project):
+    """(state, detail): whether .claude/skills points at an installed release."""
+    d = project / ".claude" / "skills"
+    if d.is_symlink():
+        return "linked", os.readlink(d)
+    if not d.is_dir():
+        return "absent", ""
+    links = [p for p in d.iterdir() if p.is_symlink()]
+    if links and all(str(RELEASES) in os.readlink(p) for p in links):
+        return "per-skill links", f"{len(links)} links into {RELEASES}"
+    return "own copies", "the project carries its own copies of the skills; an update does not change them"
+
+
+def relink_skills(project, release):
+    d = project / ".claude" / "skills"
+    src = release / "plugins" / "lineage" / "skills"
+    if d.is_symlink():
+        d.unlink()
+        d.symlink_to(src)
+        return [f".claude/skills -> {src}"]
+    changed = []
+    for p in d.iterdir():
+        if p.is_symlink() and str(RELEASES) in os.readlink(p):
+            target = src / p.name
+            p.unlink()
+            if target.exists():
+                p.symlink_to(target)
+                changed.append(f".claude/skills/{p.name} -> {target}")
+            else:
+                changed.append(f".claude/skills/{p.name} removed (not in {release.name})")
+    for s in src.iterdir():
+        if s.is_dir() and not (d / s.name).exists():
+            (d / s.name).symlink_to(s)
+            changed.append(f".claude/skills/{s.name} -> {s} (new in {release.name})")
+    return changed
+
+
+# ------------------------------------------------------------------------------- commands
+def cmd_version(a):
+    project = Path(a.project).resolve()
+    print(f"Lineage {this_version()}  ({HERE})")
+    lock = read_lock(project)
+    if not lock:
+        print(f"{project}: no lineage.lock (not pinned to a release)")
+        return 0
+    inst = RELEASES / lock.get("tag", "")
+    print(f"{project.name} runs Lineage {lock['lineage']} (tag {lock['tag']}, commit {lock.get('commit', '?')[:10]}), "
+          f"{'installed' if inst.exists() else 'NOT installed: run lineage update --apply'} at {inst}")
+    if lock.get("stale_on_update"):
+        print(f"stories marked stale by the last update: {', '.join(lock['stale_on_update'])}")
+    return 0
+
+
+def cmd_update(a):
+    project = Path(a.project).resolve()
+    lock = read_lock(project) or {}
+    source = os.environ.get("LINEAGE_SOURCE") or lock.get("source") or DEFAULT_SOURCE
+    repo = mirror(source)
+    all_tags = tags(repo)
+    if not all_tags:
+        sys.exit("no releases (tags vX.Y.Z) in " + source)
+    current = lock.get("tag")
+    target = a.to or all_tags[-1]
+    if target not in all_tags:
+        sys.exit(f"{target} is not a release; releases: {', '.join(all_tags)}")
+    if current == target:
+        print(f"{project.name} already runs {target}. Releases: {', '.join(all_tags)}")
+        return 0
+    print(f"{project.name}: {current or 'not pinned'} -> {target}\n")
+    print("What changed (CHANGELOG)\n" + "-" * 24)
+    print(changelog_between(repo, current, target) or "(no changelog entries)")
+    files = git("diff", "--name-only", f"{current}..{target}" if current else target, cwd=repo).split() if current else \
+        git("ls-tree", "-r", "--name-only", target, cwd=repo).split()
+    story_files = [f for f in files if f.startswith(STORY_PATHS)]
+    print(f"\nLineage files changed: {len(files)}" + (f" ({len(story_files)} can alter generated stories)" if current else ""))
+    for f in story_files[:40]:
+        print(f"  ! {f}")
+    stale = generated_stories(project) if (current and story_files) else []
+    state, detail = skills_links(project)
+    print("\nFiles of yours it would touch\n" + "-" * 29)
+    print("  lineage.lock                     the pinned release")
+    if stale:
+        print(f"  data/stale_stories.json          marks {len(stale)} stor{'y' if len(stale) == 1 else 'ies'} stale (no regeneration):")
+        for s in stale:
+            print(f"      {s['id']:>4}  {s['title']}  ({s['file']})")
+    if state in ("linked", "per-skill links"):
+        print(f"  .claude/skills                   re-pointed at {target} ({detail})")
+    else:
+        print(f"  .claude/skills                   untouched: {detail or state}")
+    print("  Nothing else: sources, transcripts, units, stories, people, records, photos and settings are never changed.")
+    if not a.apply:
+        print(f"\nDry run. To apply: lineage update --project {a.project} --to {target} --apply")
+        return 0
+    release = install(repo, target)
+    commit = git("rev-list", "-n1", target, cwd=repo).strip()
+    changed = relink_skills(project, release) if state in ("linked", "per-skill links") else []
+    if stale:
+        p = project / "data" / "stale_stories.json"
+        cur = json.loads(p.read_text()) if p.exists() else {}
+        now = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
+        for s in stale:
+            cur[s["id"]] = {"reason": f"Lineage {current} -> {target} changed: {', '.join(sorted({f.split('/')[2] for f in story_files}))}", "at": now}
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(cur, indent=1) + "\n")
+    write_lock(project, {**lock, "lineage": target.lstrip("v"), "tag": target, "commit": commit, "source": source,
+                         "installed_at": str(release).replace(str(Path.home()), "~"), "previous": (current or "").lstrip("v"),
+                         "updated": date.today().isoformat(), "stale_on_update": [s["id"] for s in stale]})
+    print(f"\nApplied: {project.name} now runs {target} (installed at {release}).")
+    for c in changed:
+        print("  " + c)
+    print("Review and commit: git add lineage.lock data/stale_stories.json && git commit")
+    return 0
+
+
+def cmd_dashboard(a):
+    project = Path(a.project).resolve()
+    lock = read_lock(project)
+    release = RELEASES / lock["tag"] if lock else HERE
+    if lock and not release.exists():
+        sys.exit(f"{lock['tag']} is not installed. Run: lineage update --project {a.project} --to {lock['tag']} --apply")
+    env = dict(os.environ, LINEAGE_PORT=str(a.port))
+    os.execve(str(release / "app" / "lineage"), [str(release / "app" / "lineage"), str(project)], env)
+
+
+def main():
+    ap = argparse.ArgumentParser(prog="lineage", description=__doc__.split("\n\n")[0])
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    for name in ("version", "update", "dashboard"):
+        p = sub.add_parser(name)
+        p.add_argument("--project", default=".")
+        if name == "update":
+            p.add_argument("--to", help="a release tag, default the newest")
+            p.add_argument("--apply", action="store_true", help="install and pin it (otherwise a dry run)")
+        if name == "dashboard":
+            p.add_argument("--port", type=int, default=int(os.environ.get("LINEAGE_PORT", 8777)))
+    a = ap.parse_args()
+    return {"version": cmd_version, "update": cmd_update, "dashboard": cmd_dashboard}[a.cmd](a)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

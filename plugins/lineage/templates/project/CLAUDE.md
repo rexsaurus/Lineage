@@ -1,5 +1,19 @@
 # This is a Lineage project
 
+## Where things go (read first)
+This project **uses** Lineage; it is not a copy of it.
+- **Platform changes go to the Lineage repo**, never here: style guides, story templates,
+  skills, the dashboard, scripts, the pipeline. They are released there as a tag and reach this
+  project through `make update-lineage`. Never fix platform code only in this project.
+- **This project holds only its own material**: sources, transcripts, story units, stories,
+  people, records, photos and its settings (`book.yaml`, `lineage.json`, `lineage.lock`).
+- **Genuinely one-off things** (a story template or caption convention nobody else would want)
+  go in `local-overrides/`, and you say so each time you put something there.
+- **When a request would cross the line**, say where it belongs first. If it is a platform
+  change, make it in Lineage, release it, then `make update-lineage APPLY=1` here; don't patch
+  the local copy.
+- `make lineage-version` shows the pinned release; `make dashboard` opens the dashboard.
+
 A book written from recorded interviews with a relative. The tools and rules live in the
 Lineage repo ($LINEAGE); the skills are linked into `.claude/skills/`.
 

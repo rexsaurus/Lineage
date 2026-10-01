@@ -5,6 +5,24 @@ Every entry says whether it changes anything that would alter already-generated 
 (templates, the book template, style guides, skills); when it does, a project updating to it
 marks those stories stale rather than regenerating them.
 
+## 0.4.0 — 2026-10-01
+
+**Alters generated stories: no.** Nothing under `plugins/lineage/book/`, `fonts/` or `skills/`.
+
+Projects are consumers of Lineage:
+- `bin/lineage version | update | dashboard`. `update` fetches the releases, prints the
+  changelog between the pinned release and the target and the files of the project it would
+  touch; with `--apply` it installs the release read-only under `~/.lineage/releases/<tag>`,
+  pins it in `lineage.lock`, re-points `.claude/skills` when it links to a release, and marks
+  stale (never regenerates) the stories a release would alter. Material is never touched.
+- The project template gains a `Makefile` (`make dashboard`, `make lineage-version`,
+  `make update-lineage [APPLY=1] [TO=vX.Y.Z]`), `lineage.lock`, `local-overrides/`, the
+  dashboard's runtime files in `.gitignore`, and the arrangement at the top of its CLAUDE.md.
+- `CLAUDE.md` for this repo: platform changes are made here and flow down; content stays in
+  the project; one-off things go in the project's `local-overrides/`.
+- Familypedia: empty Sources, Records and Photographs sections are hidden; a lone word that
+  only names a stub person (a surname off a roster) is no longer linked automatically.
+
 ## 0.3.2 — 2026-10-01
 
 **Alters generated stories: no.** Dashboard engine only (`app/familypedia.py`).

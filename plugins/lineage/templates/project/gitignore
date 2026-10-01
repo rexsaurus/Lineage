@@ -14,3 +14,10 @@ __pycache__/
 .DS_Store
 .env*
 *token*
+# Lineage dashboard runtime (keys stay in ~/.lineage, never in the project)
+.lineage/
+.trash/
+.thumbs/
+lineage.tmp
+data/search_index.json
+data/extracted/

@@ -40,7 +40,8 @@ let LINKER=null;
 function buildLinker(rows){
   const by=new Map(); rows.forEach(([name,slug,type])=>{ const k=name.toLowerCase(); if(!by.has(k)) by.set(k,[]); by.get(k).push({slug,type,name}); });
   // automatic links only for proper names: capitalised, not bare numbers or phrases like “his father”
-  const auto=rows.filter(([n,,t])=>t!=='event' && n.length>=4 && /^[A-Z][^]*[A-Za-z]/.test(n) && !/^\d+$/.test(n)).map(r=>r[0]);
+  // a lone word that only names a stub person (a surname off a roster) is too likely to be someone else
+  const auto=rows.filter(([n,,t,stub])=>t!=='event' && n.length>=4 && /^[A-Z][^]*[A-Za-z]/.test(n) && !/^\d+$/.test(n) && !(t==='person' && stub && !/\s/.test(n.trim()))).map(r=>r[0]);
   const uniq=[...new Set(auto)].sort((a,b)=>b.length-a.length).slice(0,4000);
   const rx = uniq.length ? new RegExp('(^|[^\\w])('+uniq.map(n=>esc(n).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')(?![\\w])','g') : null;
   LINKER={by, rx};
@@ -161,9 +162,9 @@ async function showArticle(slug){
     ${tiers}
     ${sec(`In their words · ${a.passages.length} passage${a.passages.length!==1?'s':''}`, a.passages.slice(0,60).map(m=>`<p class="quote">“${wikiLink(m.text,{skip:a.slug})}”<br><span class="who">${esc(m.speaker)}</span>${chip(m.cite)}${m.source?` <a class="chiplink" href="#" data-listen="${esc(m.source)}" data-t="${esc(m.t)}">listen</a>`:''}</p>`).join('')+(a.passages.length>60?`<p class="derived">and ${a.passages.length-60} more</p>`:''))}
     ${sec(`${esc(L.storiesAbout)} ${esc(a.title)}`, a.stories.map(s=>`<a class="wl" href="#stories?read=${encodeURIComponent(s.id)}">${esc(s.title)}</a>${s.state?` <span class="derived">${esc(s.state)}</span>`:''}`).join(' · '))}
-    ${sec(`Sources · ${a.sources.length}`, `<div class="fp-srcs">${a.sources.map(x=>`<a class="fp-src" href="#sources" data-src="${esc(x.id)}">${x.thumb?`<img src="${fileUrl(x.thumb)}" alt="">`:`<span class="icon ${esc(x.kind)}">${esc((typeof KIND_LABEL!=='undefined'&&KIND_LABEL[x.kind])||x.kind)}</span>`}<span>${esc(x.name)}<br><span class="derived">${esc(x.why)}</span></span></a>`).join('')}</div>`)}
-    ${sec(`Records · ${a.records.length}`, `<table class="fp-rec"><thead><tr><th>Type</th><th>Record</th><th>Archive</th><th>Number</th><th>Date</th><th>Retrieved</th></tr></thead><tbody>${a.records.slice(0,80).map(rec).join('')}</tbody></table>${a.records.length>80?`<p class="derived">and ${a.records.length-80} more in <a href="#familypedia?view=records">Records</a></p>`:''}`)}
-    ${sec(`Photographs and illustrations · ${a.photos.length}`, `<div class="fp-photos">${a.photos.map(photo).join('')}</div>`)}
+    ${sec(`Sources · ${a.sources.length}`, a.sources.length&&`<div class="fp-srcs">${a.sources.map(x=>`<a class="fp-src" href="#sources" data-src="${esc(x.id)}">${x.thumb?`<img src="${fileUrl(x.thumb)}" alt="">`:`<span class="icon ${esc(x.kind)}">${esc((typeof KIND_LABEL!=='undefined'&&KIND_LABEL[x.kind])||x.kind)}</span>`}<span>${esc(x.name)}<br><span class="derived">${esc(x.why)}</span></span></a>`).join('')}</div>`)}
+    ${sec(`Records · ${a.records.length}`, a.records.length&&`<table class="fp-rec"><thead><tr><th>Type</th><th>Record</th><th>Archive</th><th>Number</th><th>Date</th><th>Retrieved</th></tr></thead><tbody>${a.records.slice(0,80).map(rec).join('')}</tbody></table>${a.records.length>80?`<p class="derived">and ${a.records.length-80} more in <a href="#familypedia?view=records">Records</a></p>`:''}`)}
+    ${sec(`Photographs and illustrations · ${a.photos.length}`, a.photos.length&&`<div class="fp-photos">${a.photos.map(photo).join('')}</div>`)}
     ${sec('Related articles', related)}
     ${sec('Story units', a.units.map(u=>`<span class="chiplink" title="${esc(u.id)}">${esc(u.id)} · ${esc(u.title)}</span>`).join(' '))}
     <section class="tier"><h4>Notes <span class="derived">stated by me</span></h4><textarea id="wk-notes" rows="3" placeholder="What you know that the material doesn't say. [[Links]] work here. Your notes outrank anything derived.">${esc(a.notes)}</textarea>

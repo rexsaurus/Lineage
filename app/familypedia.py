@@ -726,13 +726,13 @@ def link_table(project):
     for k, slugs in ix["keys"].items():
         if len(slugs) == 1:
             s = ix["subs"][next(iter(slugs))]
-            rows.append([k, s["slug"], s["type"]])
+            rows.append([k, s["slug"], s["type"], s["stub"]])
         else:
             for slug in sorted(slugs):
                 s = ix["subs"][slug]
-                rows.append([k, slug, s["type"]])
+                rows.append([k, slug, s["type"], s["stub"]])
     for s in ix["subs"].values():
-        rows.append([s["title"], s["slug"], s["type"]])
+        rows.append([s["title"], s["slug"], s["type"], s["stub"]])
     seen, out = set(), []
     for r in sorted(rows, key=lambda r: -len(r[0])):
         if (r[0].lower(), r[1]) not in seen:

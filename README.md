@@ -25,6 +25,24 @@ covers the whole distance:
 
 ---
 
+## Your book project uses Lineage; it doesn't contain it
+
+A book project (made with `make new`) keeps only its own material: recordings, transcripts,
+stories, people, records, photos. Everything else (skills, style, templates, scripts, the
+dashboard) stays in Lineage and reaches the project as a release. The project pins the release
+it runs in `lineage.lock`:
+
+```bash
+make lineage-version          # what this project runs
+make update-lineage           # what a newer release would change, and which of your files it touches
+make update-lineage APPLY=1   # install and pin it; stories it would alter are marked stale, never rewritten
+make dashboard                # the dashboard, on this project
+```
+
+Improvements found while working on a book go into Lineage and come back down as a release,
+so every project gets them. Things only one family would want go in that project's
+`local-overrides/`.
+
 ## What it produces
 
 Here is one chapter, start to finish. It came from about twenty minutes of my dad talking
