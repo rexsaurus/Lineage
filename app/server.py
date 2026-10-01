@@ -106,7 +106,12 @@ DEFAULT_SETTINGS = {
     "quote_density": "standard", "ornament": "❧", "bridges_in_drafts": True, "opener": "dropcap",
     "trim": "7x10", "printer": "kdp", "drive_folder": "", "sync_sources": False, "sync_outputs": False,
     "terminal_command": "", "terminal_cwd": "", "voice_id": "", "voice_name": "",
+    "family_name": "", "subtitle": "", "summary": "", "subject_short": "", "covers_override": "",
 }
+# Changing these marks the pages built from them stale (never rewritten silently).
+IDENTITY_DEPENDENTS = {"title": ["title page", "introduction draft", "Familypedia front page"],
+                       "summary": ["introduction draft", "Familypedia front page"],
+                       "family_name": ["Familypedia front page", "records appendix"]}
 
 
 # ---------------------------------------------------------------- config (machine level)
@@ -358,6 +363,54 @@ def engine_make_page(project, source_id):
 
 
 
+# ---------------------------------------------------------------- identity of the lineage
+def engine_covers(project):
+    """Date range and places, from the timeline: '1834–1974 · Connecticut, Massachusetts'."""
+    tl = project.root / "facts" / "timeline.csv"
+    if not tl.exists():
+        return {"years": None, "places": [], "text": ""}
+    rows = list(csv.DictReader(open(tl, encoding="utf-8")))
+    years = sorted(int(y) for r in rows for y in YEAR.findall((r.get("date_start") or "") + " " + (r.get("date_end") or "")))
+    places = []
+    for r in sorted(rows, key=lambda r: r.get("date_start") or "9999"):
+        p = (r.get("place") or "").split(",")[-1].strip()
+        if p and p not in places:
+            places.append(p)
+    yr = (f"{years[0]}–{years[-1]}" if years[0] != years[-1] else str(years[0])) if years else ""
+    return {"years": yr, "places": places, "text": " · ".join(x for x in (yr, ", ".join(places[:6])) if x)}
+
+
+def engine_identity(project):
+    s = project.read()
+    st = s["settings"]
+    crest = next((p for p in (project.root / ".lineage").glob("crest.*")), None)
+    auto = engine_covers(project)
+    return {"family_name": st.get("family_name", ""), "title": s.get("title", ""), "subtitle": st.get("subtitle", ""),
+            "summary": st.get("summary", ""), "subject": s.get("subject", ""), "subject_short": st.get("subject_short", ""),
+            "covers_auto": auto["text"], "covers": st.get("covers_override") or auto["text"],
+            "covers_overridden": bool(st.get("covers_override")),
+            "crest": crest.relative_to(project.root).as_posix() if crest else None,
+            "display_title": s.get("title") or "Untitled lineage", "stale": s.get("stale", [])}
+
+
+def engine_draft_summary(project):
+    """A plain first draft of the summary, from counts in the project. Derived: the author edits it."""
+    s = project.read()
+    sessions = list(csv.DictReader(open(project.root / "transcript" / "sessions.csv", encoding="utf-8"))) \
+        if (project.root / "transcript" / "sessions.csv").exists() else []
+    stories = [x for x in engine_stories(project) if x["exists"]]
+    people = [a for a in engine_familypedia(project) if a["type"] == "person"]
+    cov = engine_covers(project)
+    subject = s.get("subject") or "the subject"
+    bits = [f"This collection holds {len(sessions)} recorded conversation{'s' if len(sessions) != 1 else ''} with {subject}"
+            + (f", and {len(stories)} stor{'y' if len(stories) == 1 else 'ies'} written from them" if stories else "") + "."]
+    if people:
+        bits.append(f"It names {len(people)} people, among them {', '.join(a['title'] for a in people[:4])}.")
+    if cov["text"]:
+        bits.append(f"It covers {cov['text'].replace(' · ', ', in ')}.")
+    bits.append("Everything in it comes from what was said on the recordings and from the records cited alongside.")
+    return " ".join(bits)
+
 # ---------------------------------------------------------------- stories
 # A story is one written piece (a chapter file on disk). The UI says "story"; the files keep
 # their names (chapters/, data/chapters.csv) so the Lineage skills downstream don't change.
@@ -584,7 +637,7 @@ def engine_article(project, slug):
     lead = edits.get("lead") or (
         f"{a['title']} appears in {len(units)} stor{'y' if len(units) == 1 else 'ies'} of the recordings"
         + (f" and {len(events)} timeline event{'s' if len(events) != 1 else ''}" if events else "")
-        + (f", between {dates[0]} and {dates[-1]}" if len(dates) > 1 else (f", {dates[0]}" if dates else "")) + ".")
+        + (f", between {dates[0]} and {dates[-1]}" if len(set(dates)) > 1 else (f", {dates[0]}" if dates else "")) + ".")
     open_q = [f"Only one mention so far: ask about {a['title']} in the next recording."] if a["stub"] else []
     open_q += [f"{e['event']} — confidence {e['confidence']}" for e in events if e.get("confidence") == "low"]
     return {**a, "lead": lead, "lead_by": "me" if edits.get("lead") else "derived", "notes": edits.get("notes", ""),
@@ -1518,7 +1571,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             "trims": TRIMS, "printers": PRINTERS, "quick_prompts": QUICK_PROMPTS,
             "keys": {p: mask(cfg["keys"].get(p, "")) for p in PROVIDERS},
             "providers": {p: {"label": v["label"], "use": v["use"]} for p, v in PROVIDERS.items()},
-            "paths": self.paths(), "terminal": TERMINAL.info(),
+            "paths": self.paths(), "terminal": TERMINAL.info(), "identity": engine_identity(self.project),
             "previews": sorted(p.name for p in pv.glob("*.png")) if pv.exists() else [],
         })
 
@@ -1536,12 +1589,57 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def post_settings(self, q):
         d = self.read_json()
         s = self.project.read()
+        stale = set(s.get("stale", []))
+        for k, deps in IDENTITY_DEPENDENTS.items():
+            old = s.get(k) if k == "title" else s["settings"].get(k)
+            if k in d and str(d[k]) != str(old or ""):
+                stale.update(deps)
+        s["stale"] = sorted(stale)
         for k in ("title", "subject"):
             if k in d:
                 s[k] = str(d.pop(k))
         s["settings"].update(d)
         self.project.write(s)
-        return self.send_json({"title": s["title"], "subject": s["subject"], "settings": s["settings"]})
+        return self.send_json({"title": s["title"], "subject": s["subject"], "settings": s["settings"],
+                               "identity": engine_identity(self.project)})
+
+    def identity(self, q):
+        return self.send_json(engine_identity(self.project))
+
+    def identity_draft(self, q):
+        return self.send_json({"summary": engine_draft_summary(self.project), "by": "derived"})
+
+    def identity_fresh(self, q):
+        """The author has looked at the stale pages; clear the marks."""
+        s = self.project.read()
+        drop = set(self.read_json().get("items") or s.get("stale", []))
+        s["stale"] = [x for x in s.get("stale", []) if x not in drop]
+        self.project.write(s)
+        return self.send_json(engine_identity(self.project))
+
+    def crest(self, q):
+        """One image file: the family crest or cover, used on the header and title page."""
+        ctype = self.headers.get("Content-Type", "")
+        m = re.search(r"boundary=(.+)$", ctype)
+        if not m:
+            return self.send_json({"error": "expected multipart"}, 400)
+        body = self.rfile.read(int(self.headers["Content-Length"]))
+        for part in body.split(b"--" + m.group(1).strip('"').encode()):
+            fn = re.search(rb'filename="([^"]*)"', part.split(b"\r\n\r\n", 1)[0])
+            if fn and fn.group(1) and b"\r\n\r\n" in part:
+                ext = Path(fn.group(1).decode(errors="replace")).suffix.lower()
+                if ext not in (".png", ".jpg", ".jpeg", ".svg", ".webp", ".gif"):
+                    return self.send_json({"error": "use a PNG, JPEG, SVG, WebP or GIF"}, 400)
+                data = part.split(b"\r\n\r\n", 1)[1]
+                data = data[:-2] if data.endswith(b"\r\n") else data
+                for old in (self.project.root / ".lineage").glob("crest.*"):
+                    old.unlink()
+                (self.project.root / ".lineage" / f"crest{ext}").write_bytes(data)
+                s = self.project.read()
+                s["stale"] = sorted(set(s.get("stale", [])) | {"title page", "Familypedia front page"})
+                self.project.write(s)
+                return self.send_json(engine_identity(self.project))
+        return self.send_json({"error": "no file"}, 400)
 
     def voices(self, q):
         v, live = list_voices(load_config()["keys"].get("elevenlabs", ""))
@@ -1820,6 +1918,10 @@ ROUTES = {
     ("GET", "/api/bootstrap"): Handler.bootstrap,
     ("GET", "/api/settings"): Handler.get_settings,
     ("POST", "/api/settings"): Handler.post_settings,
+    ("GET", "/api/identity"): Handler.identity,
+    ("POST", "/api/identity/draft-summary"): Handler.identity_draft,
+    ("POST", "/api/identity/fresh"): Handler.identity_fresh,
+    ("POST", "/api/identity/crest"): Handler.crest,
     ("POST", "/api/upload"): Handler.upload,
     ("GET", "/api/file"): Handler.file,
     ("POST", "/api/reveal"): Handler.reveal,
