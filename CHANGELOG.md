@@ -5,6 +5,13 @@ Every entry says whether it changes anything that would alter already-generated 
 (templates, the book template, style guides, skills); when it does, a project updating to it
 marks those stories stale rather than regenerating them.
 
+## 0.3.2 — 2026-10-01
+
+**Alters generated stories: no.** Dashboard engine only (`app/familypedia.py`).
+
+- A place on a route now links back to the ships and voyages whose route it is ("On the
+  route of"), so a vessel, its ports and its voyage are reachable from each other.
+
 ## 0.3.1 — 2026-10-01
 
 **Alters generated stories: no.** Dashboard engine only (`app/familypedia.py`).

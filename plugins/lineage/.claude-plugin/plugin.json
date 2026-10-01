@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "lineage",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Turn recorded interviews with a relative into a printed book: transcription, story units, chapter map, sourced third-person chapters, family-history research, photos, Typst layout and print preflight.",
   "author": { "name": "Lineage contributors" },
   "homepage": "https://github.com/rexsaurus/Lineage",

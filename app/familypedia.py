@@ -944,6 +944,12 @@ def _related(ix, s):
                 pl = ix["by_norm"].get(("place", norm(_clean_place(r.get("place", "")))))
                 put("Ports and places", pl, r.get("date", ""))
     if s["type"] == "place":
+        for f in dict.fromkeys(s["routes"]):          # a port links back to the ships and voyages whose route it is on
+            tr = next((t for t in ix["tracks"] if t["file"] == f), None)
+            if tr:
+                when = next((r.get("date", "") for r in tr["rows"] if norm(_clean_place(r.get("place", ""))) in {norm(s["title"]), *(norm(a) for a in s["aliases"])}), "")
+                for slug in tr.get("subjects") or []:
+                    put("On the route of", slug, when)
         for x in s["events"]:
             ev = ix["timeline"].get(x)
             if ev:
@@ -962,7 +968,7 @@ def _related(ix, s):
     for slug, n in sorted(co.items(), key=lambda kv: -kv[1])[:16]:
         if not any(slug in g for g in groups.values()):
             put("Appears alongside", slug, f"{n} shared stor{'y' if n == 1 else 'ies'} or event{'s' if n != 1 else ''}")
-    order = ["Voyages", "Masters", "Ports and places", "People aboard", "Members", "People", "People who were there",
+    order = ["On the route of", "Voyages", "Masters", "Ports and places", "People aboard", "Members", "People", "People who were there",
              "Events here", "Places"] + list(TYPE_LABELS.values()) + ["Appears alongside"]
     out = []
     for name in sorted(groups, key=lambda g: order.index(g) if g in order else 99):
