@@ -24,7 +24,7 @@ leave a clearly named hook where the Lineage skills get wired in.
 import argparse, base64, csv, fcntl, hashlib, http.server, json, mimetypes, os, pty, queue, re
 import secrets, shlex, shutil, signal, socketserver, struct, subprocess, termios, threading, time
 import urllib.error, urllib.parse, urllib.request, uuid, warnings
-from html import escape as html_escape
+from html import escape as html_escape, unescape as html_unescape
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -37,6 +37,7 @@ CONFIG_FILE = CONFIG_DIR / "config.json"
 GOOGLE_TOKEN_FILE = CONFIG_DIR / "google_token.json"
 TOKEN = secrets.token_urlsafe(32)          # minted at start, injected into index.html
 PORT = 8777
+DEMO = False   # --demo: invented sample results for development, with a banner. Never the default.
 
 # =========================================================================================
 # Shared vocabulary for the style choices (used by the engine and shown by the dashboard)
@@ -247,6 +248,7 @@ def engine_sources(project):
     drive = drive_map(project)
     units = list(_texts(project, ["content/units/*.md"]))
     chapters = list(_texts(project, ["chapters/*.typ", "chapters/*.md"]))
+    by_path = {r["path"]: r for r in intake_load(project).values() if not r.get("trashed")}
     rows = []
     for folder in ("sources", "audio"):
         d = project.root / folder
@@ -273,13 +275,24 @@ def engine_sources(project):
                 status = "transcribed"
             else:
                 status = "unused"
+            rel = f.relative_to(project.root).as_posix()
+            ir = by_path.get(rel)
+            eff = effective(ir) if ir else None
             rows.append({
-                "id": f.relative_to(project.root).as_posix(), "name": f.name, "kind": kind, "bytes": st.st_size,
+                "rid": ir["id"] if ir else None, "indexed": bool(ir and (ir.get("stages") or {}).get("index", {}).get("state") == "done"),
+                "stages": (ir or {}).get("stages", {}), "thumb": (ir or {}).get("thumb"),
+                "display_name": (eff or {}).get("accepted_name") or f.name, "renamed": bool(eff and eff.get("accepted_name")),
+                "summary": (eff or {}).get("summary") or "", "summary_by": (eff or {}).get("by", {}).get("summary"),
+                "doc_kind": (eff or {}).get("doc_kind"), "content_date": (eff or {}).get("date_range") or "",
+                "people": (eff or {}).get("people") or [], "added_by": (ir or {}).get("added_by", "me"),
+                "transcription": (ir or {}).get("transcription"), "in_drive": bool((ir or {}).get("drive_id")),
+                "notes": (ir or {}).get("notes", ""),
+                "id": rel, "name": f.name, "kind": kind, "bytes": st.st_size,
                 "added": datetime.fromtimestamp(st.st_mtime, timezone.utc).isoformat(timespec="seconds"),
                 "duration": media_duration(f) if kind in ("audio", "video") else None,
                 "session": sid, "transcribed": transcribed, "units": n_units, "cited_in": cited,
                 "status": status, "file_url": f.as_uri(),
-                "drive_url": f"https://drive.google.com/file/d/{drive[f.name]}/view" if f.name in drive else None,
+                "drive_url": (ir or {}).get("drive_url") or (f"https://drive.google.com/file/d/{drive[f.name]}/view" if f.name in drive else None),
             })
     return rows
 
@@ -362,6 +375,495 @@ def engine_make_page(project, source_id):
     return out.relative_to(project.root).as_posix()
 
 
+
+# ---------------------------------------------------------------- source intake
+# Every file runs ingest → extract → understand → index (→ Drive). Each stage writes to
+# data/sources.json; a failed stage never loses the file. My edits (row["mine"]) always win and
+# survive a re-scan. The original file is never modified or renamed on disk.
+INTAKE_LOCK = threading.Lock()
+INTAKE_STAGES = ("ingest", "extract", "understand", "index", "drive")
+STRUCTURED = ("what", "who", "about", "provenance")
+DOC_KINDS = ("letter", "photo", "certificate", "record", "transcript", "recording", "notes", "other")
+INTAKE_MODEL = "claude-haiku-4-5-20251001"
+
+
+def _now():
+    return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
+
+
+def _index_path(project):
+    return project.root / "data" / "sources.json"
+
+
+def intake_load(project):
+    p = _index_path(project)
+    return json.loads(p.read_text()) if p.exists() else {}
+
+
+def intake_save_row(project, row):
+    with INTAKE_LOCK:
+        data = intake_load(project)
+        data[row["id"]] = row
+        tmp = _index_path(project).with_suffix(".tmp")
+        tmp.write_text(json.dumps(data, indent=1, ensure_ascii=False))
+        tmp.replace(_index_path(project))
+
+
+def _sha256_bytes(b):
+    return hashlib.sha256(b).hexdigest()
+
+
+def _sha256_file(p):
+    h = hashlib.sha256()
+    with open(p, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def intake_find_hash(project, sha):
+    return next((r for r in intake_load(project).values() if r.get("sha256") == sha and not r.get("trashed")), None)
+
+
+def _stage(row, name, state, detail=""):
+    row.setdefault("stages", {})[name] = {"state": state, "detail": detail, "at": _now()}
+
+
+def _docx_text(path):
+    import zipfile
+    with zipfile.ZipFile(path) as z:
+        xml = z.read("word/document.xml").decode("utf-8", errors="ignore")
+    xml = re.sub(r"</w:p>", "\n", xml)
+    return html_unescape(re.sub(r"<[^>]+>", "", xml))
+
+
+def _anthropic(messages, max_tokens=900):
+    key = load_config()["keys"].get("anthropic")
+    if not key:
+        return None
+    req = urllib.request.Request("https://api.anthropic.com/v1/messages", method="POST",
+                                 data=json.dumps({"model": INTAKE_MODEL, "max_tokens": max_tokens, "messages": messages}).encode(),
+                                 headers={"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"})
+    with urllib.request.urlopen(req, timeout=90) as r:
+        body = json.loads(r.read().decode())
+    return "".join(b.get("text", "") for b in body.get("content", []) if b.get("type") == "text")
+
+
+def _thumbnail(project, row, src):
+    """A cached thumbnail in <project>/.thumbs/: image, PDF first page, video poster, audio waveform."""
+    out = project.root / ".thumbs" / f"{row['id']}.png"
+    out.parent.mkdir(exist_ok=True)
+    kind = row["kind"]
+    try:
+        if kind == "pdf" and shutil.which("pdftoppm"):
+            subprocess.run(["pdftoppm", "-png", "-f", "1", "-l", "1", "-scale-to", "320", "-singlefile", str(src),
+                            str(out.with_suffix(""))], capture_output=True, timeout=60)
+        elif kind in ("image", "video") and shutil.which("ffmpeg"):
+            args = ["-ss", "1"] if kind == "video" else []
+            subprocess.run(["ffmpeg", "-loglevel", "error", "-y", *args, "-i", str(src), "-frames:v", "1",
+                            "-vf", "scale=320:-2", str(out)], capture_output=True, timeout=60)
+        elif kind == "audio" and shutil.which("ffmpeg"):
+            subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(src), "-filter_complex",
+                            "aformat=channel_layouts=mono,showwavespic=s=320x90:colors=#C96F4A", "-frames:v", "1", str(out)],
+                           capture_output=True, timeout=120)
+    except Exception:
+        pass
+    return out.relative_to(project.root).as_posix() if out.exists() else None
+
+
+def _known_entities(project):
+    people, places = set(), set()
+    for a in engine_familypedia(project):
+        (people if a["type"] == "person" else places if a["type"] == "place" else set()).add(a["title"])
+    return people, places
+
+
+def _heuristic_understanding(project, row, text):
+    people, places = _known_entities(project)
+    found_people = sorted(p for p in people if p.split(",")[0] in text)
+    found_places = sorted(p for p in places if p.split(",")[0] in text)
+    years = sorted(set(YEAR.findall(text)))
+    sentences = re.split(r"(?<=[.!?])\s+", re.sub(r"\s+", " ", text).strip())
+    summary = " ".join(sentences[:2])[:400] if text.strip() else ""
+    return {"summary": summary, "people": found_people, "places": found_places, "organizations": [],
+            "date_range": (f"{years[0]}–{years[-1]}" if len(years) > 1 else years[0]) if years else "",
+            "doc_kind": {"audio": "recording", "video": "recording", "image": "photo"}.get(row["kind"], "other"),
+            "confidence": {"summary": "low", "people": "medium", "places": "medium", "date_range": "low", "doc_kind": "low"},
+            "method": "basic (no Anthropic key): first sentences and names the project already knows. "
+                      "Add a key in Connectors, then Re-ingest, for a real summary and name"}
+
+
+def _model_understanding(project, row, text):
+    people, places = _known_entities(project)
+    prompt = (
+        "You are cataloguing one item for a family-history archive. Read the extracted text and answer ONLY with JSON:\n"
+        '{"summary": "2-3 plain factual sentences, no adjectives doing work", '
+        '"title": "a short descriptive title, lower-case words", "content_date": "YYYY-MM-DD or YYYY-MM or YYYY ONLY if the text states it, else empty", '
+        '"people": [], "places": [], "organizations": [], "date_range": "", '
+        f'"doc_kind": "one of {", ".join(DOC_KINDS)}", '
+        '"confidence": {"summary": "high|medium|low", "people": "...", "places": "...", "date_range": "...", "doc_kind": "..."}}\n'
+        "Never invent a date, a name or a relationship the text does not support. List only people and places the text "
+        "actually names: don't map an unnamed reference ('the lake', 'Father') to a known person or place. "
+        f"People already known in this project: {', '.join(sorted(people)[:60]) or 'none'}. "
+        f"Places already known: {', '.join(sorted(places)[:60]) or 'none'}.\n\n"
+        f"File name: {row['original_name']}\nKind: {row['kind']}\n\nEXTRACTED TEXT:\n{text[:12000]}")
+    out = _anthropic([{"role": "user", "content": prompt}])
+    m = re.search(r"\{.*\}", out or "", re.S)
+    if not m:
+        raise ValueError("the model did not return JSON")
+    d = json.loads(m.group(0))
+    d["method"] = f"model ({INTAKE_MODEL})"
+    return d
+
+
+def _suggested_name(row, title, content_date, text):
+    """lower-case-hyphenated, dated only when the content supports the date; extension kept."""
+    ext = Path(row["original_name"]).suffix.lower()
+    slug = re.sub(r"[^a-z0-9]+", "-", (title or Path(row["original_name"]).stem).lower()).strip("-")[:70] or "untitled"
+    date, basis = "", ""
+    if content_date and (content_date in text or content_date[:4] in text):
+        date, basis = content_date, "date from the content"
+    else:
+        date, basis = row["date_added"][:10], "no date in the content: prefix is the date added"
+    return f"{date}-{slug}{ext}", basis
+
+
+def _links_to(project, row):
+    """Existing sources, timeline events and stories this one bears on (by shared people/places/years)."""
+    links = []
+    people, places = set(row.get("people") or []), set(row.get("places") or [])
+    years = set(YEAR.findall(row.get("date_range") or ""))
+    tl = project.root / "facts" / "timeline.csv"
+    for e in (csv.DictReader(open(tl, encoding="utf-8")) if tl.exists() else []):
+        ep = set(x.strip() for x in (e.get("people") or "").split(";") if x.strip())
+        if ep & people or (e.get("place") and e["place"] in places) or (years and (e.get("date_start") or "")[:4] in years):
+            links.append({"type": "event", "id": e["event_id"], "label": e["event"]})
+    for other in intake_load(project).values():
+        if other["id"] != row["id"] and not other.get("trashed") and (set(other.get("people") or []) & people or set(other.get("places") or []) & places):
+            links.append({"type": "source", "id": other["id"], "label": other.get("accepted_name") or other["original_name"]})
+    for st in engine_stories(project):
+        f = project.root / st["file"]
+        if f.is_file():
+            t = f.read_text(encoding="utf-8", errors="ignore")
+            if any(p.split(",")[0] in t for p in people | places):
+                links.append({"type": "story", "id": st["id"], "label": st["title"]})
+    return links[:40]
+
+
+def intake_run(project, row_id, rescan=False):
+    """Stages 2–5 for one row. Stage 1 (ingest) happened on upload. Never raises: failures are rows."""
+    data = intake_load(project)
+    row = data.get(row_id)
+    if not row:
+        return
+    src = project.root / row["path"]
+    # ---- 2. extract
+    try:
+        _stage(row, "extract", "running"); intake_save_row(project, row)
+        text, source, conf = "", "none", None
+        kind = row["kind"]
+        if kind == "pdf":
+            if shutil.which("pdftotext"):
+                r = subprocess.run(["pdftotext", "-layout", str(src), "-"], capture_output=True, text=True, timeout=120)
+                text = r.stdout
+                source = "pdf text layer" if text.strip() else "none"
+            if not text.strip():
+                if shutil.which("tesseract") and shutil.which("pdftoppm"):
+                    tmp = project.root / ".lineage" / f"ocr-{row_id}"
+                    subprocess.run(["pdftoppm", "-png", "-r", "200", str(src), str(tmp)], capture_output=True, timeout=300)
+                    parts = []
+                    for img in sorted(tmp.parent.glob(f"ocr-{row_id}*.png")):
+                        parts.append(subprocess.run(["tesseract", str(img), "-"], capture_output=True, text=True, timeout=300).stdout)
+                        img.unlink()
+                    text, source, conf = "\n".join(parts), "ocr", "unknown"
+                else:
+                    row["extract_note"] = "no text layer, and OCR (tesseract) is not installed: paste the text in the Edit drawer"
+        elif kind == "image":
+            if shutil.which("tesseract"):
+                text = subprocess.run(["tesseract", str(src), "-"], capture_output=True, text=True, timeout=180).stdout
+                source, conf = ("ocr" if text.strip() else "none"), "unknown"
+            else:
+                row["extract_note"] = "OCR (tesseract) is not installed; the vision pass below describes the image instead"
+            if load_config()["keys"].get("anthropic") and src.stat().st_size < 4_500_000 and src.suffix.lower() in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                media = mimetypes.guess_type(src.name)[0] or "image/jpeg"
+                desc = _anthropic([{"role": "user", "content": [
+                    {"type": "image", "source": {"type": "base64", "media_type": media, "data": base64.b64encode(src.read_bytes()).decode()}},
+                    {"type": "text", "text": "Describe what is pictured in 2-3 plain sentences, and transcribe any handwriting or printing exactly. "
+                                             "Never name a person from how they look; name someone only if writing on the item names them."}]}])
+                if desc:
+                    row["vision"] = {"text": desc.strip(), "by": "derived", "model": INTAKE_MODEL}
+                    text = (text + "\n\n[vision description, inferred]\n" + desc).strip()
+                    source = source if source != "none" else "vision (inferred)"
+        elif kind in ("audio", "video"):
+            row["duration"] = media_duration(src)
+            sid = session_map(project).get(src.name)
+            row["transcription"] = "done" if sid and (project.root / "transcript" / "clean" / f"{sid}.md").exists() else (row.get("transcription") or "queued")
+            if row["transcription"] == "done":
+                text, source = (project.root / "transcript" / "clean" / f"{sid}.md").read_text(encoding="utf-8"), "transcript"
+        elif src.suffix.lower() == ".docx":
+            text, source = _docx_text(src), "direct"
+        elif kind == "text" and src.suffix.lower() in (".txt", ".md", ".csv", ".json", ".html"):
+            text, source = src.read_text(encoding="utf-8", errors="replace"), "direct"
+        else:
+            row["extract_note"] = (f"can't read {src.suffix or 'this'} files yet: open it, copy the text, and paste it under "
+                                   "Edit details → Extracted text; the rest of intake runs from there")
+        if (row.get("mine") or {}).get("text") is not None:
+            text, source = row["mine"]["text"], "edited by me"
+        ex = project.root / "data" / "extracted" / f"{row_id}.txt"
+        ex.parent.mkdir(parents=True, exist_ok=True)
+        ex.write_text(text, encoding="utf-8")
+        row.update(text_source=source, text_confidence=conf, extracted=ex.relative_to(project.root).as_posix(), text_chars=len(text))
+        row["thumb"] = _thumbnail(project, row, src)
+        _stage(row, "extract", "done", row.get("extract_note") or source)
+    except Exception as e:
+        text = ""
+        _stage(row, "extract", "failed", f"{type(e).__name__}: {e}")
+    intake_save_row(project, row)
+    # ---- 3. understand
+    try:
+        _stage(row, "understand", "running"); intake_save_row(project, row)
+        if row["kind"] in ("audio", "video") and row.get("transcription") != "done" and not text.strip():
+            u = {"summary": "", "people": [], "places": [], "organizations": [], "date_range": "", "doc_kind": "recording",
+                 "confidence": {}, "method": "waiting for transcription"}
+        else:
+            try:
+                u = _model_understanding(project, row, text) if load_config()["keys"].get("anthropic") and text.strip() else _heuristic_understanding(project, row, text)
+            except Exception as e:
+                u = _heuristic_understanding(project, row, text)
+                u["method"] += f" (model call failed: {type(e).__name__})"
+        name, basis = _suggested_name(row, u.get("title"), u.get("content_date", ""), text)
+        derived = {"summary": u.get("summary", ""), "people": u.get("people", []), "places": u.get("places", []),
+                   "organizations": u.get("organizations", []), "date_range": u.get("date_range", ""),
+                   "doc_kind": u.get("doc_kind") if u.get("doc_kind") in DOC_KINDS else "other",
+                   "suggested_name": name, "suggested_name_basis": basis,
+                   "confidence": u.get("confidence", {}), "method": u.get("method", "")}
+        row["derived"] = derived
+        _stage(row, "understand", "done", derived["method"])
+    except Exception as e:
+        _stage(row, "understand", "failed", f"{type(e).__name__}: {e}")
+    intake_save_row(project, row)
+    # ---- 4. index
+    try:
+        eff = effective(row)
+        row["links_to"] = _links_to(project, eff)
+        idx = project.root / "data" / "search_index.json"
+        with INTAKE_LOCK:
+            index = json.loads(idx.read_text()) if idx.exists() else {}
+            index[row_id] = " ".join([eff.get("accepted_name") or "", row["original_name"], eff.get("summary") or "",
+                                      " ".join(eff.get("people") or []), " ".join(eff.get("places") or []),
+                                      row.get("notes") or "", " ".join((row.get("fields") or {}).values()), text[:50000]])
+            idx.write_text(json.dumps(index, ensure_ascii=False))
+        _stage(row, "index", "done")
+    except Exception as e:
+        _stage(row, "index", "failed", f"{type(e).__name__}: {e}")
+    intake_save_row(project, row)
+    # ---- 5. drive
+    st = project.read()["settings"]
+    want = row.get("store_in_drive", st.get("store_in_drive", False))
+    if not drive_status()["connected"]:
+        _stage(row, "drive", "skipped", "Enable the Google Drive connector in Connectors")
+    elif not want:
+        _stage(row, "drive", "skipped", "not stored in Drive")
+    elif not drive_folder_id(st.get("drive_folder")):
+        _stage(row, "drive", "skipped", "no Drive folder set in Settings")
+    else:
+        try:
+            folder = _drive_subfolder(_drive_subfolder(drive_folder_id(st["drive_folder"]), "sources", create=True) or "", row["kind"], create=True)
+            name = effective(row).get("accepted_name") or row["original_name"]
+            boundary = "lineage" + secrets.token_hex(8)
+            meta = json.dumps({"name": name, "parents": [folder]})
+            body = (f"--{boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n{meta}\r\n"
+                    f"--{boundary}\r\nContent-Type: {row.get('mime') or 'application/octet-stream'}\r\n\r\n").encode() \
+                + src.read_bytes() + f"\r\n--{boundary}--\r\n".encode()
+            res = drive_api("/upload/drive/v3/files", {"uploadType": "multipart", "supportsAllDrives": "true", "fields": "id,webViewLink"},
+                            "POST", body, {"Content-Type": f"multipart/related; boundary={boundary}"})
+            row["drive_id"], row["drive_url"] = res.get("id"), res.get("webViewLink")
+            _stage(row, "drive", "done", name)
+        except Exception as e:
+            _stage(row, "drive", "failed", f"{type(e).__name__}: {e}")
+    intake_save_row(project, row)
+
+
+def effective(row):
+    """The row as the book sees it: my edits win over anything derived."""
+    out = dict(row)
+    d = row.get("derived") or {}
+    for k in ("summary", "people", "places", "organizations", "date_range", "doc_kind"):
+        out[k] = d.get(k)
+    for k, v in (row.get("mine") or {}).items():
+        out[k] = v
+    out["by"] = {k: ("me" if k in (row.get("mine") or {}) else "derived") for k in
+                 ("summary", "people", "places", "organizations", "date_range", "doc_kind", "accepted_name", "text")}
+    return out
+
+
+def intake_ingest(project, name, data, added_by="me"):
+    """Stage 1. Returns (row, duplicate_of)."""
+    sha = _sha256_bytes(data)
+    dup = intake_find_hash(project, sha)
+    if dup:
+        return None, dup
+    out = project.root / "sources" / Path(name).name
+    if out.exists():
+        out = out.with_name(f"{out.stem} ({datetime.now().strftime('%Y%m%d-%H%M%S')}){out.suffix}")
+    out.write_bytes(data)
+    row = {"id": sha[:12], "path": out.relative_to(project.root).as_posix(), "original_name": Path(name).name,
+           "sha256": sha, "bytes": len(data), "mime": mimetypes.guess_type(out.name)[0] or "application/octet-stream",
+           "kind": kind_of(out), "date_added": _now(), "added_by": added_by, "mine": {}, "fields": {}, "notes": "",
+           "history": [{"at": _now(), "by": added_by, "event": "added"}]}
+    _stage(row, "ingest", "done", f"sha256 {sha[:12]}…")
+    intake_save_row(project, row)
+    return row, None
+
+
+def intake_adopt(project, path):
+    """Index a file that is already in the project (dropped in by hand, or synced from Drive)."""
+    p = project.root / path
+    sha = _sha256_file(p)
+    dup = intake_find_hash(project, sha)
+    if dup:
+        return dup
+    row = {"id": sha[:12], "path": path, "original_name": p.name, "sha256": sha, "bytes": p.stat().st_size,
+           "mime": mimetypes.guess_type(p.name)[0] or "application/octet-stream", "kind": kind_of(p),
+           "date_added": datetime.fromtimestamp(p.stat().st_mtime, timezone.utc).astimezone().isoformat(timespec="seconds"),
+           "added_by": "me", "mine": {}, "fields": {}, "notes": "", "history": [{"at": _now(), "by": "me", "event": "indexed"}]}
+    _stage(row, "ingest", "done", f"sha256 {sha[:12]}… (already in the project)")
+    intake_save_row(project, row)
+    return row
+
+
+def intake_start(project, row_id):
+    threading.Thread(target=intake_run, args=(project, row_id), daemon=True).start()
+
+
+def intake_edit(project, row_id, patch):
+    """My edits: stored apart from the derived values, timestamped, and never overwritten by a re-scan."""
+    data = intake_load(project)
+    row = data[row_id]
+    changed = []
+    for k in ("summary", "people", "places", "organizations", "date_range", "doc_kind", "accepted_name", "text"):
+        if k in patch:
+            row.setdefault("mine", {})[k] = patch[k]
+            changed.append(k)
+    for k in STRUCTURED:
+        if k in patch:
+            row.setdefault("fields", {})[k] = patch[k]
+            changed.append(k)
+    for k in ("notes", "rotation", "store_in_drive"):
+        if k in patch:
+            row[k] = patch[k]
+            changed.append(k)
+    if patch.get("forget"):
+        for k in patch["forget"]:
+            row.get("mine", {}).pop(k, None)
+            changed.append(f"reset {k}")
+    row.setdefault("history", []).append({"at": _now(), "by": "me", "event": "edited", "fields": changed})
+    intake_save_row(project, row)
+    return row
+
+
+def source_citations(project, row):
+    """Stories that cite this source (by session timestamp or by name) and people it's tagged on."""
+    sid = session_map(project).get(Path(row["path"]).name)
+    names = {Path(row["path"]).name, (row.get("mine") or {}).get("accepted_name") or ""} - {""}
+    stories = []
+    for st in engine_stories(project):
+        f = project.root / st["file"]
+        if f.is_file():
+            t = f.read_text(encoding="utf-8", errors="ignore")
+            if (sid and f"[{sid} " in t) or any(n in t for n in names):
+                stories.append({"id": st["id"], "title": st["title"]})
+    tags = [t.get("person") for t in (row.get("tags") or []) if t.get("state") in ("accepted", "unsure")]
+    return {"stories": stories, "people": tags}
+
+
+def mark_stories_stale(project, story_ids, reason):
+    p = project.root / "data" / "stale_stories.json"
+    cur = json.loads(p.read_text()) if p.exists() else {}
+    for sid in story_ids:
+        cur[str(sid)] = {"reason": reason, "at": _now()}
+    p.write_text(json.dumps(cur, indent=1))
+
+
+def _unindex(project, row_id):
+    idx = project.root / "data" / "search_index.json"
+    with INTAKE_LOCK:
+        if idx.exists():
+            index = json.loads(idx.read_text())
+            index.pop(row_id, None)
+            idx.write_text(json.dumps(index, ensure_ascii=False))
+
+
+def intake_trash(project, row_id, restore=False, delete_drive=False):
+    data = intake_load(project)
+    row = data[row_id]
+    trash = project.root / ".trash"
+    trash.mkdir(exist_ok=True)
+    if restore:
+        src = trash / Path(row["path"]).name
+        dest = project.root / row["path"]
+        if src.exists() and not dest.exists():
+            shutil.move(str(src), str(dest))
+        row["trashed"] = False
+        row["history"].append({"at": _now(), "by": "me", "event": "restored"})
+    else:
+        src = project.root / row["path"]
+        cites = source_citations(project, row)
+        if src.exists():
+            shutil.move(str(src), str(trash / src.name))
+        (trash / f"{Path(row['path']).name}.lineage.json").write_text(json.dumps(row, indent=1, ensure_ascii=False))
+        row["trashed"] = True
+        _unindex(project, row_id)
+        if cites["stories"]:
+            mark_stories_stale(project, [c["id"] for c in cites["stories"]], f"source deleted: {row['original_name']}")
+        drive_note = "Drive copy untouched"
+        if delete_drive and row.get("drive_id"):
+            try:
+                drive_api(f"/drive/v3/files/{row['drive_id']}", {"supportsAllDrives": "true"}, "DELETE", raw=True)
+                row["drive_id"], row["drive_url"], drive_note = None, None, "Drive copy deleted"
+            except Exception as e:
+                drive_note = f"Drive copy NOT deleted ({type(e).__name__})"
+        row["history"].append({"at": _now(), "by": "me", "event": f"moved to .trash ({drive_note})"})
+    intake_save_row(project, row)
+    if restore:
+        intake_start(project, row_id)      # back into the index
+    return row
+
+
+def intake_purge(project, row_id):
+    """Delete permanently: the file in .trash and its row. Only from the trash."""
+    data = intake_load(project)
+    row = data.get(row_id)
+    if not row or not row.get("trashed"):
+        raise ValueError("only files in the trash can be deleted permanently")
+    trash = project.root / ".trash"
+    for f in (trash / Path(row["path"]).name, trash / f"{Path(row['path']).name}.lineage.json"):
+        if f.exists():
+            f.unlink()
+    with INTAKE_LOCK:
+        data = intake_load(project)
+        data.pop(row_id, None)
+        _index_path(project).write_text(json.dumps(data, indent=1, ensure_ascii=False))
+    thumb = project.root / ".thumbs" / f"{row_id}.png"
+    if thumb.exists():
+        thumb.unlink()
+
+
+def engine_search(project, q):
+    idx = project.root / "data" / "search_index.json"
+    if not idx.exists() or not q.strip():
+        return []
+    index = json.loads(idx.read_text())
+    terms = [t.lower() for t in q.split() if t.strip()]
+    rows = intake_load(project)
+    hits = []
+    for rid, text in index.items():
+        low = text.lower()
+        if all(t in low for t in terms) and rid in rows and not rows[rid].get("trashed"):
+            pos = low.find(terms[0])
+            hits.append({"id": rid, "name": rows[rid].get("mine", {}).get("accepted_name") or rows[rid]["original_name"],
+                         "snippet": text[max(0, pos - 60): pos + 140]})
+    return hits[:50]
 
 # ---------------------------------------------------------------- identity of the lineage
 def engine_covers(project):
@@ -446,6 +948,8 @@ def engine_stories(project):
                          "part": c.get("part", ""), "dates": c.get("years", ""), "summary": c.get("summary", ""),
                          "map_status": "proposed"})
     states = _story_states(project)
+    sp = project.root / "data" / "stale_stories.json"
+    stale = json.loads(sp.read_text()) if sp.exists() else {}
     parts, chapter_no = [], 0
     for r in rows:
         f = project.root / r["file"] if r["file"] else None
@@ -467,6 +971,7 @@ def engine_stories(project):
             "book_position": (f"{'Part ' + str(len(parts)) + ', ' if r['part'] else ''}Chapter {chapter_no}"
                               if state == "in the book" else ("kept aside" if state == "kept aside" else "not in the book yet")),
             "mtime": f.stat().st_mtime if f and f.is_file() else None,
+            "stale": stale.get(r["id"]),
         }
         r.update(rows_extra)
     return rows
@@ -736,8 +1241,35 @@ def preview_text(style):
     return body + "\n\n⟦BRIDGE: years later, she still remembered the sound the ore cars made⟧"
 
 
+STAGE_PROMPTS = {
+    "research": "Using the records-archives skill, read every source in this project for names, places and dates, then "
+                "search free public archives (census, military rosters, ship registers, newspapers, graves, museum catalogues) "
+                "for records that corroborate or contradict the family's version. Cache what you find under facts/records/, "
+                "add each to data/archives.csv with its verdict, and never send my personal details to any site.",
+    "genealogy": "Using the family-history-chapters skill, build the line of descent from the sources and the records: every "
+                 "person, every relationship, each link marked witnessed, told, documented or unconfirmed with its evidence. "
+                 "Never infer a relationship from a surname or a date alone. Write it to data/genealogy.json and list the gaps.",
+    "chapters": "Using the content-separator and chapter-index-builder skills, cut the transcripts into story units (with "
+                "the coverage check) and propose a story map: each story with title, years, the units it uses and a one-line "
+                "summary. Write data/chapters.csv with status proposed and stop for my approval. Batch your questions.",
+    "generate": "Using the chapter-generator and memoir-style-guide skills, write the approved stories: quotes exact, every "
+                "paragraph cited with // src:, anything you add as a #bridge. Build the draft and tell me what needs approval.",
+    "podcast": "Write a spoken-word script for one episode from the first approved story, following the memoir-style-guide: "
+               "quotes exact, no unapproved bridge read aloud. Save it to output/podcast-episode-01.md.",
+}
+
+
+class StageIsTerminalWork(Exception):
+    """Outside --demo, pipeline stages are real work done by the Genealogist in the terminal."""
+    def __init__(self, prompt):
+        super().__init__(prompt)
+        self.prompt = prompt
+
+
 def engine_run(project, stage):
     """Start a pipeline stage as a job. Returns a job id."""
+    if stage in STAGE_PROMPTS and not DEMO:
+        raise StageIsTerminalWork(STAGE_PROMPTS[stage])
     state = project.read()
     settings = state["settings"]
     root = project.root
@@ -850,11 +1382,11 @@ def check_key(provider, key):
 
 def list_voices(key):
     if not key:
-        return DEMO_VOICES, False
+        return (DEMO_VOICES if DEMO else []), False
     res = check_key("elevenlabs", key)
     voices = (res.get("body") or {}).get("voices") if res.get("ok") else None
     if not voices:
-        return DEMO_VOICES, False
+        return (DEMO_VOICES if DEMO else []), False
     return [{"voice_id": v.get("voice_id"), "name": v.get("name", "voice"),
              "preview_url": v.get("preview_url")} for v in voices][:60], True
 
@@ -1052,6 +1584,7 @@ def drive_sync(project):
                     data = drive_api(f"/drive/v3/files/{f['id']}", {"alt": "media", "supportsAllDrives": "true"}, raw=True)
                 dest.write_bytes(data)
                 report["downloaded"].append(name)
+                intake_start(project, intake_adopt(project, dest.relative_to(project.root).as_posix())["id"])
             dmap[name] = f["id"]
     if s.get("sync_outputs"):
         out_folder = _drive_subfolder(fid, "outputs", create=True)
@@ -1453,6 +1986,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def run_stage(self, stage):
         try:
             return self.send_json({"job": engine_run(self.project, stage)})
+        except StageIsTerminalWork as w:
+            return self.send_json({"terminal_prompt": w.prompt})
         except ValueError as e:
             return self.send_json({"error": str(e)}, 400)
 
@@ -1496,13 +2031,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     # ======================= dashboard state (settings, uploads, files) =======================
     def upload(self, q):
+        """Stage 1 of intake for each file, then the rest in the background. Duplicates aren't stored."""
         ctype = self.headers.get("Content-Type", "")
         m = re.search(r"boundary=(.+)$", ctype)
         if not m:
             return self.send_json({"error": "expected multipart"}, 400)
         boundary = m.group(1).strip('"').encode()
         body = self.rfile.read(int(self.headers["Content-Length"]))
-        saved = []
+        saved, duplicates = [], []
         for part in body.split(b"--" + boundary):
             if b"\r\n\r\n" not in part:
                 continue
@@ -1510,17 +2046,141 @@ class Handler(http.server.BaseHTTPRequestHandler):
             fn = re.search(rb'filename="([^"]*)"', head)
             if not fn or not fn.group(1):
                 continue
-            name = Path(fn.group(1).decode(errors="replace")).name
             if data.endswith(b"\r\n"):
                 data = data[:-2]
-            out = self.project.root / "sources" / name
-            if out.exists():                       # originals are never overwritten
-                out = out.with_name(f"{out.stem} ({datetime.now().strftime('%Y%m%d-%H%M%S')}){out.suffix}")
-            out.write_bytes(data)
-            saved.append({"name": out.name, "size": out.stat().st_size})
+            row, dup = intake_ingest(self.project, fn.group(1).decode(errors="replace"), data)
+            if dup:
+                duplicates.append({"name": Path(fn.group(1).decode(errors="replace")).name, "existing": dup["path"],
+                                   "added": dup["date_added"], "rid": dup["id"]})
+            else:
+                saved.append({"name": Path(row["path"]).name, "size": row["bytes"], "rid": row["id"]})
+                intake_start(self.project, row["id"])
         if saved:
             self.project.mark("sources", "done")
-        return self.send_json({"saved": saved})
+        return self.send_json({"saved": saved, "duplicates": duplicates})
+
+    def e_scan(self, q):
+        """Index a file that's in the project but not yet scanned, or re-scan one (keeps my edits)."""
+        d = self.read_json()
+        rid = d.get("rid")
+        if not rid:
+            try:
+                self.project.inside(d.get("path", ""))
+            except PermissionError as e:
+                return self.send_json({"error": str(e)}, 400)
+            rid = intake_adopt(self.project, d["path"])["id"]
+        intake_start(self.project, rid)
+        return self.send_json({"ok": True, "rid": rid})
+
+    def e_scan_all(self, q):
+        n = 0
+        for row in engine_sources(self.project):
+            if not row["rid"]:
+                intake_start(self.project, intake_adopt(self.project, row["id"])["id"]); n += 1
+        return self.send_json({"ok": True, "started": n})
+
+    def e_source_meta(self, q):
+        rid = (q.get("rid") or [""])[0]
+        row = intake_load(self.project).get(rid)
+        if not row:
+            return self.send_json({"error": "not indexed yet"}, 404)
+        ex = self.project.root / (row.get("extracted") or "")
+        return self.send_json({**effective(row), "extracted_text": ex.read_text(encoding="utf-8")[:200000] if row.get("extracted") and ex.is_file() else "",
+                               "drive_connected": drive_status()["connected"], "doc_kinds": DOC_KINDS})
+
+    def e_source_edit(self, q):
+        d = self.read_json()
+        if d.get("rid") not in intake_load(self.project):
+            return self.send_json({"error": "not indexed yet"}, 404)
+        row = intake_edit(self.project, d["rid"], d)
+        if d.get("rescan"):
+            intake_start(self.project, d["rid"])
+        return self.send_json(effective(row))
+
+    def e_source_trash(self, q):
+        d = self.read_json()
+        if d.get("rid") not in intake_load(self.project):
+            return self.send_json({"error": "not indexed"}, 404)
+        return self.send_json(effective(intake_trash(self.project, d["rid"], restore=bool(d.get("restore")),
+                                                     delete_drive=bool(d.get("delete_drive")))))
+
+    def e_source_consequences(self, q):
+        rows = intake_load(self.project)
+        out = []
+        for rid in (q.get("rid") or [""])[0].split(","):
+            if rid in rows:
+                c = source_citations(self.project, rows[rid])
+                out.append({"rid": rid, "name": rows[rid].get("mine", {}).get("accepted_name") or rows[rid]["original_name"],
+                            "in_drive": bool(rows[rid].get("drive_id")), **c})
+        return self.send_json({"items": out})
+
+    def e_source_purge(self, q):
+        try:
+            intake_purge(self.project, self.read_json().get("rid"))
+        except ValueError as e:
+            return self.send_json({"error": str(e)}, 400)
+        return self.send_json({"ok": True})
+
+    def e_bulk(self, q):
+        """One action on several sources: reingest, delete, or tag (people, places, date)."""
+        d = self.read_json()
+        rows = intake_load(self.project)
+        rids = [r for r in d.get("rids", []) if r in rows]
+        done = 0
+        for rid in rids:
+            if d.get("action") == "reingest":
+                intake_start(self.project, rid)
+            elif d.get("action") == "delete":
+                intake_trash(self.project, rid, delete_drive=bool(d.get("delete_drive")))
+            elif d.get("action") == "tag":
+                eff = effective(rows[rid])
+                patch = {}
+                if d.get("person"):
+                    patch["people"] = sorted(set(eff.get("people") or []) | {d["person"]})
+                if d.get("place"):
+                    patch["places"] = sorted(set(eff.get("places") or []) | {d["place"]})
+                if d.get("date"):
+                    patch["date_range"] = d["date"]
+                intake_edit(self.project, rid, patch)
+            done += 1
+        return self.send_json({"ok": True, "done": done})
+
+    def e_trash(self, q):
+        return self.send_json({"trash": [effective(r) for r in intake_load(self.project).values() if r.get("trashed")]})
+
+    def e_search(self, q):
+        return self.send_json({"hits": engine_search(self.project, (q.get("q") or [""])[0])})
+
+    def e_transcribe(self, q):
+        """Queue a recording for transcription. Runs once per file, never twice."""
+        rid = self.read_json().get("rid")
+        rows = intake_load(self.project)
+        row = rows.get(rid)
+        if not row or row["kind"] not in ("audio", "video"):
+            return self.send_json({"error": "only recordings can be transcribed"}, 400)
+        if row.get("transcription") in ("done", "running"):
+            return self.send_json({"error": f"already {row['transcription']} — transcription never runs twice on the same file"}, 409)
+        home = lineage_home()
+        script = home / "scripts" / "transcribe.sh" if home else None
+        venv_wx = (home.parent.parent / ".venv" / "bin" / "whisperx") if home else None
+        if not script or not script.exists() or not (shutil.which("whisperx") or (venv_wx and venv_wx.exists())):
+            return self.send_json({"error": "transcription tools aren't installed here: run `make install-transcribe` in the Lineage repo"}, 400)
+        row["transcription"] = "running"
+        row["history"].append({"at": _now(), "by": "me", "event": "transcription started"})
+        intake_save_row(self.project, row)
+        proj = self.project
+
+        def go():
+            r = subprocess.run(["bash", str(script), "--project", str(proj.root), str(proj.root / row["path"])],
+                               capture_output=True, text=True, cwd=str(proj.root))
+            cur = intake_load(proj)[rid]
+            cur["transcription"] = "done" if r.returncode == 0 else "failed"
+            cur["history"].append({"at": _now(), "by": "system", "event": f"transcription {cur['transcription']}"})
+            intake_save_row(proj, cur)
+            if r.returncode == 0:
+                intake_run(proj, rid)
+        threading.Thread(target=go, daemon=True).start()
+        return self.send_json({"ok": True})
 
     def file(self, q):
         """Serve a project file to the page (audio for the transcript drawer). Supports Range."""
@@ -1571,7 +2231,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             "trims": TRIMS, "printers": PRINTERS, "quick_prompts": QUICK_PROMPTS,
             "keys": {p: mask(cfg["keys"].get(p, "")) for p in PROVIDERS},
             "providers": {p: {"label": v["label"], "use": v["use"]} for p, v in PROVIDERS.items()},
-            "paths": self.paths(), "terminal": TERMINAL.info(), "identity": engine_identity(self.project),
+            "paths": self.paths(), "terminal": TERMINAL.info(), "identity": engine_identity(self.project), "demo": DEMO,
             "previews": sorted(p.name for p in pv.glob("*.png")) if pv.exists() else [],
         })
 
@@ -1923,6 +2583,17 @@ ROUTES = {
     ("POST", "/api/identity/fresh"): Handler.identity_fresh,
     ("POST", "/api/identity/crest"): Handler.crest,
     ("POST", "/api/upload"): Handler.upload,
+    ("POST", "/api/engine/source/scan"): Handler.e_scan,
+    ("POST", "/api/engine/source/scan-all"): Handler.e_scan_all,
+    ("GET", "/api/engine/source/meta"): Handler.e_source_meta,
+    ("POST", "/api/engine/source/edit"): Handler.e_source_edit,
+    ("POST", "/api/engine/source/trash"): Handler.e_source_trash,
+    ("GET", "/api/engine/trash"): Handler.e_trash,
+    ("GET", "/api/engine/source/consequences"): Handler.e_source_consequences,
+    ("POST", "/api/engine/source/purge"): Handler.e_source_purge,
+    ("POST", "/api/engine/source/bulk"): Handler.e_bulk,
+    ("GET", "/api/engine/search"): Handler.e_search,
+    ("POST", "/api/engine/source/transcribe"): Handler.e_transcribe,
     ("GET", "/api/file"): Handler.file,
     ("POST", "/api/reveal"): Handler.reveal,
     ("GET", "/api/voices"): Handler.voices,
@@ -1966,7 +2637,10 @@ def main():
     ap.add_argument("--project", default=str(Path.home() / "lineage-books" / "my-book"))
     ap.add_argument("--command", default=None, help="terminal command (default: claude, or the one picked in Connectors)")
     ap.add_argument("--cwd", default=None, help="terminal working folder (default: the project)")
+    ap.add_argument("--demo", action="store_true", help="invented sample results for development (shown with a banner)")
     a = ap.parse_args()
+    global DEMO
+    DEMO = a.demo
     PORT = a.port
     Handler.project = Project(a.project)
     Handler.cli_command, Handler.cli_cwd = a.command, a.cwd
