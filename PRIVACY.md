@@ -1,11 +1,11 @@
 # Privacy
 
-BookAssembler handles some of the most personal material a family has. Here is exactly
+Lineage handles some of the most personal material a family has. Here is exactly
 where it goes.
 
 ## What stays on your computer
 - **Audio.** Speech recognition (WhisperX) and speaker labelling (pyannote) run locally.
-  Your recordings are never uploaded by BookAssembler.
+  Your recordings are never uploaded by Lineage.
 - **Originals.** `audio/` and `photos/source/` are never modified; their checksums are
   recorded so any change is noticed.
 - **The project folder.** Transcripts, story units, chapters and PDFs live in your project

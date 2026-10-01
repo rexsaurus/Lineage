@@ -1,0 +1,16 @@
+# Lineage project
+audio/
+photos/source/
+photos/print/
+transcript/work/
+facts/records/_raw/
+output/
+.venv/
+__pycache__/
+*.wav
+*.m4a
+*.mp3
+*.mp4
+.DS_Store
+.env*
+*token*

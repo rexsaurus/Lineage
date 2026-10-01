@@ -1,8 +1,8 @@
-# Book Assembler Factory Skill
+# Lineage
 
 **Turn recorded interviews with a relative into a real printed book — without the AI making things up.**
 
-[![Build the sample book](https://github.com/rexsaurus/BookAssembler/actions/workflows/sample.yml/badge.svg)](https://github.com/rexsaurus/BookAssembler/actions)
+[![Build the sample book](https://github.com/rexsaurus/Lineage/actions/workflows/sample.yml/badge.svg)](https://github.com/rexsaurus/Lineage/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](LICENSE)
 
 ---
@@ -132,8 +132,8 @@ rule, not a nicety.
 No recordings, no models, no Claude account needed for the sample.
 
 ```bash
-git clone https://github.com/rexsaurus/BookAssembler.git
-cd BookAssembler
+git clone https://github.com/rexsaurus/Lineage.git
+cd Lineage
 make install
 make sample
 ```
@@ -175,7 +175,7 @@ is the reason you can trust the output.
 
 ## The Factory Skill
 
-BookAssembler is one instance of a general pattern, and the repo ships the generator too.
+Lineage is one instance of a general pattern, and the repo ships the generator too.
 Point it at a different kind of source material and it writes you a new pipeline.
 
 Only five things change:
@@ -192,9 +192,9 @@ quarantined inventions, coverage checks, versioning that pins every PDF to the e
 that produced it.
 
 ```
-/plugin marketplace add rexsaurus/BookAssembler
-/plugin install bookassembler@rexsaurus-factory   # the book pipeline
-/plugin install factory@rexsaurus-factory         # the generator
+/plugin marketplace add rexsaurus/Lineage
+/plugin install lineage@lineage   # the book pipeline
+/plugin install factory@lineage         # the generator
 ```
 
 ---
@@ -233,7 +233,7 @@ make new PROJECT="$HOME/books/grandma"       # start a book, outside this repo
 - **[docs/HOWTO.md](docs/HOWTO.md)** — recordings to printed book, step by step.
 - **[docs/EXAMPLE-CHAPTER.md](docs/EXAMPLE-CHAPTER.md)** — the chapter above, annotated.
 - **[docs/FACTORY.md](docs/FACTORY.md)** — the pattern, and how to aim it at something else.
-- **[scripts/README.md](plugins/bookassembler/scripts/README.md)** — every tool, and the upstream breakage it works around.
+- **[scripts/README.md](plugins/lineage/scripts/README.md)** — every tool, and the upstream breakage it works around.
 
 ---
 

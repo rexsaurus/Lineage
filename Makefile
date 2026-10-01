@@ -1,4 +1,4 @@
-# BookAssembler — turn recorded interviews with a relative into a printed book.
+# Lineage — turn recorded interviews with a relative into a printed book.
 #
 #   make install                     build tools (Python venv, checks for typst)
 #   make install-transcribe          + speech recognition and diarization (large download)
@@ -17,10 +17,10 @@ SHELL   := /bin/bash
 BA      := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 VENV    := $(BA)/.venv
 PY      := $(VENV)/bin/python
-SKILLS  := $(BA)/plugins/bookassembler/skills
+SKILLS  := $(BA)/plugins/lineage/skills
 SAMPLE  := $(BA)/examples/sample-project
 EXAMPLE := $(BA)/examples/erasthus-burnham
-export BOOKASSEMBLER := $(BA)
+export LINEAGE := $(BA)
 # zsh passes PROJECT=~/x through unexpanded; expand a leading ~ here.
 override PROJECT := $(patsubst ~/%,$(HOME)/%,$(PROJECT))
 
@@ -33,7 +33,7 @@ install:
 	@$(PY) -m pip install -q -r $(BA)/requirements.txt
 	@command -v typst >/dev/null || { echo "typst not found. Install it: brew install typst  (or see https://github.com/typst/typst#installation)"; exit 1; }
 	@command -v pdfinfo >/dev/null || echo "note: pdfinfo not found (poppler). Optional; used by preflight. brew install poppler / apt install poppler-utils"
-	@echo "BookAssembler installed. Try: make sample"
+	@echo "Lineage installed. Try: make sample"
 
 install-transcribe: install
 	@command -v ffmpeg >/dev/null || { echo "ffmpeg is required for transcription: brew install ffmpeg / apt install ffmpeg"; exit 1; }
@@ -52,7 +52,7 @@ sample:
 # ---- a real project ------------------------------------------------------------------
 new:
 	@test -n "$(PROJECT)" || { echo "usage: make new PROJECT=path/to/new-book"; exit 1; }
-	@bash $(BA)/plugins/bookassembler/scripts/new_project.sh "$(PROJECT)"
+	@bash $(BA)/plugins/lineage/scripts/new_project.sh "$(PROJECT)"
 
 check-project:
 	@test -n "$(PROJECT)" || { echo "set PROJECT=path/to/your-book"; exit 1; }

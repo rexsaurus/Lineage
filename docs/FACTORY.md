@@ -1,14 +1,14 @@
 # The factory
 
-BookAssembler is one instance of a general pattern. The factory is the generator for the
+Lineage is one instance of a general pattern. The factory is the generator for the
 pattern: give it five answers and it writes a new pipeline, with skills, a runtime, a fixture
 and a HOWTO, for a different kind of source material.
 
 ```
-/plugin marketplace add rexsaurus/BookAssembler
-/plugin install factory@rexsaurus-factory
+/plugin marketplace add rexsaurus/Lineage
+/plugin install factory@lineage
 ```
-Then ask Claude for "a pipeline like BookAssembler for <your domain>". Or run the generator
+Then ask Claude for "a pipeline like Lineage for <your domain>". Or run the generator
 directly:
 ```bash
 python plugins/factory/skills/factory/scripts/scaffold.py \
@@ -84,7 +84,7 @@ trustworthy.
 
 1. Answer the five questions. Write them down as a spec. `examples/toy-minutes.yaml` is
    complete, with a fixture; `examples/incident-review.yaml` shows a non-book domain;
-   `examples/bookassembler.yaml` is BookAssembler itself as five answers.
+   `examples/lineage.yaml` is Lineage itself as five answers.
 2. Run `scaffold.py <spec> --out <dir>` and then `make fixture` in that folder. It must pass.
 3. Write the domain's own rules into `<name>-policy` §7. These are the mistakes this domain
    punishes.
@@ -95,6 +95,6 @@ trustworthy.
 ## What the generic runtime does not do
 
 It cites lines of plain-text sources. Timestamps, page numbers in PDFs, and audio need a
-domain extension, as BookAssembler adds. It doesn't judge whether a unit's text is faithful
+domain extension, as Lineage adds. It doesn't judge whether a unit's text is faithful
 to its lines. It proves that every claim points at the right lines, and leaves the reading to
 the human at the gate.

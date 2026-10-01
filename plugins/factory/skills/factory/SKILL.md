@@ -1,11 +1,11 @@
 ---
 name: factory
-description: Generate a complete, trustworthy source-to-output pipeline for a new domain (skills, runtime, fixture, HOWTO) from five answers — sources and citations, units, evidence tiers, output and builder, human gates. Use when someone wants "a BookAssembler for X", a pipeline that turns raw material (transcripts, logs, papers, records) into a document where every claim cites back, or asks to scaffold a citation-checked writing workflow.
+description: Generate a complete, trustworthy source-to-output pipeline for a new domain (skills, runtime, fixture, HOWTO) from five answers — sources and citations, units, evidence tiers, output and builder, human gates. Use when someone wants "a Lineage for X", a pipeline that turns raw material (transcripts, logs, papers, records) into a document where every claim cites back, or asks to scaffold a citation-checked writing workflow.
 ---
 
 # The factory
 
-BookAssembler turns interview recordings into a book. Underneath it is a pattern that has
+Lineage turns interview recordings into a book. Underneath it is a pattern that has
 nothing to do with books: **raw sources → small cited units → generated output, with humans
 deciding at named gates.** This skill asks five questions, writes a spec, and runs
 `scripts/scaffold.py`, which builds the whole pipeline the same way every time.
@@ -73,7 +73,7 @@ After scaffolding, edit only the domain parts:
   page layout), add scripts beside `pl.py`; keep the invariants intact and keep `make fixture`
   passing.
 
-## Worked example 1 — BookAssembler
+## Worked example 1 — Lineage
 
 | | |
 |---|---|
@@ -83,8 +83,8 @@ After scaffolding, edit only the domain parts:
 | 4. Output / builder | A 7×10 printed book, Typst |
 | 5. Gates | speakers confirmed (after transcription) · chapter map approved (after units) · final sign-off |
 
-`examples/bookassembler.yaml` scaffolds the same skeleton with line citations. The real
-BookAssembler (plugins/bookassembler) extends it with transcription, timestamp citations,
+`examples/lineage.yaml` scaffolds the same skeleton with line citations. The real
+Lineage (plugins/lineage) extends it with transcription, timestamp citations,
 family-history research and book layout. That is step 4 done thoroughly.
 
 ## Worked example 2 — an incident review (not a book)

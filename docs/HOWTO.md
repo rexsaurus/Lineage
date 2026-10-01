@@ -95,8 +95,8 @@ the diarization step later.
 ### Install the tools
 
 ```sh
-git clone https://github.com/rexsaurus/BookAssembler.git ~/BookAssembler
-cd ~/BookAssembler
+git clone https://github.com/rexsaurus/Lineage.git ~/Lineage
+cd ~/Lineage
 make install              # Python venv in .venv with the build tools; checks for typst
 make install-transcribe   # adds WhisperX + pyannote to the same venv (a large download)
 make sample               # optional: proves the build works (see the README)
@@ -121,7 +121,7 @@ ruth/
   book.yaml            names, birth year, print settings (fill this in now)
   CLAUDE.md            standing rules Claude Code reads at the start of every session
   .gitignore           keeps audio, photos, raw web caches and PDFs out of git
-  .claude/skills  ->   a link to the skills in your BookAssembler checkout
+  .claude/skills  ->   a link to the skills in your Lineage checkout
   audio/               your recordings (never modified)
   transcript/          raw JSON, verbatim and clean transcripts, sessions.csv, corrections.json
   facts/               timeline.csv, glossary.md, gaps.md (questions for you), records/
@@ -182,8 +182,8 @@ Two more to get right early:
 ### Every session: set up the shell, then open Claude Code
 
 ```sh
-export BOOKASSEMBLER="$HOME/BookAssembler"     # put this line in your shell profile
-source "$BOOKASSEMBLER/.venv/bin/activate"     # so `python` is the BookAssembler venv
+export LINEAGE="$HOME/Lineage"     # put this line in your shell profile
+source "$LINEAGE/.venv/bin/activate"     # so `python` is the Lineage venv
 cd "$HOME/books/ruth"
 claude
 ```
@@ -193,7 +193,7 @@ each session by asking **"where are we?"**. It runs the status check and resumes
 first unfinished stage. You can run the same check yourself:
 
 ```sh
-make -C "$BOOKASSEMBLER" status PROJECT="$PWD"
+make -C "$LINEAGE" status PROJECT="$PWD"
 ```
 
 The output lists stages 1 to 12, each marked ✓ or ·, followed by a `NEXT:` line.
@@ -210,9 +210,9 @@ active.
 Copy the recordings into `audio/` by any means. Then:
 
 ```sh
-$BOOKASSEMBLER/scripts/transcribe.sh --dry-run   # list sessions and the plan; do nothing
-$BOOKASSEMBLER/scripts/transcribe.sh --smoke     # the shortest session only: check it all works
-$BOOKASSEMBLER/scripts/transcribe.sh             # everything, shortest first
+$LINEAGE/scripts/transcribe.sh --dry-run   # list sessions and the plan; do nothing
+$LINEAGE/scripts/transcribe.sh --smoke     # the shortest session only: check it all works
+$LINEAGE/scripts/transcribe.sh             # everything, shortest first
 ```
 
 For each recording, this:
@@ -256,10 +256,10 @@ overlapping 10-minute windows, which are then stitched together. You can also ru
 directly:
 
 ```sh
-python $BOOKASSEMBLER/scripts/diarize.py                    # every session without speakers
-python $BOOKASSEMBLER/scripts/diarize.py S1 S3
-python $BOOKASSEMBLER/scripts/diarize_chunked.py S5         # force chunking
-python $BOOKASSEMBLER/scripts/diarize_chunked.py S5 --chunk 600 --overlap 60
+python $LINEAGE/scripts/diarize.py                    # every session without speakers
+python $LINEAGE/scripts/diarize.py S1 S3
+python $LINEAGE/scripts/diarize_chunked.py S5         # force chunking
+python $LINEAGE/scripts/diarize_chunked.py S5 --chunk 600 --overlap 60
 ```
 
 Each window logs a line like `stitched 2/2 by overlap`. Anything less than all speakers
@@ -273,7 +273,7 @@ the book (`[S2 00:14:07]`) would silently point at the wrong words. So:
 - `transcript/raw/*.json` is **never edited**.
 - Every fix (a misheard name, a speaker label, a prompt echo) goes in
   **`transcript/corrections.json`** and is applied when the Markdown is rendered. Start from
-  the template: `cp $BOOKASSEMBLER/scripts/corrections.example.json transcript/corrections.json`.
+  the template: `cp $LINEAGE/scripts/corrections.example.json transcript/corrections.json`.
 - Once you start cutting story units (section 5), set **`transcription_locked: true`** in
   `book.yaml`. After that, `transcribe.sh --force` and `diarize.py --force` refuse to run. New
   recordings can still be added; they just become new sessions.
@@ -297,7 +297,7 @@ usually asks short questions, and the subject tells long stories. Then write the
 Then render:
 
 ```sh
-python $BOOKASSEMBLER/scripts/render_transcripts.py
+python $LINEAGE/scripts/render_transcripts.py
 ```
 
 This writes three layers:
@@ -419,8 +419,8 @@ S2,00:00:36,U006,The cabin,life,Walt and the Cabin,,Walt,"Pike Lake, Minnesota",
 Then generate the unit files and check coverage:
 
 ```sh
-python $BOOKASSEMBLER/scripts/make_units.py --check    # coverage only
-python $BOOKASSEMBLER/scripts/make_units.py            # write content/units/U###-*.md
+python $LINEAGE/scripts/make_units.py --check    # coverage only
+python $LINEAGE/scripts/make_units.py            # write content/units/U###-*.md
 ```
 
 ### The coverage check
@@ -659,14 +659,14 @@ Ask Claude to "shape the units for chapter 2" (content-separator plus the style 
 writes each unit's `## Shaped` section, usually with:
 
 ```sh
-python $BOOKASSEMBLER/scripts/shape.py U002 drafts/U002.md        # writes ## Shaped, status: shaped
-python $BOOKASSEMBLER/scripts/shape.py U002 --status approved     # only you set approved
+python $LINEAGE/scripts/shape.py U002 drafts/U002.md        # writes ## Shaped, status: shaped
+python $LINEAGE/scripts/shape.py U002 --status approved     # only you set approved
 ```
 
 Then check every quotation in the chapters against what the subject actually said:
 
 ```sh
-python $BOOKASSEMBLER/scripts/verify_quotes.py --transcript chapters/[0-8]*.typ
+python $LINEAGE/scripts/verify_quotes.py --transcript chapters/[0-8]*.typ
 ```
 
 This matches every double-quoted passage of three or more words against the subject's
@@ -744,8 +744,8 @@ person.
   project:
 
   ```sh
-  python $BOOKASSEMBLER/scripts/export_sources.py --dry-run
-  python $BOOKASSEMBLER/scripts/export_sources.py --restricted '^museum/'
+  python $LINEAGE/scripts/export_sources.py --dry-run
+  python $LINEAGE/scripts/export_sources.py --restricted '^museum/'
   ```
 
   This copies text files to `facts/records/sources/` and writes `MANIFEST.csv` listing
@@ -910,7 +910,7 @@ seq,date,place,lat,lon,kind,aboard,source,label,gap_before
 ```
 
 ```sh
-python $BOOKASSEMBLER/scripts/make_route_map.py facts/records/anders/crossing_track.csv \
+python $LINEAGE/scripts/make_route_map.py facts/records/anders/crossing_track.csv \
     --out photos/print/P050.png --title "The crossing" --subject "Anders" \
     --caption "Positions from the records; lines between them are approximate."
 ```
@@ -923,7 +923,7 @@ approximate between recorded points. **Legs no record covers are not drawn and a
 "not recorded"**. In the example, `gap_before=yes` on New York leaves the Atlantic crossing
 blank and labels it that way. The output is a 300 dpi PNG. Coastlines come from Natural
 Earth (public domain) and are downloaded once. For the map lettering to be EB Garamond, copy
-`$BOOKASSEMBLER/fonts/*.otf` into your system font folder (`~/Library/Fonts` on a Mac,
+`$LINEAGE/fonts/*.otf` into your system font folder (`~/Library/Fonts` on a Mac,
 `~/.local/share/fonts` on Linux). `make_route_map.py --help` lists the label and extent
 options.
 
@@ -968,12 +968,12 @@ on every build.
 ### Build a draft
 
 ```sh
-make -C "$BOOKASSEMBLER" draft PROJECT="$PWD"
+make -C "$LINEAGE" draft PROJECT="$PWD"
 ```
 
 In order, this runs:
 1. **sync**: refreshes `book/template.typ` from the repo (the design lives in one file,
-   `$BOOKASSEMBLER/book/template.typ`);
+   `$LINEAGE/book/template.typ`);
 2. **assemble**: regenerates every chapter from its units;
 3. **quote check**: `verify_quotes.py --transcript`, which warns here and blocks in final;
 4. **appendices**: "A Timeline" from `facts/timeline.csv` and "Where the Records Are" from
@@ -1049,7 +1049,7 @@ you put the project on GitHub, keep the repository private, because transcripts 
 ### GATE 3: final build and preflight
 
 ```sh
-make -C "$BOOKASSEMBLER" final PROJECT="$PWD"
+make -C "$LINEAGE" final PROJECT="$PWD"
 ```
 
 This builds the draft, re-checks every quotation (and **stops** on a mismatch), and compiles
@@ -1115,8 +1115,8 @@ and keeps the bridges and your questions visible. List your own chapter files at
 Build the draft first, so the chapters and template are current. Then:
 
 ```sh
-make -C "$BOOKASSEMBLER" draft PROJECT="$PWD"
-typst compile --root . --font-path "$BOOKASSEMBLER/fonts" book/review.typ output/review.pdf
+make -C "$LINEAGE" draft PROJECT="$PWD"
+typst compile --root . --font-path "$LINEAGE/fonts" book/review.typ output/review.pdf
 ```
 
 Line numbers restart on each page, so a note can say "page 4, line 12". Two-column
@@ -1140,7 +1140,7 @@ the old transcripts.**
 
 ```sh
 cp ~/Downloads/review-call.m4a audio/
-$BOOKASSEMBLER/scripts/transcribe.sh         # only the new session is processed (say S3)
+$LINEAGE/scripts/transcribe.sh         # only the new session is processed (say S3)
 ```
 
 Earlier sessions are skipped. `transcription_locked: true` stops nothing here, because this
@@ -1181,7 +1181,7 @@ The build always pads to an even page count. Front and back matter add up quickl
 sample, from two minutes of tape, is 30 pages, which is enough for KDP, IngramSpark and
 Blurb, but not for Lulu.
 
-**What BookAssembler doesn't do:**
+**What Lineage doesn't do:**
 - **The cover.** Each printer has a cover calculator that sizes the spine from your final
   page count and paper. Make the cover once the page count is final.
 - **PDF/X conversion.** IngramSpark prefers PDF/X-1a or X-3. If it rejects the file, convert
@@ -1202,7 +1202,7 @@ a month before.
 
 **`UnpicklingError` / `WeightsUnpickler` / "weights_only" when WhisperX starts.** PyTorch
 2.6 and later refuse the speech-detection checkpoints WhisperX loads. Use
-`$BOOKASSEMBLER/scripts/wx.py` in place of the `whisperx` command, as `transcribe.sh` does.
+`$LINEAGE/scripts/wx.py` in place of the `whisperx` command, as `transcribe.sh` does.
 It applies the narrow fix in `scripts/hf_compat.py`.
 
 **`TypeError: ... unexpected keyword argument 'use_auth_token'`.** huggingface_hub 1.0
@@ -1213,27 +1213,27 @@ breaks WhisperX. The tested versions are in `requirements-transcribe.txt`.
 
 **pip can't find `torch==2.8.0`.** Your Python is probably newer than the pinned PyTorch
 supports. The stack was last run on Python 3.13. Rebuild the venv with an older Python:
-`rm -rf "$BOOKASSEMBLER/.venv" && python3.13 -m venv "$BOOKASSEMBLER/.venv"`, then
+`rm -rf "$LINEAGE/.venv" && python3.13 -m venv "$LINEAGE/.venv"`, then
 `make install install-transcribe`.
 
 **401, 403 or `GatedRepoError` when diarization starts.** The token is wrong, or the licence
 wasn't accepted on **both** pyannote pages (`speaker-diarization-3.1` *and*
 `segmentation-3.0`) while logged in as the account that owns the token. See section 1. Your
-transcription is safe. Fix the token and run `python $BOOKASSEMBLER/scripts/diarize.py`.
+transcription is safe. Fix the token and run `python $LINEAGE/scripts/diarize.py`.
 
 **Diarization runs for hours.** One long session was labelled in one piece. Make sure you're
 running through `diarize.py`, which chunks anything over 20 minutes by default, rather than
 `transcribe.sh --one-pass`, which doesn't chunk. Or force chunking with
-`python $BOOKASSEMBLER/scripts/diarize_chunked.py S4`.
+`python $LINEAGE/scripts/diarize_chunked.py S4`.
 
 **Names in the transcript as fake speech.** This is the initial prompt being echoed. Shorten
 `proper_nouns`, then cut the echoes with `drop_segments`/`scrub_inline` in
 `corrections.json`, and re-render. Don't re-transcribe a cited session.
 
 **`unknown font family` warnings, or the book comes out in the wrong typeface.** You compiled
-without the bundled fonts. Always pass `--font-path "$BOOKASSEMBLER/fonts"` to `typst
+without the bundled fonts. Always pass `--font-path "$LINEAGE/fonts"` to `typst
 compile`, or build through `make draft`, which does it for you. Check that
-`$BOOKASSEMBLER/fonts/` contains the EB Garamond `.otf` files.
+`$LINEAGE/fonts/` contains the EB Garamond `.otf` files.
 
 **`failed to download package @preview/droplet`.** The first build needs internet access once
 to fetch the drop-cap package. After that it's cached.

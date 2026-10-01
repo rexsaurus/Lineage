@@ -2,10 +2,10 @@
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "factory",
   "version": "0.1.0",
-  "description": "Generate a trustworthy source-to-output pipeline for a new domain from five answers: sources and citations, units, evidence tiers, output and builder, and human gates. BookAssembler is one instance.",
-  "author": { "name": "rexsaurus", "url": "https://github.com/rexsaurus" },
-  "homepage": "https://github.com/rexsaurus/BookAssembler/blob/main/docs/FACTORY.md",
-  "repository": "https://github.com/rexsaurus/BookAssembler",
+  "description": "Generate a trustworthy source-to-output pipeline for a new domain from five answers: sources and citations, units, evidence tiers, output and builder, and human gates. Lineage is one instance.",
+  "author": { "name": "Lineage contributors" },
+  "homepage": "https://github.com/rexsaurus/Lineage/blob/main/docs/FACTORY.md",
+  "repository": "https://github.com/rexsaurus/Lineage",
   "license": "MIT",
   "keywords": ["pipeline", "generator", "provenance", "citations", "scaffold"]
 }

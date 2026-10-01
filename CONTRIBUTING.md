@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping. BookAssembler is a small set of tools, Typst templates and Claude Code
+Thanks for helping. Lineage is a small set of tools, Typst templates and Claude Code
 skills; most contributions are one of these:
 
 - **Bug fixes in the scripts.** Run `make sample` before and after; CI builds the sample

@@ -1,8 +1,8 @@
-# Optional transcription stack for BookAssembler (transcribe.sh, wx.py,
+# Optional transcription stack for Lineage (transcribe.sh, wx.py,
 # diarize.py, diarize_chunked.py). Not needed to build a book from existing
 # transcripts. Install into the same venv as the build deps:
 #
-#     $BOOKASSEMBLER/.venv/bin/python -m pip install -r requirements-transcribe.txt
+#     $LINEAGE/.venv/bin/python -m pip install -r requirements-transcribe.txt
 #
 # Also needed, outside pip: ffmpeg/ffprobe on PATH, and for speaker labels a
 # Hugging Face read token (HF_TOKEN) with the licences accepted for

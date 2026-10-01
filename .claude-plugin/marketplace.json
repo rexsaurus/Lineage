@@ -1,14 +1,14 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "rexsaurus-factory",
-  "owner": { "name": "rexsaurus", "url": "https://github.com/rexsaurus" },
+  "name": "lineage",
+  "owner": { "name": "Lineage contributors" },
   "metadata": {
-    "description": "BookAssembler, and the factory that generates pipelines like it."
+    "description": "Lineage, and the factory that generates pipelines like it."
   },
   "plugins": [
     {
-      "name": "bookassembler",
-      "source": "./plugins/bookassembler",
+      "name": "lineage",
+      "source": "./plugins/lineage",
       "description": "Turn recorded interviews with a relative into a printed book.",
       "category": "productivity"
     },

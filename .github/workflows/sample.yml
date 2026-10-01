@@ -11,12 +11,12 @@ jobs:
       - uses: typst-community/setup-typst@v4
       - name: Install poppler (pdfinfo)
         run: sudo apt-get update && sudo apt-get install -y poppler-utils
-      - name: Install BookAssembler build tools
+      - name: Install Lineage build tools
         run: make install
       - name: Build the sample project and the example chapter
         run: make sample
       - name: Check the scripts compile
-        run: .venv/bin/python -m py_compile plugins/bookassembler/scripts/*.py plugins/bookassembler/skills/*/scripts/*.py plugins/factory/skills/factory/scripts/*.py plugins/factory/skills/factory/templates/pipeline/scripts/*.py
+        run: .venv/bin/python -m py_compile plugins/lineage/scripts/*.py plugins/lineage/skills/*/scripts/*.py plugins/factory/skills/factory/scripts/*.py plugins/factory/skills/factory/templates/pipeline/scripts/*.py
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -24,7 +24,7 @@ jobs:
         run: |
           npm install -g @anthropic-ai/claude-code
           claude plugin validate .
-          claude plugin validate plugins/bookassembler
+          claude plugin validate plugins/lineage
           claude plugin validate plugins/factory
       - name: The factory scaffolds a toy domain, and its fixture builds
         run: |

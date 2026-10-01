@@ -1,0 +1,32 @@
+# Lineage expressed as the five answers. The real Lineage adds domain machinery
+# the generic runtime doesn't have (audio transcription, timestamp citations, Typst book
+# layout); this spec scaffolds the same skeleton with line citations into the transcripts.
+name: memoir
+title: "Family book"
+domain: "a third-person biography of a relative written from recorded interviews"
+source:
+  noun: interview transcript
+  dir: sources
+  citation: "[{source}:{line}]"        # Lineage itself cites timestamps: [S1 00:04:28]
+unit:
+  noun: story unit
+  plural: story units
+  definition: "one story as the subject told it, with its source excerpt, that can move to a different chapter without rewriting"
+tiers:
+  - {id: witnessed, meaning: "the subject was there"}
+  - {id: told, meaning: "told to the subject by a named person"}
+  - {id: lore, meaning: "family lore; the chapter says it is lore"}
+  - {id: documented, meaning: "in a record cited in THE RECORDS"}
+output:
+  noun: book
+  format: typst
+  builder: typst
+  title: "A Family Book"
+gates:
+  - {id: G1, name: "speakers confirmed", after: ingest, question: "Which voice is the subject in each session?"}
+  - {id: G2, name: "chapter map approved", after: units, question: "Are these the right chapters, in the right order?"}
+  - {id: G3, name: "final sign-off", after: build, question: "Every bridge and REVIEW item decided; may this print?"}
+rules:
+  - "Third person, past tense, about the subject; no interview format."
+  - "Quotes exact from the transcript; hedges carry over; never firm up a date."
+  - "Where records and the family disagree, print both and say so."

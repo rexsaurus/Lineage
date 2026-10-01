@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 BookAssembler contributors
+Copyright (c) 2026 Lineage contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,9 +23,9 @@ SOFTWARE.
 ---------------------------------------------------------------------------
 What this license covers
 
-This license covers the BookAssembler code, templates, skills and documentation.
+This license covers the Lineage code, templates, skills and documentation.
 It does NOT cover anyone's recordings, transcripts, photographs, or the books
-made with BookAssembler: those belong to the people who made them.
+made with Lineage: those belong to the people who made them.
 
 The worked example in examples/erasthus-burnham/ is a real family's chapter,
 published by that family as an example. Its text is not licensed for reuse
