@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lineage</title>
+<link rel="icon" href="/logo.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
+<style>
+:root{
+  --ink:#1C1A17; --ink-2:#4A443C; --ink-3:#7C756A;
+  --paper:#F7F3EC; --card:#FFFDF8; --line:#E0D9CC;
+  --clay:#C96F4A; --clay-dark:#A8552F; --green:#4F7A54; --amber:#B9872F;
+  --serif:Fraunces,Georgia,'Times New Roman',serif;
+  --sans:'Public Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono','SFMono-Regular',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55}
+a{color:var(--clay-dark)}
+.hidden{display:none !important}
+.top{background:var(--ink);color:var(--paper);display:flex;align-items:center;gap:26px;padding:0 26px;height:62px;position:sticky;top:0;z-index:20}
+.brand{display:flex;gap:11px;align-items:center;flex:none}
+.brand img{width:34px;height:34px;border-radius:9px}
+.brand h1{font-family:var(--serif);font-size:22px;margin:0;font-weight:600;letter-spacing:-.2px}
+.tabs{display:flex;gap:2px;height:100%;overflow-x:auto}
+.tabs a{all:unset;cursor:pointer;display:flex;align-items:center;padding:0 15px;font-size:14px;color:#D9D2C6;border-bottom:2.5px solid transparent;white-space:nowrap}
+.tabs a:hover{color:#fff}
+.tabs a[aria-current="page"]{color:#fff;border-bottom-color:var(--clay)}
+.top .proj{margin-left:auto;font-size:12px;color:#A49C90;max-width:34ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top .proj code{color:#D9D2C6}
+.page{padding:34px 40px 70px;max-width:1180px;margin:0 auto}
+.page.wide{max-width:none;padding:22px 26px 26px}
+.head{margin-bottom:22px}
+.kicker{font-size:12px;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+h2{font-family:var(--serif);font-size:32px;line-height:1.15;margin:0 0 8px;font-weight:600;letter-spacing:-.5px}
+.lede{color:var(--ink-2);font-size:16px;max-width:66ch;margin:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:16px}
+.card h3{margin:0 0 3px;font-size:16px;font-weight:600}
+.card p.sub{margin:0 0 14px;color:var(--ink-3);font-size:13.6px}
+.author{position:relative}
+.author:after{content:"author";position:absolute;top:12px;right:14px;font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-3);border:1px solid var(--line);border-radius:20px;padding:1px 8px;background:#F3EEE4}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+label{display:block;font-size:13px;font-weight:500;margin-bottom:5px;color:var(--ink-2)}
+input[type=text],input[type=password],input[type=search],select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:#fff;font:inherit;font-size:14.3px;color:var(--ink)}
+textarea{resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--clay);outline-offset:1px}
+.btn{all:unset;cursor:pointer;background:var(--ink);color:var(--paper);padding:9px 17px;border-radius:9px;font-size:14px;font-weight:500;text-align:center;white-space:nowrap}
+.btn:hover{background:#312C26}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{background:#F0EADF}
+.btn.go{background:var(--clay)} .btn.go:hover{background:var(--clay-dark)}
+.btn.sm{padding:5px 11px;font-size:13px;border-radius:7px}
+.pill{font-size:12px;padding:3px 9px;border-radius:20px;border:1px solid var(--line);color:var(--ink-3);background:#F3EEE4;white-space:nowrap;display:inline-block}
+.pill.ok{color:#2F5A35;border-color:#BFD6C2;background:#EAF3EB}
+.pill.warn{color:#8A6418;border-color:#E3D2AB;background:#FBF4E4}
+.pill.bad{color:#8E3B2A;border-color:#E6C4B9;background:#FBECE7}
+.grid{display:grid;gap:14px}
+.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.grid.five{grid-template-columns:repeat(5,minmax(0,1fr))}
+.choice{border:1px solid var(--line);border-radius:12px;padding:15px;background:var(--card);cursor:pointer;display:block}
+.choice:hover{border-color:#C9BFAE}
+.choice[data-on="1"]{border-color:var(--clay);box-shadow:0 0 0 3px rgba(201,111,74,.14)}
+.choice h4{margin:0 0 4px;font-size:15px;font-weight:600}
+.choice p{margin:0;font-size:13.2px;color:var(--ink-3)}
+.choice .thumb{width:100%;aspect-ratio:7/10;object-fit:cover;object-position:top;border:1px solid var(--line);border-radius:6px;background:#fff;margin-bottom:10px;display:block}
+.choice .swatch{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;margin-bottom:9px;display:block;background:#eee}
+.voice{font-family:var(--serif);font-size:14.6px;line-height:1.6;color:var(--ink);margin:10px 0 0;padding-top:10px;border-top:1px solid var(--line)}
+.note{font-size:13.4px;color:var(--ink-2);background:#F3EEE4;border-radius:10px;padding:12px 15px}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:5px 16px;font-size:13.4px}
+.kv dt{color:var(--ink-3)} .kv dd{margin:0;word-break:break-all;font-family:var(--mono);font-size:12.4px}
+.toggle{display:flex;gap:11px;align-items:flex-start;padding:10px 0;font-weight:400}
+.toggle input{margin-top:4px;accent-color:var(--clay);width:16px;height:16px;flex:none}
+.toggle b{font-weight:600}
+.toggle span{display:block;color:var(--ink-3);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13.8px}
+th{text-align:left;font-size:11.2px;letter-spacing:1.1px;text-transform:uppercase;color:var(--ink-3);font-weight:600;padding:0 9px 8px;white-space:nowrap}
+td{padding:9px 9px;border-top:1px solid var(--line);vertical-align:middle}
+tr.group td{background:#F3EEE4;font-size:11.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-3);font-weight:600;padding:6px 9px}
+td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.icon{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;font-size:10.5px;font-weight:600;color:#fff;letter-spacing:.3px}
+.icon.audio{background:var(--clay)} .icon.video{background:#8A5A3C} .icon.image{background:var(--green)}
+.icon.pdf{background:#8E3B2A} .icon.text{background:var(--ink-2)} .icon.other{background:var(--ink-3)}
+.links a,.links button{all:unset;cursor:pointer;color:var(--clay-dark);font-size:12.8px;margin-right:10px;text-decoration:underline;text-underline-offset:2px}
+.linkish{all:unset;cursor:pointer;font-weight:600;color:var(--ink)}
+.linkish:hover{color:var(--clay-dark);text-decoration:underline}
+.drop{border:2px dashed var(--line);border-radius:14px;padding:22px;text-align:center;background:var(--card);transition:.15s;margin-bottom:16px}
+.drop.over{border-color:var(--clay);background:#FBF2EC}
+.drop p{margin:3px 0;color:var(--ink-3)}
+.chat{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;height:calc(100vh - 62px - 48px)}
+.chatmain{display:flex;flex-direction:column;min-height:0;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.sessionbar{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line)}
+.sessionbar .who{font-family:var(--serif);font-size:18px;font-weight:600}
+.sessionbar code{font-size:12px;color:var(--ink-3);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:40ch}
+.chips{display:flex;gap:7px;flex-wrap:wrap;padding:11px 14px 0}
+.chip{all:unset;cursor:pointer;font-size:12.8px;padding:5px 11px;border-radius:20px;border:1px solid var(--line);background:#F7F2E9;color:var(--ink-2)}
+.chip:hover{border-color:var(--clay);color:var(--clay-dark)}
+.composer{display:flex;gap:9px;padding:11px 14px 12px;align-items:flex-end}
+.composer textarea{min-height:46px;max-height:180px;font-size:14.5px}
+.composer .hint{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+.termwrap{flex:1;min-height:0;background:var(--ink);padding:10px 4px 6px 12px}
+#term{height:100%}
+.side{display:flex;flex-direction:column;gap:14px;overflow-y:auto;min-height:0}
+.side .card{margin:0;padding:16px 16px}
+.action{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.action:first-of-type{border-top:0}
+.action .name{font-weight:600;font-size:14px}
+.action .step{grid-column:1/-1;font-size:12.4px;color:var(--ink-3)}
+.mini{grid-column:1/-1;height:4px;background:#EBE4D8;border-radius:3px;overflow:hidden}
+.mini i{display:block;height:100%;width:0;background:var(--clay);transition:width .3s}
+.appr{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;max-height:260px;overflow-y:auto}
+.appr li{font-size:12.8px;background:#F7F2E9;border-radius:8px;padding:7px 9px}
+.appr code{font-size:11px;color:var(--ink-3);font-family:var(--mono)}
+.scrim{position:fixed;inset:0;background:rgba(28,26,23,.35);z-index:40}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(580px,100vw);background:var(--paper);z-index:41;box-shadow:-10px 0 30px rgba(0,0,0,.12);display:flex;flex-direction:column}
+.drawer header,.modal header{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.drawer header h3,.modal header h3{font-family:var(--serif);font-size:21px;margin:0;font-weight:600}
+.drawer .body{padding:18px 22px;overflow-y:auto}
+.ts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13.4px}
+.ts button{all:unset;cursor:pointer;font-family:var(--mono);font-size:12.2px;color:var(--clay-dark);text-decoration:underline}
+.ts .spk{color:var(--ink-3);font-size:12px}
+.modal{position:fixed;inset:5vh 6vw;background:var(--paper);border-radius:16px;z-index:41;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal .body{padding:20px 24px;overflow:auto}
+.preview{background:#FFFDF8;border:1px solid var(--line);border-radius:14px;padding:28px 34px;font-family:var(--serif);font-size:16px;line-height:1.72;white-space:pre-wrap}
+.preview mark{background:#F6DFA8;padding:1px 5px;border-radius:3px;font-family:var(--sans);font-size:13.5px}
+.tree{list-style:none;padding:0;margin:0}
+.tree li{padding:9px 0 9px 20px;border-left:2px solid var(--line);margin-left:9px;position:relative}
+.tree li:before{content:"";position:absolute;left:-6px;top:16px;width:10px;height:10px;border-radius:50%;background:var(--clay)}
+.tree li.told:before{background:#D7C49A} .tree li.witnessed:before{background:var(--green)}
+.tree .name{font-weight:600} .tree .meta{color:var(--ink-3);font-size:13px}
+@media (max-width:1000px){.chat{grid-template-columns:1fr;height:auto}.termwrap{height:60vh}.grid.three,.grid.four,.grid.five{grid-template-columns:repeat(2,minmax(0,1fr))}.page{padding:24px 18px 60px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="/logo.svg" alt=""><h1>Lineage</h1></div>
+  <nav class="tabs" id="tabs">
+    <a data-tab="settings">Settings</a>
+    <a data-tab="chat">Chat with the Genealogist</a>
+    <a data-tab="style">Style</a>
+    <a data-tab="sources">Sources</a>
+    <a data-tab="connectors">Connectors</a>
+  </nav>
+  <div class="proj">project <code id="proj"></code></div>
+</header>
+<main>
+  <section id="tab-settings" class="page hidden"></section>
+  <section id="tab-chat" class="page wide hidden"></section>
+  <section id="tab-style" class="page hidden"></section>
+  <section id="tab-sources" class="page hidden"></section>
+  <section id="tab-connectors" class="page hidden"></section>
+</main>
+<div id="overlay"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+<script>
+const TOKEN = "__LINEAGE_TOKEN__";
+const TABS = ['settings','chat','style','sources','connectors'];
+const S = {data:null, tab:null, built:{}, results:{}, connectors:null, sources:null, voices:[]};
+const $ = (s,r=document)=>r.querySelector(s);
+const esc = s => (s??"").toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function api(path, {method='GET', body=null}={}){
+  const opts = {method, headers:{'X-Lineage-Token':TOKEN}};
+  if(body instanceof FormData) opts.body = body;
+  else if(body!==null){ opts.body = JSON.stringify(body); opts.headers['Content-Type']='application/json'; }
+  const r = await fetch(path, opts);
+  return r.json();
+}
+const settings = () => S.data.state.settings;
+async function saveSettings(patch){
+  const r = await api('/api/settings',{method:'POST', body:patch});
+  S.data.state.settings = r.settings; S.data.state.title = r.title; S.data.state.subject = r.subject;
+  syncMirrors();
+  return r;
+}
+function fmtBytes(n){ if(n<1024) return n+' B'; if(n<1048576) return (n/1024).toFixed(0)+' KB'; if(n<1073741824) return (n/1048576).toFixed(1)+' MB'; return (n/1073741824).toFixed(2)+' GB'; }
+function fmtDur(s){ if(s==null) return '—'; s=Math.round(s); const h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=s%60; return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0'); }
+function head(el,{kicker,title,lede}){ el.insertAdjacentHTML('beforeend',`<div class="head"><div class="kicker">${esc(kicker)}</div><h2>${esc(title)}</h2>${lede?`<p class="lede">${esc(lede)}</p>`:''}</div>`); }
+function options(list, cur){ return list.map(([v,l])=>`<option value="${esc(v)}" ${v===cur?'selected':''}>${esc(l)}</option>`).join(''); }
+function alertNote(msg){ const n=document.createElement('div'); n.className='note'; n.style.cssText='position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:60;box-shadow:0 6px 20px rgba(0,0,0,.15);max-width:80vw'; n.textContent=msg; document.body.appendChild(n); setTimeout(()=>n.remove(),4500); }
+
+/* ------------------------------------------------------------------ boot + routing (state in the URL hash) */
+async function boot(){
+  S.data = await api('/api/bootstrap');
+  $('#proj').textContent = S.data.project;
+  document.querySelectorAll('#tabs a').forEach(a=>a.onclick=()=>{ location.hash = a.dataset.tab; });
+  window.addEventListener('hashchange', route);
+  if(!location.hash){
+    const setUp = Boolean(S.data.state.title) || Boolean(S.data.keys.anthropic) || S.data.terminal.status==='running';
+    history.replaceState(null,'','#'+(setUp?'chat':'settings'));
+  }
+  route();
+}
+function route(){
+  let t = location.hash.replace('#','').split('-')[0];
+  if(!TABS.includes(t)) t='settings';
+  S.tab = t;
+  document.querySelectorAll('#tabs a').forEach(a=>a.setAttribute('aria-current', a.dataset.tab===t?'page':'false'));
+  TABS.forEach(x=>$('#tab-'+x).classList.toggle('hidden', x!==t));
+  const builders = {settings:buildSettings, chat:buildChat, style:buildStyle, sources:buildSources, connectors:buildConnectors};
+  if(!S.built[t] || t==='sources' || t==='connectors'){ builders[t]($('#tab-'+t)); S.built[t]=true; }
+  else syncMirrors();
+  if(t==='chat') onChatShown();
+  if(t==='connectors' && location.hash.includes('drive-failed')) alertNote('Google sign-in did not complete.');
+}
+
+/* mirrored controls: Settings and Style write the same keys */
+function syncMirrors(){
+  document.querySelectorAll('[data-setting]').forEach(el=>{
+    const v = settings()[el.dataset.setting];
+    if(el.type==='checkbox') el.checked = !!v; else if(document.activeElement!==el) el.value = v ?? '';
+  });
+  document.querySelectorAll('[data-choice-for]').forEach(c=>{ c.dataset.on = settings()[c.dataset.choiceFor]===c.dataset.id ? 1 : 0; });
+}
+function bindSettingInputs(root){
+  root.querySelectorAll('[data-setting]').forEach(el=>{
+    el.onchange = ()=>saveSettings({[el.dataset.setting]: el.type==='checkbox' ? el.checked : el.value});
+  });
+}
+
+/* ================================================================== 1. SETTINGS */
+function buildSettings(el){
+  const s = settings(), D = S.data;
+  el.innerHTML='';
+  head(el,{kicker:'Settings', title:'The book and where it lives', lede:'Every control on every tab writes to the same settings. Change something here or on the Style tab and both stay in step.'});
+  el.insertAdjacentHTML('beforeend', `
+  <div class="grid two">
+    <div class="card"><h3>The book</h3><p class="sub">You can change these at any time.</p>
+      <div class="grid two">
+        <div><label>Working title</label><input type="text" id="set-title" value="${esc(D.state.title)}" placeholder="The Lake Was Always There"></div>
+        <div><label>Who it is about</label><input type="text" id="set-subject" value="${esc(D.state.subject)}" placeholder="My grandmother, Ruth Calder"></div>
+        <div><label>Trim size</label><select data-setting="trim">${options(D.trims.map(t=>[t,t.replace('x',' × ')+' in']), s.trim)}</select></div>
+        <div><label>Printer</label><select data-setting="printer">${options([['kdp','Amazon KDP'],['ingramspark','IngramSpark'],['lulu','Lulu'],['blurb','Blurb']], s.printer)}</select></div>
+      </div>
+    </div>
+    <div class="card"><h3>Style</h3><p class="sub">The same settings as the Style tab, compact.</p>
+      <div class="grid two">
+        <div><label>Narrator style</label><select data-setting="narrative_style">${options(D.narrative_styles.map(n=>[n.id,n.name]), s.narrative_style)}</select></div>
+        <div><label>Writing style · quotes</label><select data-setting="quote_density">${options(D.writing_options.quote_density, s.quote_density)}</select></div>
+        <div style="grid-column:1/-1"><label>Chapter template</label><select data-setting="chapter_template">${options(D.chapter_templates.map(t=>[t.id,t.name]), s.chapter_template)}</select></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- author-only surface: project repo, Drive folder, terminal command -->
+  <div class="card author"><h3>Project repo</h3><p class="sub">The folder that holds this book. Lineage checks it exists and is a git repo, so every version can be pinned.</p>
+    <div class="row"><input type="text" id="repo-path" value="${esc(D.project)}" style="flex:1;min-width:280px"><button class="btn" id="repo-verify">Verify</button></div>
+    <div id="repo-out" style="margin-top:12px"></div>
+  </div>
+  <div class="card author"><h3>Google Drive folder</h3><p class="sub">A Drive folder to organize sources and finished outputs. Paste its ID or its URL.</p>
+    <div class="row"><input type="text" id="drive-folder" value="${esc(s.drive_folder||'')}" placeholder="https://drive.google.com/drive/folders/…" style="flex:1;min-width:280px">
+      <button class="btn" id="drive-verify">Verify</button>
+      <span class="pill ${s.drive_verified===true?'ok':(s.drive_folder?'warn':'')}" id="drive-pill">${s.drive_verified===true?'verified':(s.drive_folder?'saved, unverified':'not set')}</span></div>
+    <label class="toggle"><input type="checkbox" data-setting="sync_sources" ${s.sync_sources?'checked':''}><div><b>Sync sources · Drive → this computer</b><span>Copies new files from the folder (or its <code>sources</code> subfolder) into the project's <code>sources/</code>. Never deletes, never overwrites a file you already have.</span></div></label>
+    <label class="toggle"><input type="checkbox" data-setting="sync_outputs" ${s.sync_outputs?'checked':''}><div><b>Sync outputs · this computer → Drive</b><span>Uploads what's in <code>output/</code> (draft PDFs, podcast scripts) to an <code>outputs</code> subfolder. Nothing on Drive is deleted.</span></div></label>
+    <div class="row"><button class="btn ghost sm" id="drive-sync">Sync now</button><span id="drive-sync-out" style="font-size:13px;color:var(--ink-3)"></span></div>
+  </div>
+  <div class="card author"><h3>Terminal</h3><p class="sub">What runs in the Chat tab. Default: <code>claude</code> in the project folder. Pick a detected CLI on the Connectors tab.</p>
+    <div class="grid two">
+      <div><label>Command</label><input type="text" data-setting="terminal_command" value="${esc(s.terminal_command||'')}" placeholder="claude"></div>
+      <div><label>Working folder</label><input type="text" data-setting="terminal_cwd" value="${esc(s.terminal_cwd||'')}" placeholder="${esc(D.project)}"></div>
+    </div>
+  </div>
+
+  <div class="card"><h3>Where things are</h3><p class="sub">Resolved paths on this machine.</p>
+    <dl class="kv">${Object.entries(D.paths).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+  </div>`);
+  bindSettingInputs(el);
+  ['title','subject'].forEach(k=>$('#set-'+k).onchange=e=>saveSettings({[k]:e.target.value}));
+  $('#repo-verify').onclick = verifyRepo;
+  $('#drive-verify').onclick = async ()=>{
+    const p=$('#drive-pill'); p.className='pill'; p.textContent='checking…';
+    const r = await api('/api/drive/verify',{method:'POST', body:{folder:$('#drive-folder').value}});
+    p.className='pill '+(r.ok===true?'ok':(r.ok===null?'warn':'bad')); p.textContent=r.detail;
+    S.data.state.settings.drive_folder = $('#drive-folder').value;
+  };
+  $('#drive-sync').onclick = ()=>runJob('sync', st=>{$('#drive-sync-out').textContent=st;}, r=>{
+    $('#drive-sync-out').textContent = `downloaded ${r.downloaded.length}, uploaded ${r.uploaded.length}, skipped ${r.skipped.length}`;
+  }, err=>{$('#drive-sync-out').textContent=err;});
+  verifyRepo();
+}
+async function verifyRepo(){
+  const out=$('#repo-out'); out.innerHTML='<span class="pill">checking…</span>';
+  const path=$('#repo-path').value;
+  const r = await api('/api/repo/verify',{method:'POST', body:{path}});
+  if(!r.exists){ out.innerHTML='<span class="pill bad">folder does not exist</span>'; return; }
+  if(r.is_dir===false){ out.innerHTML='<span class="pill bad">not a folder</span>'; return; }
+  const useBtn = path!==S.data.project ? `<button class="btn ghost sm" id="repo-use">Use this folder as the project</button>` : '';
+  if(r.git===false){
+    out.innerHTML=`<div class="row"><span class="pill warn">not a git repo</span><button class="btn sm" id="repo-init">git init</button>${useBtn}</div>`;
+    $('#repo-init').onclick=async()=>{ await api('/api/repo/init',{method:'POST',body:{path}}); verifyRepo(); };
+  } else if(r.git===null){ out.innerHTML=`<span class="pill warn">${esc(r.detail)}</span> ${useBtn}`; }
+  else {
+    out.innerHTML=`<div class="row"><span class="pill ok">git repo</span>
+      <span class="pill">${esc(r.branch)}</span>
+      <span class="pill ${r.remote?'':'warn'}">${r.remote?'origin · '+esc(r.remote):'no remote'}</span>
+      <span class="pill ${r.dirty?'warn':'ok'}">${r.dirty?r.dirty+' uncommitted change'+(r.dirty>1?'s':''):'clean'}</span>${useBtn}</div>`;
+  }
+  const u=$('#repo-use'); if(u) u.onclick=async()=>{
+    const res=await api('/api/project',{method:'POST',body:{path}});
+    if(res.ok){ S.data = await api('/api/bootstrap'); $('#proj').textContent=S.data.project; S.built={}; route(); alertNote('Project switched.'); }
+    else alertNote(res.detail);
+  };
+}
+
+/* ================================================================== jobs (shared) */
+async function runJob(stage, onStep, onDone, onError){
+  const r = await api('/api/run/'+stage,{method:'POST'});
+  if(!r.job){ onError && onError(r.error||'could not start'); return; }
+  return pollJob(r.job, onStep, onDone, onError);
+}
+function pollJob(job, onStep, onDone, onError){
+  return new Promise(resolve=>{
+    const t=setInterval(async()=>{
+      const j=await api('/api/job/'+job);
+      onStep && onStep(j.step, j.progress);
+      if(j.state==='done'){ clearInterval(t); onDone && onDone(j.result); resolve(j.result); }
+      if(j.state==='error'||j.state==='unknown'){ clearInterval(t); onError && onError(j.step||'job lost'); resolve(null); }
+    }, 350);
+  });
+}
+
+/* ================================================================== 2. CHAT WITH THE GENEALOGIST */
+/* author-only surface: the terminal is a real shell on this machine. */
+const TERM = {term:null, fit:null, es:null, chain:Promise.resolve(), buf:'', timer:null, started:false};
+const ACTIONS = [
+  ['research','Search public records','Names, places and dates → archives'],
+  ['genealogy','Build the genealogy','Records → a line of descent'],
+  ['chapters','Propose the chapter map','Stories → a proposed book'],
+  ['generate','Write the chapters','Cited prose, bridges held back'],
+  ['podcast','Make a podcast episode','A spoken script in the chosen voice'],
+];
+function buildChat(el){
+  el.innerHTML = `<div class="chat">
+    <div class="chatmain">
+      <div class="sessionbar">
+        <span class="who">The Genealogist</span><code id="t-cmd"></code>
+        <span class="spacer"></span>
+        <span class="pill" id="t-status">…</span>
+        <button class="btn ghost sm" id="t-restart" title="Start the command again">Restart</button>
+        <button class="btn ghost sm" id="t-stop" title="Send Ctrl-C (SIGINT)">Stop</button>
+        <button class="btn ghost sm" id="t-clear" title="Clear the screen and the saved scrollback">Clear</button>
+      </div>
+      <div class="chips" id="t-chips">${S.data.quick_prompts.map((q,i)=>`<button class="chip" data-i="${i}" title="${esc(q.prompt)}">${esc(q.label)}</button>`).join('')}</div>
+      <div class="composer">
+        <div style="flex:1"><textarea id="t-compose" rows="2" placeholder="Ask the Genealogist… (Enter to send, Shift+Enter for a new line)"></textarea>
+          <div class="hint">Your message is typed into the terminal below, followed by Return. The terminal is the truth.</div></div>
+        <button class="btn go" id="t-send">Send</button>
+      </div>
+      <div class="termwrap"><div id="term"></div></div>
+    </div>
+    <aside class="side">
+      <div class="card"><h3>Pipeline</h3><p class="sub">Runs on the engine, alongside the terminal.</p>
+        <div id="actions">${ACTIONS.map(([id,name,blurb])=>`<div class="action" data-stage="${id}">
+          <span class="name">${esc(name)}</span><button class="btn sm" data-run="${id}">Run</button>
+          <span class="step" id="step-${id}">${esc(blurb)}</span><div class="mini"><i id="bar-${id}"></i></div></div>`).join('')}</div>
+      </div>
+      <div class="card"><div class="row"><h3>Needs your approval</h3><span class="spacer"></span><button class="btn ghost sm" id="appr-refresh">Refresh</button></div>
+        <p class="sub">Bridges, REVIEW notes and proposed decisions, from the engine.</p><ul class="appr" id="appr"></ul></div>
+    </aside>
+  </div>`;
+  el.querySelectorAll('[data-run]').forEach(b=>b.onclick=()=>runAction(b.dataset.run, b));
+  $('#appr-refresh').onclick=loadApprovals; loadApprovals();
+  $('#t-restart').onclick=startTerminal;
+  $('#t-stop').onclick=()=>api('/api/term/stop',{method:'POST'});
+  $('#t-clear').onclick=()=>api('/api/term/clear',{method:'POST'});
+  $('#t-send').onclick=sendCompose;
+  $('#t-compose').onkeydown=e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendCompose(); } };
+  el.querySelectorAll('.chip').forEach(c=>c.onclick=()=>sendToTerminal(S.data.quick_prompts[+c.dataset.i].prompt));
+  initTerminal();
+}
+function initTerminal(){
+  if(typeof Terminal==='undefined'){ $('#term').innerHTML='<p style="color:#F7F3EC;padding:14px">xterm.js did not load (no internet?). The terminal needs the CDN once.</p>'; return; }
+  const t = new Terminal({fontFamily:"'JetBrains Mono','SFMono-Regular',Menlo,Consolas,monospace", fontSize:13.2, lineHeight:1.18,
+    cursorBlink:true, scrollback:10000,
+    theme:{background:'#1C1A17', foreground:'#F7F3EC', cursor:'#C96F4A', cursorAccent:'#1C1A17', selectionBackground:'#5B544A',
+      black:'#1C1A17', red:'#E07A5F', green:'#9DBF8F', yellow:'#E3B95F', blue:'#8FB3D9', magenta:'#C99BC9', cyan:'#86C5C0', white:'#E9E2D6',
+      brightBlack:'#7C756A', brightRed:'#F09A80', brightGreen:'#B6D6A8', brightYellow:'#F0CF7F', brightBlue:'#A9C8E8', brightMagenta:'#DDB6DD', brightCyan:'#A3D8D3', brightWhite:'#FFFFFF'}});
+  const fit = new FitAddon.FitAddon(); t.loadAddon(fit); t.open($('#term'));
+  TERM.term=t; TERM.fit=fit;
+  t.onData(d=>{ TERM.buf+=d; if(!TERM.timer) TERM.timer=setTimeout(flushKeys, 6); });
+  new ResizeObserver(()=>{ if(S.tab==='chat'){ try{ fit.fit(); sendResize(); }catch(e){} } }).observe($('#term'));
+  openStream();
+}
+function flushKeys(){ const d=TERM.buf; TERM.buf=''; TERM.timer=null; if(d) TERM.chain = TERM.chain.then(()=>api('/api/term/input',{method:'POST',body:{data:d}})); }
+let resizeTimer=null;
+function sendResize(){ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ if(TERM.term) api('/api/term/resize',{method:'POST',body:{cols:TERM.term.cols, rows:TERM.term.rows}}); },120); }
+const b64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+function openStream(){
+  if(TERM.es) TERM.es.close();
+  const es = new EventSource('/api/term/stream?token='+encodeURIComponent(TOKEN));
+  TERM.es = es;
+  es.addEventListener('hello', e=>{ const d=JSON.parse(e.data); TERM.term.reset(); if(d.scrollback) TERM.term.write(b64(d.scrollback)); setTermStatus(d); });
+  es.addEventListener('data', e=>TERM.term.write(b64(e.data)));
+  es.addEventListener('status', e=>setTermStatus(JSON.parse(e.data)));
+  es.addEventListener('clear', ()=>TERM.term.clear());
+}
+function setTermStatus(d){
+  S.data.terminal = d;
+  const p=$('#t-status'); if(!p) return;
+  const map={running:['ok','running'], exited:['warn','exited'], 'not configured':['bad','not configured'], 'not started':['','not started']};
+  const [cls,label]=map[d.status]||['',d.status];
+  p.className='pill '+cls; p.textContent=label; p.title=d.detail||'';
+  $('#t-cmd').textContent = d.command ? `${d.command} · ${d.cwd||''}` : '';
+  if(d.status==='not configured' && d.detail && TERM.term) TERM.term.write(`\r\n\x1b[33m${d.detail}\x1b[0m\r\n`);
+}
+async function startTerminal(){ const d = await api('/api/term/start',{method:'POST'}); setTermStatus(d); setTimeout(()=>{ TERM.fit && TERM.fit.fit(); sendResize(); },60); }
+function onChatShown(){
+  setTimeout(()=>{ try{ TERM.fit && TERM.fit.fit(); sendResize(); }catch(e){} TERM.term && TERM.term.focus(); }, 30);
+  if(!TERM.started){ TERM.started=true; if(S.data.terminal.status!=='running') startTerminal(); }
+}
+async function sendToTerminal(text){
+  if(!text.trim()) return;
+  if(S.data.terminal.status!=='running'){ await startTerminal(); await new Promise(r=>setTimeout(r,900)); }
+  // Multi-line text goes in as a bracketed paste so it stays one message (agent CLIs support
+  // it); a single line is typed plainly, which every shell understands. Return submits it.
+  const body = text.includes('\n') ? '\x1b[200~'+text+'\x1b[201~' : text;
+  TERM.chain = TERM.chain.then(()=>api('/api/term/input',{method:'POST',body:{data:body}}))
+                         .then(()=>new Promise(r=>setTimeout(r,60)))
+                         .then(()=>api('/api/term/input',{method:'POST',body:{data:'\r'}}));
+  TERM.term && TERM.term.focus();
+}
+function sendCompose(){ const ta=$('#t-compose'); const v=ta.value; ta.value=''; sendToTerminal(v); }
+async function loadApprovals(){
+  const r = await api('/api/engine/approvals');
+  const ul=$('#appr'); if(!ul) return;
+  ul.innerHTML = r.items.length ? r.items.slice(0,60).map(i=>`<li><span class="pill ${i.kind==='bridge'?'warn':(i.kind==='review'?'bad':'')}">${esc(i.kind)}</span> ${esc(i.text)}<br><code>${esc(i.where)}</code></li>`).join('')
+    : '<li style="background:none;color:var(--ink-3);padding-left:0">Nothing waiting.</li>';
+}
+function runAction(stage, btn){
+  btn.disabled=true; const step=$('#step-'+stage), bar=$('#bar-'+stage);
+  runJob(stage, (s,p)=>{ step.textContent=s; bar.style.width=p+'%'; }, r=>{
+    btn.disabled=false; btn.textContent='Run again'; bar.style.width='100%';
+    S.results[stage]=r; step.innerHTML=`Done · <a href="#" data-show="${stage}">view result</a>`;
+    step.querySelector('[data-show]').onclick=e=>{e.preventDefault(); showResult(stage);};
+    showResult(stage); loadApprovals();
+  }, err=>{ btn.disabled=false; step.textContent='Error: '+err; });
+}
+function showResult(stage){
+  const r=S.results[stage]; let title='', html='';
+  if(stage==='research'){ title=`${r.records.length} records found`;
+    const tone=c=>c.startsWith('documented')?'ok':(c.startsWith('contradicts')?'warn':'');
+    html=`<p class="sub">PROTOTYPE results. Each would get a line in THE RECORDS at the end of its chapter.</p><table><thead><tr><th>Record</th><th>Where</th><th>What it shows</th><th>Verdict</th></tr></thead><tbody>${r.records.map(x=>`<tr><td><strong>${esc(x.title)}</strong></td><td>${esc(x.where)}</td><td>${esc(x.detail)}</td><td><span class="pill ${tone(x.confidence)}">${esc(x.confidence)}</span></td></tr>`).join('')}</tbody></table>`; }
+  if(stage==='genealogy'){ title='Line of descent';
+    html=`<p class="sub">PROTOTYPE. Green: witnessed. Sand: told. Clay: a record says so.</p><ul class="tree">${r.tree.map(p=>`<li class="${esc(p.tier)}"><div class="name">${esc(p.name)} <span class="meta">${esc(p.years)}</span></div><div class="meta">${esc(p.note||'')} · ${esc(p.tier)}</div></li>`).join('')}</ul>`; }
+  if(stage==='chapters'){ title=`${r.chapters.length} chapters proposed`;
+    html=`<p class="sub">PROTOTYPE map. Approve it, or tell the Genealogist to split, merge or reorder.</p><table><thead><tr><th>#</th><th>Chapter</th><th>Part</th><th>Years</th><th>Stories</th><th>Words</th></tr></thead><tbody>${r.chapters.map(c=>`<tr><td>${c.n}</td><td><strong>${esc(c.title)}</strong><br><span style="color:var(--ink-3);font-size:13px">${esc(c.summary)}</span></td><td>${esc(c.part)}</td><td>${esc(c.years)}</td><td class="num">${c.units}</td><td class="num">${c.words.toLocaleString()}</td></tr>`).join('')}</tbody></table>
+      <h3 style="margin:22px 0 8px">Preview, in the current narrator style</h3><div class="preview">${esc(r.preview).replace(/⟦BRIDGE: (.*?)⟧/g,(m,t)=>`<mark>BRIDGE · ${esc(t)} · approve or cut</mark>`)}</div>`; }
+  if(stage==='generate'){ title=`${r.written} chapters written`; html=`<p>${esc(r.note)}</p><div class="row"><span class="pill ok">${r.written} chapters</span><span class="pill warn">${r.bridges} bridges to approve</span></div>`; }
+  if(stage==='podcast'){ title='Episode 1'; html=`<p>${esc(r.note)}</p><div class="row"><span class="pill ok">${esc(r.script)}</span>${r.audio?'<span class="pill ok">audio</span>':'<span class="pill warn">audio not rendered</span>'}</div>`; }
+  openModal(title, html);
+}
+
+/* ================================================================== 3. STYLE */
+function buildStyle(el){
+  const s=settings(), D=S.data, has = n => D.previews.includes(n);
+  el.innerHTML='';
+  head(el,{kicker:'Style', title:'How the book looks and sounds', lede:'A gallery, not a form. Pick by looking. Every choice here is mirrored on the Settings tab.'});
+  el.insertAdjacentHTML('beforeend', `
+  <div class="card"><h3>Chapter templates</h3><p class="sub">Real pages, rendered from the Typst template. Click one for a larger look and its sections.</p>
+    <div class="grid four">${D.chapter_templates.map(t=>`<div class="choice" data-choice-for="chapter_template" data-id="${t.id}" data-on="${s.chapter_template===t.id?1:0}">
+      ${has('tpl-'+t.id+'.png')?`<img class="thumb" src="/previews/tpl-${t.id}.png" alt="">`:`<div class="thumb" style="display:grid;place-items:center;color:var(--ink-3);font-size:12px">run make previews</div>`}
+      <h4>${esc(t.name)}</h4><p>${esc(t.blurb)}</p>
+      <p style="margin-top:8px"><button class="btn ghost sm" data-preview="${t.id}">Larger preview</button></p></div>`).join('')}</div></div>
+
+  <div class="card"><h3>Narrator style</h3><p class="sub">The same passage, in each voice. The difference is the point.</p>
+    <div class="grid two">${D.narrative_styles.map(n=>`<div class="choice" data-choice-for="narrative_style" data-id="${n.id}" data-on="${s.narrative_style===n.id?1:0}">
+      <h4>${esc(n.name)}</h4><p>${esc(n.blurb)}</p><p class="voice">${esc(D.voice_samples[n.id])}</p></div>`).join('')}</div></div>
+
+  <div class="card"><h3>Writing style</h3><p class="sub">How the prose sits on the page.</p>
+    <div class="grid four">
+      <div><label>Quote density</label><select data-setting="quote_density">${options(D.writing_options.quote_density, s.quote_density)}</select></div>
+      <div><label>Section-break ornament</label><select data-setting="ornament">${options(D.writing_options.ornament, s.ornament)}</select></div>
+      <div><label>Chapter opener</label><select data-setting="opener">${options(D.writing_options.opener, s.opener)}</select></div>
+      <div><label>Bridges in drafts</label><label class="toggle" style="padding:6px 0"><input type="checkbox" data-setting="bridges_in_drafts" ${s.bridges_in_drafts?'checked':''}><div><b>Print highlighted</b><span>Off hides them in drafts. The final build refuses unapproved bridges either way.</span></div></label></div>
+    </div></div>
+
+  <div class="card"><h3>Photographs and illustrations</h3><p class="sub">The look for generated illustrations.</p>
+    <div class="note" style="margin-bottom:14px"><b>Standing rule:</b> generated images are always captioned as illustrations ("as the family told it", "illustration") and listed apart from the real photographs. They never pass as records, in drafts or in print.</div>
+    <div class="grid five">${D.photo_styles.map(p=>`<div class="choice" data-choice-for="photo_style" data-id="${p.id}" data-on="${s.photo_style===p.id?1:0}">
+      ${has('photo-'+p.id+'.png')?`<img class="swatch" src="/previews/photo-${p.id}.png" alt="">`:''}<h4>${esc(p.name)}</h4><p>${esc(p.blurb)}</p></div>`).join('')}</div></div>
+
+  <div class="card"><h3>Podcast voice</h3><p class="sub" id="voice-sub">Loading voices…</p>
+    <div class="row"><div style="flex:1;min-width:260px"><select id="voice"></select></div><button class="btn ghost" id="voice-play">Preview</button><audio id="voice-audio"></audio></div></div>`);
+  el.querySelectorAll('[data-choice-for]').forEach(c=>c.onclick=e=>{ if(e.target.closest('[data-preview]')) return; saveSettings({[c.dataset.choiceFor]: c.dataset.id}); });
+  el.querySelectorAll('[data-preview]').forEach(b=>b.onclick=()=>templatePreview(b.dataset.preview));
+  bindSettingInputs(el);
+  loadVoices();
+}
+function templatePreview(id){
+  const t=S.data.chapter_templates.find(x=>x.id===id);
+  openModal(t.name, `<div class="grid two" style="align-items:start">
+    ${S.data.previews.includes('tpl-'+id+'.png')?`<img src="/previews/tpl-${id}.png" style="width:100%;border:1px solid var(--line);border-radius:8px;background:#fff">`:'<div class="note">No preview yet: run <code>make previews</code>.</div>'}
+    <div><p>${esc(t.blurb)}</p><h3 style="margin:16px 0 6px;font-size:15px">Sections</h3><ol>${t.sections.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>
+    <button class="btn go" id="tpl-use">Use this template</button></div></div>`);
+  $('#tpl-use').onclick=()=>{ saveSettings({chapter_template:id}); closeOverlay(); };
+}
+async function loadVoices(){
+  const r = await api('/api/voices'); S.voices=r.voices;
+  const s=settings();
+  $('#voice-sub').textContent = r.live ? 'Live from your ElevenLabs account.' : 'Stand-ins. Add an ElevenLabs key on the Connectors tab to see your voices and hear previews.';
+  $('#voice').innerHTML = r.voices.map(v=>`<option value="${esc(v.voice_id)}" ${s.voice_id===v.voice_id?'selected':''}>${esc(v.name)}</option>`).join('');
+  $('#voice').onchange=e=>saveSettings({voice_id:e.target.value, voice_name:e.target.selectedOptions[0].textContent});
+  $('#voice-play').onclick=()=>{ const v=S.voices.find(x=>x.voice_id===$('#voice').value);
+    if(!v||!v.preview_url){ alertNote(r.live?'This voice has no preview sample.':'Previews need an ElevenLabs key.'); return; }
+    const a=$('#voice-audio'); a.src=v.preview_url; a.play(); };
+}
+
+/* ================================================================== 4. SOURCES */
+const KIND_LABEL={audio:'AUD',video:'VID',image:'IMG',pdf:'PDF',text:'TXT',other:'FILE'};
+function buildSources(el){
+  el.innerHTML='';
+  head(el,{kicker:'Sources', title:'What the book is made from', lede:'Recordings, transcripts, scans, letters, documents. Originals are copied into the project and never modified.'});
+  el.insertAdjacentHTML('beforeend', `
+    <div class="drop" id="drop"><p style="font-size:16px;color:var(--ink)">Drop files here</p><p>audio · video · pdf · images · text</p>
+      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn ghost sm" id="pick">Choose files</button><button class="btn ghost sm" id="from-drive">Add from Drive folder</button></div>
+      <input id="picker" type="file" multiple class="hidden"></div>
+    <div class="card"><div class="row" style="margin-bottom:12px">
+      <input type="search" id="src-filter" placeholder="Filter by name, kind or status" style="max-width:340px">
+      <select id="src-sort" style="max-width:200px"><option value="name">Sort: name</option><option value="added">Sort: date added</option><option value="bytes">Sort: size</option><option value="status">Sort: status</option></select>
+      <label class="toggle" style="padding:0;margin:0"><input type="checkbox" id="src-group" checked><div><b>Group by kind</b></div></label>
+      <span class="spacer"></span><span class="pill" id="src-count"></span></div>
+      <div id="src-table"><p class="sub" style="margin:0">Loading…</p></div></div>`);
+  const drop=$('#drop');
+  drop.ondragover=e=>{e.preventDefault();drop.classList.add('over')}; drop.ondragleave=()=>drop.classList.remove('over');
+  drop.ondrop=e=>{e.preventDefault();drop.classList.remove('over');upload(e.dataTransfer.files)};
+  $('#pick').onclick=()=>$('#picker').click(); $('#picker').onchange=e=>upload(e.target.files);
+  $('#from-drive').onclick=()=>{
+    if(!settings().drive_folder){ alertNote('Set a Drive folder on the Settings tab first.'); return; }
+    if(!settings().sync_sources){ alertNote('Turn on "Sync sources" on the Settings tab, then try again.'); return; }
+    $('#from-drive').textContent='syncing…';
+    runJob('sync', null, r=>{ $('#from-drive').textContent='Add from Drive folder'; alertNote(`Added ${r.downloaded.length} file(s) from Drive.`); loadSources(); },
+      err=>{ $('#from-drive').textContent='Add from Drive folder'; alertNote(err); });
+  };
+  ['src-filter','src-sort','src-group'].forEach(id=>$('#'+id).oninput=drawSources);
+  loadSources();
+}
+async function loadSources(){ const r=await api('/api/engine/sources'); S.sources=r.sources; drawSources(); }
+async function upload(files){
+  const fd=new FormData(); [...files].forEach(f=>fd.append('file',f,f.name));
+  $('#src-count').textContent='uploading…';
+  const r=await api('/api/upload',{method:'POST',body:fd});
+  alertNote(`Added ${(r.saved||[]).length} file(s).`); loadSources();
+}
+function drawSources(){
+  if(!S.sources) return;
+  const q=($('#src-filter').value||'').toLowerCase(), sort=$('#src-sort').value, group=$('#src-group').checked;
+  let rows=S.sources.filter(x=>!q || (x.name+' '+x.kind+' '+x.status).toLowerCase().includes(q));
+  const cmp={name:(a,b)=>a.name.localeCompare(b.name), added:(a,b)=>b.added.localeCompare(a.added), bytes:(a,b)=>b.bytes-a.bytes, status:(a,b)=>a.status.localeCompare(b.status)}[sort];
+  rows.sort(cmp);
+  $('#src-count').textContent=`${rows.length} of ${S.sources.length}`;
+  if(!S.sources.length){ $('#src-table').innerHTML='<p class="sub" style="margin:0">No sources yet. Drop recordings above.</p>'; return; }
+  const order=['audio','video','text','pdf','image','other'];
+  const groups = group ? order.map(k=>[k, rows.filter(r=>r.kind===k)]).filter(([,v])=>v.length) : [[null, rows]];
+  const tone=s=>s.startsWith('cited')||s==='has units'?'ok':(s==='unused'?'':'warn');
+  $('#src-table').innerHTML=`<table><thead><tr><th></th><th>Name</th><th style="text-align:right">Size</th><th style="text-align:right">Duration</th><th>Added</th><th>Status</th><th>Open</th></tr></thead><tbody>
+   ${groups.map(([k,list])=>(k?`<tr class="group"><td colspan="7">${esc(k)} · ${list.length}</td></tr>`:'')+list.map(x=>`<tr>
+     <td><span class="icon ${x.kind}">${KIND_LABEL[x.kind]}</span></td>
+     <td>${x.transcribed?`<button class="linkish" data-drawer="${esc(x.id)}">${esc(x.name)}</button>`:`<strong>${esc(x.name)}</strong>`}${x.session?` <span class="pill">${esc(x.session)}</span>`:''}</td>
+     <td class="num">${fmtBytes(x.bytes)}</td><td class="num">${x.kind==='audio'||x.kind==='video'?fmtDur(x.duration):'—'}</td>
+     <td style="white-space:nowrap">${esc(x.added.slice(0,10))}</td>
+     <td><span class="pill ${tone(x.status)}">${esc(x.status)}</span></td>
+     <td class="links"><button data-reveal="${esc(x.id)}" title="Open with the default app">open</button><a href="${esc(x.file_url)}" title="file:// link (copy it if your browser blocks it)">file</a>${x.transcribed?`<button data-drawer="${esc(x.id)}">transcript</button>`:''}${x.drive_url?`<a href="${esc(x.drive_url)}" target="_blank" rel="noopener">Drive</a>`:''}<button data-page="${esc(x.id)}" title="Draft a page of this source's exact words">page</button></td></tr>`).join('')).join('')}
+   </tbody></table>`;
+  document.querySelectorAll('[data-drawer]').forEach(b=>b.onclick=()=>openTranscript(b.dataset.drawer));
+  document.querySelectorAll('[data-reveal]').forEach(b=>b.onclick=async()=>{ const r=await api('/api/reveal',{method:'POST',body:{path:b.dataset.reveal}}); if(!r.ok) alertNote(r.detail||r.error); });
+  document.querySelectorAll('[data-page]').forEach(b=>b.onclick=async()=>{ const r=await api('/api/engine/page',{method:'POST',body:{source:b.dataset.page}});
+    if(!r.job){ alertNote(r.error); return; } pollJob(r.job,null,res=>alertNote('Page drafted: '+res.page)); });
+}
+async function openTranscript(id){
+  const d=await api('/api/engine/source?id='+encodeURIComponent(id));
+  const media = d.kind==='audio'||d.kind==='video';
+  const src='/api/file?path='+encodeURIComponent(id)+'&token='+encodeURIComponent(TOKEN);
+  openDrawer(id.split('/').pop(), d.transcribed ? `
+    ${media?`<audio id="dr-audio" controls preload="metadata" src="${src}" style="width:100%;margin-bottom:14px"></audio>`:''}
+    <h4 style="margin:0 0 6px">Session ${esc(d.session)}</h4>
+    <dl class="kv" style="margin-bottom:18px">${Object.entries(d.header).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+    ${d.topics.length?`<h4 style="margin:0 0 6px">Topics</h4><div class="ts" style="margin-bottom:18px">${d.topics.map(t=>`<button data-t="${t.t}">${t.t}</button><span>${esc(t.title)}</span>`).join('')}</div>`:''}
+    <h4 style="margin:0 0 6px">Jump to</h4>
+    <div class="ts">${d.paragraphs.map(p=>`<button data-s="${p.seconds}">${p.t}</button><span><span class="spk">${esc(p.speaker)}</span> ${esc(p.text)}</span>`).join('')}</div>`
+    : '<p>Not transcribed yet.</p>');
+  const jump=sec=>{ const a=$('#dr-audio'); if(!a){ alertNote('Jumping needs the recording itself; this source is text.'); return; } a.currentTime=sec; a.play(); };
+  document.querySelectorAll('.drawer [data-s]').forEach(b=>b.onclick=()=>jump(+b.dataset.s));
+  document.querySelectorAll('.drawer [data-t]').forEach(b=>b.onclick=()=>{ const [h,m,s]=b.dataset.t.split(':').map(Number); jump(h*3600+m*60+s); });
+}
+
+/* ================================================================== 5. CONNECTORS */
+/* author-only surface: keys, OAuth, agent CLIs. */
+async function buildConnectors(el){
+  el.innerHTML='';
+  head(el,{kicker:'Connectors', title:'Services and tools', lede:"Keys are checked against the real service and stored in ~/.lineage/config.json (chmod 600) on this machine. Nothing here is faked: if a card isn't wired up, it says so."});
+  el.insertAdjacentHTML('beforeend','<div class="grid three" id="conn"><div class="card">Loading…</div></div>');
+  const c = S.connectors = await api('/api/connectors');
+  const keyCard=(id)=>{ const P=S.data.providers[id], m=c.keys[id];
+    return `<div class="card author"><h3>${esc(P.label)}</h3><p class="sub">Used for: ${esc(P.use)}</p>
+      <div class="row" style="margin-bottom:8px"><span class="pill ${m?'ok':''}" id="pill-${id}">${m?'saved · '+esc(m):'not connected'}</span></div>
+      <input type="password" id="in-${id}" placeholder="${m?'replace the key':'paste a key'}">
+      <div class="row" style="margin-top:10px"><button class="btn sm" data-connect="${id}">${m?'Replace':'Connect'}</button>
+      ${m?`<button class="btn ghost sm" data-recheck="${id}">Check again</button><button class="btn ghost sm" data-disconnect="${id}">Disconnect</button>`:''}</div></div>`; };
+  const d=c.drive;
+  $('#conn').innerHTML = `
+    <div class="card author"><h3>Google Drive</h3><p class="sub">Used for: sources and output sync. Token stored in ~/.lineage/, never in the project.</p>
+      <div class="row" style="margin-bottom:10px"><span class="pill ${d.connected?'ok':''}">${d.connected?(d.can_read_folder?'connected · can read the folder':'connected · device flow (files Lineage created only)'):'not connected'}</span></div>
+      <details ${d.client_configured?'':'open'}><summary style="cursor:pointer;font-size:13px;color:var(--ink-2)">OAuth client ${d.client_configured?'(saved)':'— needed first'}</summary>
+        <p class="sub" style="margin:8px 0">Create a <b>Desktop app</b> OAuth client in Google Cloud Console (APIs &amp; Services → Credentials) with the Drive API enabled, then paste it here.</p>
+        <input type="text" id="g-id" placeholder="client ID"><div style="height:8px"></div><input type="password" id="g-secret" placeholder="client secret">
+        <div class="row" style="margin-top:8px"><button class="btn ghost sm" id="g-save">Save client</button></div></details>
+      <div class="row" style="margin-top:12px">
+        <button class="btn sm" id="g-device" ${d.client_configured?'':'disabled'}>Connect (device code)</button>
+        <button class="btn ghost sm" id="g-browser" ${d.client_configured?'':'disabled'}>Browser sign-in</button>
+        ${d.connected?'<button class="btn ghost sm" id="g-disc">Disconnect</button>':''}</div>
+      <div id="g-out" class="note" style="margin-top:10px;display:none"></div>
+      <p class="sub" style="margin:10px 0 0;font-size:12.4px">Device code is the flow you asked for, but Google only lets it see files Lineage itself created: fine for uploading outputs, not for reading an existing folder. Browser sign-in grants read access to the folder.</p></div>
+
+    <div class="card author"><h3>GitHub</h3><p class="sub">Used for: pushing the book repo.</p>
+      <div class="row" style="margin-bottom:8px"><span class="pill ${c.gh.logged_in?'ok':(c.gh.installed?'warn':'')}">${c.gh.installed?(c.gh.logged_in?'gh CLI · '+esc(c.gh.account||'signed in'):'gh CLI found, not signed in'):'gh CLI not found'}</span>
+      <span class="pill ${c.keys.github?'ok':''}" id="pill-github">${c.keys.github?'token · '+esc(c.keys.github):'no token'}</span></div>
+      <input type="password" id="in-github" placeholder="a fine-grained token (optional if gh is signed in)">
+      <div class="row" style="margin-top:10px"><button class="btn sm" data-connect="github">${c.keys.github?'Replace':'Save token'}</button>
+        ${c.keys.github?'<button class="btn ghost sm" data-disconnect="github">Disconnect</button>':''}
+        <button class="btn ghost sm" id="gh-push">Push the book repo</button></div>
+      <p class="sub" style="margin:10px 0 0;font-size:12.4px">Push runs <code>git push origin HEAD</code> in the project with your existing git credentials.</p></div>
+
+    ${keyCard('anthropic')}${keyCard('openai')}${keyCard('elevenlabs')}
+
+    <div class="card author" style="grid-column:span 2"><h3>Detected on this machine</h3><p class="sub">Agent CLIs found on PATH. The one you pick runs in the Chat tab.</p>
+      ${c.clis.length?c.clis.map(x=>`<label class="toggle" style="padding:6px 0"><input type="radio" name="cli" value="${esc(x.command)}" ${c.terminal_command===x.command?'checked':''}><div><b>${esc(x.label)}</b> <span class="pill">${x.kind}</span><span>${esc(x.path)}</span></div></label>`).join(''):'<p class="sub">No agent CLI found on PATH.</p>'}
+    </div>
+    <div class="card"><h3>Grok</h3><p class="sub">xAI</p><span class="pill">not wired up</span><p class="sub" style="margin-top:10px">Nothing calls Grok yet. This card is a placeholder so you can see it's planned, not a connection.</p></div>
+    <div class="card"><h3>ChatGPT</h3><p class="sub">OpenAI's app</p><span class="pill">not wired up</span><p class="sub" style="margin-top:10px">Not connected to anything. The OpenAI key above (illustrations) is real; this card is not.</p></div>`;
+  el.querySelectorAll('[data-connect]').forEach(b=>b.onclick=()=>connectKey(b.dataset.connect));
+  el.querySelectorAll('[data-disconnect]').forEach(b=>b.onclick=async()=>{ await api('/api/key',{method:'POST',body:{provider:b.dataset.disconnect, remove:true}}); S.data.keys[b.dataset.disconnect]=''; buildConnectors(el); });
+  el.querySelectorAll('[data-recheck]').forEach(b=>b.onclick=async()=>{ const p=$('#pill-'+b.dataset.recheck); p.className='pill'; p.textContent='checking…';
+    const r=await api('/api/key/recheck',{method:'POST',body:{provider:b.dataset.recheck}}); p.className='pill '+(r.ok===true?'ok':(r.ok===null?'warn':'bad')); p.textContent=r.detail; });
+  el.querySelectorAll('input[name=cli]').forEach(r=>r.onchange=()=>{ saveSettings({terminal_command:r.value}); alertNote(`The terminal will run ${r.value}. Press Restart in the Chat tab.`); });
+  $('#g-save').onclick=async()=>{ await api('/api/google/client',{method:'POST',body:{client_id:$('#g-id').value, client_secret:$('#g-secret').value}}); buildConnectors(el); };
+  $('#g-device').onclick=googleDevice;
+  $('#g-browser').onclick=async()=>{ const r=await api('/api/google/browser-url'); if(r.ok) location.href=r.url; else alertNote(r.detail); };
+  const gd=$('#g-disc'); if(gd) gd.onclick=async()=>{ await api('/api/google/disconnect',{method:'POST'}); buildConnectors(el); };
+  $('#gh-push').onclick=async()=>{ $('#gh-push').textContent='pushing…'; const r=await api('/api/repo/push',{method:'POST'}); $('#gh-push').textContent='Push the book repo'; alertNote(r.detail); };
+}
+async function connectKey(provider){
+  const input=$('#in-'+provider), pill=$('#pill-'+provider);
+  pill.className='pill'; pill.textContent='checking…';
+  const r=await api('/api/key',{method:'POST',body:{provider, key:input.value}});
+  pill.className='pill '+(r.ok===true?'ok':(r.ok===null?'warn':'bad')); pill.textContent = r.ok===true ? (r.detail+' · '+r.masked) : r.detail;
+  if(r.ok!==false){ S.data.keys[provider]=r.masked; input.value=''; }
+}
+async function googleDevice(){
+  const out=$('#g-out'); out.style.display='block'; out.textContent='asking Google…';
+  const r=await api('/api/google/device/start',{method:'POST'});
+  if(!r.ok){ out.textContent=r.detail; return; }
+  out.innerHTML=`Go to <a href="${esc(r.verification_url)}" target="_blank" rel="noopener">${esc(r.verification_url)}</a> and enter <b style="font-family:var(--mono);font-size:16px">${esc(r.user_code)}</b>. Waiting…`;
+  const t=setInterval(async()=>{ const p=await api('/api/google/device/poll',{method:'POST'});
+    if(p.state==='connected'){ clearInterval(t); alertNote('Google Drive connected.'); buildConnectors($('#tab-connectors')); }
+    else if(!['authorization_pending','slow_down','pending'].includes(p.state)){ clearInterval(t); out.textContent='Stopped: '+p.state; } }, (r.interval||5)*1000);
+}
+
+/* ================================================================== overlays */
+function closeOverlay(){ $('#overlay').innerHTML=''; }
+function openDrawer(title, html){
+  $('#overlay').innerHTML=`<div class="scrim"></div><aside class="drawer"><header><h3>${esc(title)}</h3><span class="spacer"></span><button class="btn ghost sm" id="ov-close">Close</button></header><div class="body">${html}</div></aside>`;
+  $('.scrim').onclick=closeOverlay; $('#ov-close').onclick=closeOverlay;
+}
+function openModal(title, html){
+  $('#overlay').innerHTML=`<div class="scrim"></div><div class="modal"><header><h3>${esc(title)}</h3><span class="spacer"></span><button class="btn ghost sm" id="ov-close">Close</button></header><div class="body">${html}</div></div>`;
+  $('.scrim').onclick=closeOverlay; $('#ov-close').onclick=closeOverlay;
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && $('#overlay').innerHTML) closeOverlay(); });
+
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Launch Lineage and open it in the browser.
+set -e
+cd "$(dirname "$0")"
+PORT="${LINEAGE_PORT:-8777}"
+PROJECT="${1:-$HOME/lineage-books/my-book}"
+python3 server.py --port "$PORT" --project "$PROJECT" &
+PID=$!
+sleep 1
+URL="http://127.0.0.1:$PORT"
+(command -v open >/dev/null && open "$URL") || (command -v xdg-open >/dev/null && xdg-open "$URL") || echo "open $URL"
+trap 'kill $PID 2>/dev/null' INT TERM
+wait $PID
