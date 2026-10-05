@@ -19,6 +19,10 @@ facts/records/<person>/                 structured facts from research: CSV/mark
 facts/records/_raw/                     raw downloads (pages, PDFs, images) — NOT in git
 facts/records/sources/                  shareable text exports + MANIFEST.csv — in git
 chapters/91-where-the-records-are.typ   printed appendix (generated, print-safe)
+dossiers/<slug>/                        per-chapter research memory (chapter-dossier skill)
+research/MANUAL-LOOKUPS.md              lookups only a person can do (template in $LINEAGE/templates/research/)
+research/manual-lookups-results.csv     what they found, one row per lookup
+research/REQUESTS.md                    letters and forms sent to archives, and the replies
 ```
 
 ## A. The family's records
@@ -68,9 +72,24 @@ too**: "the letters burned in 1962" saves a future relative years.
   Internet Archive or HathiTrust, digitized newspapers (e.g. Chronicling America), free
   census indexes, museum and library catalogues, maritime and ship-register databases, park
   service pages. Note paywalled sources as such and give the free route if there is one.
-- Fetch politely: respect robots.txt and site terms, at most one request every couple of
-  seconds per site, a User-Agent naming the project only. **Never put anyone's personal
-  email or credentials in a request.** No login-walled content scraped, no CAPTCHA tricks.
+- **Automated fetching** (scripts and agents on their own) is polite: it respects robots.txt
+  and site terms, waits **at least 2 seconds between requests to the same site**, and sends a
+  User-Agent naming the project only (`book.yaml` → `research.user_agent`). **Never put
+  anyone's personal email or credentials in a request.** `$LINEAGE/scripts/fetch_records.py
+  <slug> URL…` does all of this, saves raw copies with checksums and logs the chapter dossier.
+- **Targeted lookups by a person.** What automation may not or cannot reach (a login, a bot
+  check, a robots.txt that bars automated crawlers) goes on `research/MANUAL-LOOKUPS.md`: what
+  to find, where, the search terms, why it matters. The author (or someone they ask) does those
+  lookups in **their own browser and their own accounts**, one record at a time at a human
+  pace, within each site's terms; if the author chooses, a browser assistant can do the same
+  inside the author's own logged-in session, at the author's direction. **Never**: CAPTCHA
+  solving, tools built to defeat bot checks, credentials beyond the author's own session, or
+  bulk harvesting of a database. Results go to `research/manual-lookups-results.csv`
+  (transcribed exactly, every candidate listed, two agreeing facts before an identity
+  match), and every lookup is logged in the chapter dossier.
+- **Archive requests** (an email, a web form, a records request) go out only with the
+  author's go-ahead, from the author's own address; log each in `research/REQUESTS.md` with
+  the date and status, and the replies under it.
 - **Cache what you use:** structured facts (one row or bullet per fact, with URL, page and
   retrieval date) in `facts/records/<person>/`; raw snapshots in `facts/records/_raw/`
   (gitignored; catalogues often forbid reproduction).
@@ -84,11 +103,14 @@ too**: "the letters burned in 1962" saves a future relative years.
 - **When sources disagree** (a museum's date vs the official roster), follow the more
   authoritative record in the text, keep a `// REVIEW:`, and log it in `facts/gaps.md`.
 
-### THE RECORDS (one per chapter that uses documents or context)
-Every family-history chapter, and any chapter with `// context:` lines, ends with a
-small-type `#records(...)` block after the closing paragraph, **listing where each
-documented claim came from**: catalogue numbers, record titles, database entries with IDs,
-newspaper titles and dates, book citations with years and pages, URLs.
+### THE RECORDS (every chapter, 100% of its sources)
+**Every chapter** ends with a small-type `#records(...)` block after the closing paragraph,
+**listing every original source found and used for it**: catalogue numbers, record titles,
+database entries with IDs, newspaper titles and dates, book citations with years and pages,
+URLs (and, in the dossier, the local cached path). Nothing used or downloaded is left off:
+sources consulted but not cited go in a closing "Further sources consulted" entry, and the
+chapter's dossier `SOURCES.csv` holds them all. Generate the block from the dossier
+(`$LINEAGE/scripts/dossier.py records <slug>`) and check it (`dossier.py check <slug> <file>`).
 ```
 #records(
   [*Census.* U.S. Census 1870, Millbrook, Hamlin Co., Ohio, p. 12, line 31: Tobias
@@ -102,7 +124,9 @@ newspaper titles and dates, book citations with years and pages, URLs.
 - **Include a "note on the name/identity" entry whenever a record might be confused with
   a similar one** (two ships of the same name, two men with the same name): which is which,
   and why. Record the reasoning in `facts/records/<person>/`.
-- One entry per source; clickable links; "general knowledge" context isn't listed.
+- One entry per source (or a group heading with its sources); clickable links. Typst
+  gotcha: in markup a `;` straight after an embedded call (`#link(...)[x];`) is swallowed as
+  a statement end, so write `\u{3B}` there (dossier.py does).
 - In units, THE RECORDS lives in the chapter's apparatus unit (`kind: apparatus`).
 
 ## Generate
