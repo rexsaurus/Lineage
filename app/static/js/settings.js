@@ -142,7 +142,7 @@ SECTION_BUILDERS.project = function(el){
       <div><label>Bridges in drafts</label><label class="toggle" style="padding:6px 0"><input type="checkbox" data-setting="bridges_in_drafts" ${s.bridges_in_drafts?'checked':''}><div><b>Print highlighted</b><span>The final build refuses unapproved bridges either way.</span></div></label></div>
     </div></div>
   <div class="card"><h3>Photographs and illustrations</h3><p class="sub">The look for generated illustrations.</p>
-    <div class="note" style="margin-bottom:14px"><b>Standing rule:</b> generated images are always captioned as illustrations ("as the family told it", "illustration") and listed apart from the real photographs. They never pass as records.</div>
+    <div class="note" style="margin-bottom:14px"><b>Standing rule:</b> generated images are always recorded as illustrations (kind: illustration), named as renderings in the book's front matter and the chapter's note, and listed apart from the real photographs. They never pass as records.</div>
     <div class="grid five">${D.photo_styles.map(p=>`<div class="choice" data-choice-for="photo_style" data-id="${p.id}" data-on="${s.photo_style===p.id?1:0}">
       ${has('photo-'+p.id+'.png')?`<img class="swatch" src="/previews/photo-${p.id}.png" alt="">`:''}<h4>${esc(p.name)}</h4><p>${esc(p.blurb)}</p></div>`).join('')}</div></div>
   <div class="card"><h3>Where things are</h3><p class="sub">Resolved paths on this machine.</p>
