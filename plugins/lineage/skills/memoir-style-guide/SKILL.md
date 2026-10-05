@@ -72,6 +72,12 @@ Narration may **restate, order and connect**. It may not **add**.
 - **Sensitive material** (living people, legal trouble, health, violence, trauma): write it
   accurately, add `// REVIEW:` saying what it is, and **never cut or soften it**. The author
   and family decide what prints; the drafter does not.
+- **Sensitive record entries** (a punishment in a service file, a court case, an asylum or
+  prison record, a cause of death) are different: they did not come from the subject. They
+  stay **out of the prose until the author decides**, flagged `// REVIEW:` and marked
+  SENSITIVE in the chapter's dossier. Once the author decides to include one, tell it plainly
+  from the record, with what it meant at the time (sourced), at its place in the timeline,
+  without moralising; record the decision in `DOSSIER.md`.
 - Unclear names, dates or relationships go in `facts/gaps.md` as questions for the author,
   never into the text as guesses.
 
@@ -89,8 +95,9 @@ what was changing, what things cost, what a reader in fifty years won't know.
   history unless it bears directly on what the subject was doing.
 - **Every fact is sourced** from a reliable source (government, university, museum,
   encyclopedia, major newspaper, period book), never written from memory. Mark it on the
-  paragraph: `// context: <claim> — <source/URL>`. "general knowledge" is acceptable as the
-  source only for the truly obvious (the Second World War ended in 1945).
+  paragraph: `// context: <claim> — <source/URL>`. **"General knowledge" is never a source**,
+  not even for the obvious: there is always a real source to cite (an encyclopedia entry
+  will do for the end of the Second World War).
 - **Every context source is listed in that chapter's THE RECORDS** (`#records[...]` after
   the closing paragraph; see records-archives). A fact that can't be verified is cut.
 - Keep the proportion: context supports the story and the subject stays the spine (as a
@@ -99,10 +106,12 @@ what was changing, what things cost, what a reader in fifty years won't know.
 - A claim made in passing ("around the Cape") can assert something no record says. Reread
   every added sentence against its source before the build.
 
-### 2b. Epigraphs (optional)
-- At most **one** per chapter by default (a family-history chapter may carry two), printed
-  on the opener via the chapter's `epigraphs:`. No other quotations from such writers in
-  the chapter.
+### 2b. Epigraphs
+- **Each chapter opens with one epigraph** by default (`book.yaml` → `chapters.epigraphs`),
+  printed on the opener via the chapter's `epigraphs:`; a family-history chapter may carry
+  two, and the author may ask for none. No other quotations from such writers at section
+  heads. Choose a writer **of the chapter's place and time**; a project can keep its own
+  place → writer table in `local-overrides/epigraphs.md`.
 - **Public-domain literature only**, chosen for the chapter's place or era, cited as
   "Author, Work". Never from memory: save the source text in the project and verify the
   exact wording with `$LINEAGE/scripts/verify_quotes.py <chapter file>`. Note the text
@@ -157,7 +166,7 @@ Petersons' farm down the road.
    poetic **summary line** in the old-book manner, never a list or a sentence of facts
    ("On Looms, Floods and Such"). Set in `data/chapters.csv` (`setting`, `dates`,
    `summary_line`).
-2. **Epigraph** (optional, §2b).
+2. **Epigraph** (one, §2b).
 3. **Opening: the place and the people at that time.** One to three paragraphs on where
    and when the chapter happens and who matters in it, then the first concrete moment the
    subject described. The first paragraph carries the drop cap: `#opening[lead words][rest]`.
@@ -170,10 +179,18 @@ Petersons' farm down the road.
 5. **The last scene**, told start to finish.
 6. **Closing paragraph** after a `#sectionbreak`: what followed and what remains, in sourced
    facts only. No moral, no feelings they didn't state, never a bare quote as the ending.
-7. Then, if the chapter used research or context, **THE RECORDS** (`#records`); family-
-   history chapters also get the photographs page (`#photo-addendum`).
+7. Then **THE RECORDS** (`#records`) on **every chapter**: a complete list of **every
+   original source found and used** for it (title, author or publisher, date, link), and
+   in the chapter's dossier every source consulted or scraped, so nothing used or downloaded
+   goes unlisted (chapter-dossier, records-archives). Family-history chapters also get the
+   photographs page (`#photo-addendum`).
 
-- Life chapters: usually 1,500–3,500 words. A relative's chapter can be a page.
+- **Length: at least `chapters.min_pages` pages (default 10) in the book's layout**, measured
+  by building the chapter (`make chapter`). Reach it with real material: the subject's full
+  stories in their own words, the records, and built-out sourced context. **Never padding,
+  repetition or invention.** Where a chapter can't reach it honestly, **combine sparse
+  chapters** (a short relative's chapter into "Others in the Family" or a neighbour, two
+  thin life stages into one) rather than print thin ones; propose the merge to the author.
 - Paragraphs 60–150 words, varied; a short one for a punchline is fine.
 - Titles: plain stage or place names, or a phrase the subject said; relatives' chapters
   are just the name.
@@ -197,11 +214,13 @@ Prose lives in story units (content-separator) and is assembled into `chapters/N
 3. Nothing the subject didn't say: scan for feelings, motives, weather, dialogue, "must have".
 4. Every quote matches `transcript/clean/` word for word (bar removed fillers).
 5. One or two quotes per page; does it still sound like them?
-6. Every `// context:` has a source that is listed in THE RECORDS, and no context sentence
-   claims anything about the subject.
+6. Every `// context:` has a real source (never "general knowledge") that is listed in THE
+   RECORDS, and no context sentence claims anything about the subject. If the chapter has a
+   dossier, `dossier.py check <slug> <file>` prints OK.
 7. Strictly chronological; ends on a closing paragraph.
-8. Epigraphs pass `verify_quotes.py`.
-9. List every `#bridge`, `// REVIEW:` and bare-"yeah" fact for the author.
+8. The epigraph passes `verify_quotes.py`.
+9. The chapter builds to at least the page minimum without padding.
+10. List every `#bridge`, `// REVIEW:` and bare-"yeah" fact for the author.
 
 ## Example
 Transcript:

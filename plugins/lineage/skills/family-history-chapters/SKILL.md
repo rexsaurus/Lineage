@@ -1,6 +1,6 @@
 ---
 name: family-history-chapters
-description: Writes the family-history stories and chapters of a lineage — one chapter per named relative or ancestor the subject talks about, keeping every fact in one tier (witnessed by the subject, told to the subject by someone named, or family lore), naming the chain of telling, setting documents beside the family's version and saying plainly where they disagree, with a line-of-descent box, optional epigraphs, research from census, military, newspaper, ship and museum records, and a sourced THE RECORDS section. Use this whenever the user mentions ancestors, grandparents, great-grandparents, family origins, where the family came from, genealogy, a line of descent, the family tree, or the "those who came before" part — even if they only ask "what did Grandma say about her grandfather".
+description: Writes the family-history stories and chapters of a lineage — one chapter per named relative or ancestor the subject talks about, keeping every fact in one tier (witnessed by the subject, told to the subject by someone named, or family lore), naming the chain of telling, setting documents beside the family's version and saying plainly where they disagree, with a line-of-descent box or a small family tree, an epigraph, research from census, military service files, first-hand accounts, newspaper, ship and museum records, and a sourced THE RECORDS section. Use this whenever the user mentions ancestors, grandparents, great-grandparents, family origins, where the family came from, genealogy, a line of descent, the family tree, or the "those who came before" part — even if they only ask "what did Grandma say about her grandfather".
 ---
 
 # Family History Chapters
@@ -51,11 +51,13 @@ Chain of telling: Tobias → his grandson Walter (Ruth's father) → Ruth
 - **One chapter per named relative, titled with just the name** ("Tobias Calder").
   Relatives with little material share a closing chapter, **"Others in the Family"**, each
   with a `== Name` heading. If a named figure has almost nothing, write the short honest
-  version and tell the author rather than padding.
+  version and tell the author rather than padding. A relative's chapter that can't reach the
+  page minimum (style guide §6) with real material is **combined**: folded into "Others in
+  the Family" or into the neighbouring generation's chapter, at its place in time.
 - Default placement: a part titled "Those Who Came Before", oldest generation first (the
   author may move it; record the decision in `data/chapters.csv`).
 - Header as in the style guide §6: name, setting · dates, a short poetic summary line,
-  optional epigraphs.
+  one epigraph (two allowed in a family-history chapter).
 
 ### Opening the chapter
 The first paragraph (with the drop cap) **says plainly what kind of material this is**,
@@ -77,6 +79,20 @@ documented facts and names the author has confirmed, **unconfirmed links marked*
 )
 ```
 Put it in the first unit's Shaped text, right after the opening paragraph.
+
+**Or a small family tree** when the author asks for one ("a little tree, three
+generations"): `#family-tree(...)` at the foot of the same page, the ancestor's parents →
+the ancestor and spouse (a note line for the spouse's parents if known) → their children in
+birth order, with the line of descent continued under the right child ("and so to Ruth").
+It stands in for `#descent` or sits beside it. Same rules: documented facts and confirmed
+names only, unconfirmed links marked, approximate years as "c." (from census ages), and
+every name cited in a `// descent:` comment.
+```
+#family-tree(title: "The Family of Tobias Calder",
+  parents: ([Josiah Calder], [Mary Calder]),
+  couple: ([Tobias Calder (c.1840–1911)], [Hannah Pratt (1844–1920)]),
+  children: ([Walter (b. 1868)], [Mary (b. c.1870)]), line: 0, descent: [and so to Ruth])
+```
 
 ## 4. The three tiers and the chain of telling
 - **Every fact sits in exactly one tier: witnessed / told by X / lore.** The unit's `tier`
@@ -134,6 +150,36 @@ When a record-backed episode (a voyage, a regiment, a mill town) deserves more t
 4. Conflicting figures get safe wording ("more than five hundred") and a `// NOTE:`.
 5. Keep the proportion: each paragraph still comes back to where the ancestor was.
 
+## 6a. Ancestors who served: research comprehensively
+For anyone in the chapter who served in a war, the service record is the spine:
+1. **Pull the official service record first** (a national archive's personnel file,
+   attestation or enlistment record, pension file, regimental roster). Use it as the
+   spine; tell the family's version where it differs, attributed and kind, with
+   `// REVIEW:` ("The family remembered four years in the trenches; the file shows four
+   months in France").
+2. Research, with numbers, short period quotations and sources, and use generously in time
+   order:
+   - **the town they grew up in** and what it and the country were like then;
+   - **how the war drew their countrymen in**, and those soldiers' **reputation**;
+   - **how a young soldier enlisted, was examined, trained and shipped** (the ship, the
+     route) and sent up to the line;
+   - **what happened to their unit when they got there**: how it went into battle, the
+     reality of its battles: weapons, artillery, gas, and the **leadership and generals** of
+     that time and place;
+   - **the process of being sent home** and the journey back;
+   - **what veterans came home to**: the economy, politics, prices, jobs, pensions, illness,
+     the public mood.
+3. **First-hand accounts:** seek out letters, diaries, memoirs, unit histories and letters
+   home printed in local papers by soldiers **in or near their units and battles**. Quote
+   short exact passages from public-domain or archival sources, cite each, save the texts
+   (`facts/sources/`, listed in `works.csv`) so `verify_quotes.py` can check them. Set the
+   unit's days from its war diary beside a private's diary and say plainly that the diary
+   doesn't name the ancestor; that keeps them in the scene without inventing their presence.
+4. **Sensitive record entries** (a field punishment, a court-martial, a venereal-disease
+   admission) stay out of the prose until the author decides (style guide §2).
+5. Anything that needs a login or a written request goes on the manual-lookups list
+   (records-archives); log every search in the chapter's dossier (chapter-dossier).
+
 ## 7. Ending the chapter
 Closing paragraph (style guide §6) → **THE RECORDS** (`#records`, records-archives) →
 **the photographs page** (`#photo-addendum`, photo-processor) listing real photographs held
@@ -142,13 +188,23 @@ same `section`, highest `order`, no spans) so they survive reassembly.
 
 ## 8. Illustrations of ancestors
 Usually no photograph exists. AI or artist's illustrations are allowed only under the
-photo-processor rules: captions marked ("as the family told it" / "illustration"), a note in
-the chapter saying they are renderings and what likeness or source they were based on,
-scenes from the material only, and the distinction kept in print.
+photo-processor rules: recorded as illustrations in `photo_index.csv`, a note in the chapter
+saying they are renderings and what likeness or source they were based on, the book's
+front-matter line, scenes from the material only. Real photographs of the family may serve
+as **likeness references** (generate_images.py), and the chapter says so.
+
+**The illustrated story.** When the subject told one scene in vivid detail (a fight, a
+storm, a departure), the author may want it drawn as a two-page sequence of eight panels
+(`#story-page` with `#story-panel`, book-layout), each captioned with **the subject's own
+words, verbatim**, in order, each cited `// src:`. The panels follow the telling exactly;
+the page's note line says they are renderings after the subject's account. Nothing graphic;
+faces of named people only from reference photographs. Check in the assembled book that the
+two pages face each other.
 
 ## 9. Family tree (optional)
-From confirmed relationships only, as an indented list or table in a back-matter file;
-unconfirmed links shown "?" or left out. Show the author the draft first.
+In a chapter: the three-generation `#family-tree` (§3). For the whole family: from confirmed
+relationships only, as an indented list or table in a back-matter file (or the dashboard's
+Genealogy export); unconfirmed links shown "?" or left out. Show the author the draft first.
 
 ## 10. Report
 Figures found and confirmed relationships; chapters proposed; words per figure; tier

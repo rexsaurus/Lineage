@@ -25,12 +25,14 @@ Work from the timeline and the units, not from the order things were said.
   with little material share **"Others in the Family"** (family-history-chapters).
 - **Life chapters: chronological** through the subject's life, one stage or place each.
   A theme spanning decades can be its own chapter, placed where it peaks.
-- **Size to the material.** Aim for roughly 1,000–2,500 words of the subject's speech per
-  life chapter; under ~600 merge with a neighbour, over ~3,000 split at a natural turn.
-  A relative's chapter can be a page.
+- **Size to the material, and to the page minimum.** Each chapter should reach
+  `book.yaml` → `chapters.min_pages` (default 10) in the layout with real material: the
+  subject's full stories, the records, built-out sourced context. **Combine sparse chapters**
+  rather than print thin ones: a relative with little material goes into "Others in the
+  Family" or the neighbouring generation's chapter; two thin life stages become one. Over
+  ~3,000 words of the subject's speech, split at a natural turn.
 - **Titles:** plain stage or place names, or a phrase the subject said.
-- **Columns:** `1` for narrative chapters, `2` for research-dense ones (records, lists of
-  ships and regiments).
+- **Columns:** `2` by default; `1` only where the author wants a chapter in one measure.
 
 Write the proposal into `data/chapters.csv` with `status: proposed` and show the author a
 simple outline (number, title, setting, years, one line each, main sources). **This is
@@ -47,7 +49,7 @@ GATE 2: nothing is shaped or assembled until the author approves the map.**
 | summary_line | short poetic line for the opener ("On Looms, Floods and Such"), never a list |
 | summary | 2–4 neutral sentences for the spreadsheet and introduction |
 | epigraph, epigraph_source | optional, verified (style guide §2b) |
-| columns | 1 or 2 |
+| columns | 2 (default) or 1 |
 | contents | optional "in this chapter" line |
 | key_events | timeline IDs `E004; E007` |
 | people / places | glossary spellings, `;`-separated |
