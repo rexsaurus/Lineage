@@ -5,7 +5,7 @@ Every entry says whether it changes anything that would alter already-generated 
 (templates, the book template, style guides, skills); when it does, a project updating to it
 marks those stories stale rather than regenerating them.
 
-## 0.6.0 — 2026-10-05 (to be tagged)
+## 0.6.0 — 2026-10-05
 
 **Alters generated stories: yes**, for projects that use Lineage's skills: the book template,
 the writing rules and several skills changed (two columns by default, an epigraph per chapter,
