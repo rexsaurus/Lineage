@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Lineage">
+  <rect width="64" height="64" rx="14" fill="#1C1A17"/>
+  <!-- An L drawn as a line of descent: three generations down, then the line carried forward. -->
+  <g fill="none" stroke="#F7F3EC" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 13 L22 47 Q22 51 26 51 L45 51"/>
+  </g>
+  <g fill="#C96F4A">
+    <circle cx="22" cy="13" r="4.2"/>
+    <circle cx="22" cy="30" r="4.2"/>
+    <circle cx="46" cy="51" r="4.2"/>
+  </g>
+  <circle cx="34" cy="51" r="2.2" fill="#F7F3EC"/>
+  <circle cx="22" cy="40" r="2.2" fill="#F7F3EC"/>
+</svg>

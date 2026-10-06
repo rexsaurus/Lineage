@@ -295,6 +295,7 @@ inventions, human gates, versioning). See [docs/FACTORY.md](docs/FACTORY.md).
 - **[docs/BOOK-SWARM.md](docs/BOOK-SWARM.md)**: a full first pass of the whole book, chapter by chapter.
 - **[docs/FACTORY.md](docs/FACTORY.md)**: the pattern, and how to aim it at something else.
 - **[CHANGELOG.md](CHANGELOG.md)**: releases.
+- **[docs/DEPLOY.md](docs/DEPLOY.md)**: the public website (`make site`): landing page, docs and a read-only demo.
 
 ## License
 

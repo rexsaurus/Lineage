@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy · Lineage</title>
+<meta name="description" content="Lineage: Privacy.">
+<link rel="icon" href="../../assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<header class="site-top"><div class="wrap">
+  <a class="brand" href="../../"><img src="../../assets/logo.svg" alt="" width="26" height="26"><span>Lineage</span></a>
+  <nav class="site-nav" aria-label="Site"><a href="../../">Home</a><a href="../../tour/">Tour</a><a href="../../demo/">Live demo</a><a href="../" aria-current=page>Docs</a><a href="../../install/">Install</a><a href="https://github.com/rexsaurus/Lineage" class="gh">GitHub</a></nav>
+</div></header>
+<main>
+<article class="doc"><p class="muted"><a href="../">Docs</a> · <a href="https://github.com/rexsaurus/Lineage/blob/main/PRIVACY.md">view on GitHub</a></p><h1 id="privacy">Privacy</h1>
+<p>Lineage handles some of the most personal material a family has. Here is exactly
+where it goes.</p>
+<h2 id="what-stays-on-your-computer">What stays on your computer</h2>
+<ul>
+<li><strong>Audio.</strong> Speech recognition (WhisperX) and speaker labelling (pyannote) run locally.
+  Your recordings are never uploaded by Lineage.</li>
+<li><strong>Originals.</strong> <code>audio/</code> and <code>photos/source/</code> are never modified; their checksums are
+  recorded so any change is noticed.</li>
+<li><strong>The project folder.</strong> Transcripts, story units, chapters and PDFs live in your project
+  folder. Nothing is published unless you publish it.</li>
+</ul>
+<h2 id="what-goes-to-a-cloud-service">What goes to a cloud service</h2>
+<ul>
+<li><strong>Transcript text goes to a cloud language model.</strong> The writing is done with Claude
+  (Claude Code), so transcript passages, notes and drafts are sent to Anthropic while you
+  work. If your recordings contain things that must not leave your machine, remove them from
+  the transcript before you start writing, or don't use the writing stages for them.</li>
+<li><strong>Model downloads.</strong> The first transcription run downloads the speech and diarization models
+  from Hugging Face. The diarization model is gated: you accept its licence once, with a free
+  account and an access token. The token is only used to download the model; no audio is sent.</li>
+<li><strong>Research.</strong> If you ask Claude to look up public records (rosters, newspapers, museum
+  catalogues), those requests go to the websites concerned. The skills tell Claude never to
+  put your name, email or other personal details in those requests.</li>
+</ul>
+<h2 id="living-people">Living people</h2>
+<ul>
+<li>The book is about real people, many of them alive. The style guide makes the writer flag
+  anything about living people, legal trouble or trauma with <code>// REVIEW:</code>. The writer never
+  cuts or softens it on its own: you decide what prints.</li>
+<li>Before you share a draft, read the <code>// REVIEW:</code> list (<code>grep -rn "REVIEW" content chapters</code>).</li>
+</ul>
+<h2 id="git-and-github">Git and GitHub</h2>
+<ul>
+<li><code>make new</code> writes a <code>.gitignore</code> that keeps audio, photos, raw web caches and outputs out
+  of git. If you put your project on GitHub, keep the repository <strong>private</strong>: transcripts are
+  in it.</li>
+<li>Never commit tokens. <code>HF_TOKEN</code> belongs in your shell environment, not in a file in the
+  project.</li>
+</ul></article>
+</main>
+<footer class="site-foot"><div class="wrap">
+  <p>Lineage is open source under the MIT license. <a href="https://github.com/rexsaurus/Lineage">github.com/rexsaurus/Lineage</a></p>
+  <p class="muted">Every family in the screenshots and the demo is invented. Your recordings, transcripts and photographs stay yours: the license does not cover them.</p>
+</div></footer>
+</body>
+</html>
