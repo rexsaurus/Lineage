@@ -65,8 +65,7 @@ If the project is connected to the GitHub repo instead, every push to the produc
 deploys the committed `site/public/`; nothing is built on Vercel.
 
 Decisions for the first deploy:
-- **Team**: the CLI is logged in with access to two teams, `verafyai` (Verafy, Pro) and
-  `verafy` (Verafy, Hobby).
+- **Team**: deploy under whichever Vercel team or personal account you choose (`vercel link --scope <team>`).
 - **Project name**: for example `lineage` (gives `lineage-<team>.vercel.app` or similar).
 - **Domain**: none is configured; add one in the project's Domains settings when chosen.
 - **Production branch**: `main` or `development`.
