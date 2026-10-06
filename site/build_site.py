@@ -605,6 +605,7 @@ class Demo:
                 break
             time.sleep(0.3)
         if res:
+            res.pop("id", None)                         # the server's random job id
             self.store(f"/api/job/demo-render-{sid}", 200, "application/json", None, override=res)
 
     def copy_files(self):
