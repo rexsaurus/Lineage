@@ -64,6 +64,24 @@ def cmd_sync():
     print(f"template synced from {src}")
 
 
+ILLUSTRATIONS_NOTE = "The illustrations in this book are artist's renderings, not photographs."
+
+
+def illustrations_line(c):
+    """The front-matter line for illustrations (photo-processor §4): printed when any image
+    placed in a chapter is indexed as kind: illustration in photos/photo_index.csv.
+    book.yaml front.illustrations_note changes the wording; false or "" leaves it out."""
+    note = (c.get("front") or {}).get("illustrations_note", ILLUSTRATIONS_NOTE)
+    idx = Path("photos/photo_index.csv")
+    if not note or not idx.exists():
+        return ""
+    with open(idx, newline="", encoding="utf-8") as f:
+        placed = [r for r in csv.DictReader(f) if (r.get("kind") or "").strip().lower() == "illustration"
+                  and (r.get("chapter") or "").strip()
+                  and (r.get("status") or "").strip().lower() not in ("candidate", "removed", "superseded")]
+    return f"\n\n  {t(note)}" if placed else ""
+
+
 def cmd_front():
     c = cfg(); n = c.get("narrator", {}); i = c.get("interviewer", {})
     title = c.get("title") or "Untitled"; sub = c.get("subtitle") or ""
@@ -91,7 +109,7 @@ def cmd_front():
   Written from recorded interviews with {t(n.get("name"))}. Every fact and quotation
   traces to the original recordings, which are preserved by the family.
 
-  Set in EB Garamond.
+  Set in EB Garamond.{illustrations_line(c)}
 ]
 ''')
     if not Path("book/front/dedication.typ").exists():
@@ -282,7 +300,13 @@ def cmd_chapter(file, final=False, pages=False, ppi=None):
         f'#include "/{Path(file).as_posix().lstrip("/")}"', ""]))
     out = f"output/preview-{name}.pdf"
     print_warnings(typst_compile("output/preview.typ", out, inputs_for(final)))
-    print(f"compiled {out} Pages: {pdf_pages(out)}")
+    n = pdf_pages(out)
+    print(f"compiled {out} Pages: {n}")
+    min_pages = int(((c.get("chapters") or {}).get("min_pages", 10)) or 0)
+    if min_pages and n < min_pages and not name[:2] in ("90", "91", "92", "93", "94"):
+        print(f"note: {n} pages, under the {min_pages}-page chapter minimum (book.yaml chapters.min_pages). "
+              "Reach it with real material (the subject's full stories, records, sourced context) or "
+              "combine this chapter with a neighbour; never pad.")
     if pages: export_pages("output/preview.typ", name, inputs_for(final), ppi)
 
 

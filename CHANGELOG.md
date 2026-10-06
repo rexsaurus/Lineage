@@ -5,11 +5,92 @@ Every entry says whether it changes anything that would alter already-generated 
 (templates, the book template, style guides, skills); when it does, a project updating to it
 marks those stories stale rather than regenerating them.
 
-## Unreleased (on `development`)
+## 0.6.0 — 2026-10-05 (to be tagged)
 
-**Alters generated stories: yes**, for projects that use Lineage's skills: the writing rules
-below changed. Projects that carry their own copies of the skills are not affected
-(`lineage update` knows the difference).
+**Alters generated stories: yes**, for projects that use Lineage's skills: the book template,
+the writing rules and several skills changed (two columns by default, an epigraph per chapter,
+THE RECORDS on every chapter, a page minimum). Projects that carry their own copies of the
+skills are not affected (`lineage update` knows the difference). `lineage update` marks
+generated stories stale; it never regenerates them.
+
+The innovations of a working family book's full first pass, brought up in generic form (no
+names, places or material from that project). Where the working book's rules and Lineage's
+disagreed, the working book's rules became Lineage's defaults:
+
+Conflicts resolved (the working book's rule is now the default):
+- **C1 Illustrations.** Captions stay short (a name, or a scene title in the text's words; the
+  author's caption word for word). An illustration is marked by `kind: illustration` in
+  `photo_index.csv`, the chapter's note, and a copyright-page line ("The illustrations in this
+  book are artist's renderings, not photographs."), which `build_book.py front` now writes
+  whenever a placed image is an illustration (`book.yaml` → `front.illustrations_note`). The
+  old rule that each caption must say "illustration" is retired.
+- **C2 Epigraphs.** One per chapter by default (`chapters.epigraphs`); two allowed in a
+  family-history chapter; none if the author asks. A writer of the chapter's place and time.
+- **C3 THE RECORDS on every chapter**, listing 100% of the sources found and used (not only
+  family-history chapters or chapters with context).
+- **C4 No "general knowledge" sources.** Every context fact cites a real source.
+- **C5 Two columns by default.** `chapter.with(columns: 2)` is the template default and
+  `assemble.py` writes 2 when `data/chapters.csv` leaves `columns` blank; 1 stays available per
+  chapter. Rows that already say 1 are unchanged.
+- **C6 Archive thumbnails in drafts.** `#photo-addendum`'s `show-images` defaults to the draft
+  flag: thumbnails print in drafts, and in the final book only once the holder's permission is
+  recorded (`show-images: true`).
+- **C7 Gates.** Work stops at the author's chosen gates (three by default, `workflow.gates`;
+  the project's CLAUDE.md may be stricter and wins), and a full first pass of the whole book
+  runs when the author asks for it (the book swarm, below).
+
+New:
+- **Chapter dossiers** (`chapter-dossier` skill, `scripts/dossier.py`, `templates/dossier/`):
+  per chapter, the author's dated requests, a log of every search (blocked ones too), 100% of
+  sources in `SOURCES.csv`, the evidence for and against the family's version, and lessons.
+  `dossier.py records` generates THE RECORDS from it; `dossier.py check` fails when a URL in
+  the chapter isn't logged or a cited source isn't listed.
+- **Polite record fetching** (`scripts/fetch_records.py`): targeted lookups (at most 50 URLs a
+  run), robots.txt obeyed, at least 2 s per site, a project-only User-Agent
+  (`research.user_agent`; an email address is refused), no logins or bot-check workarounds;
+  raw copies with sha256 metadata; logged in the dossier; anything blocked goes on the
+  manual-lookups list.
+- **Research access rules** (records-archives): automated fetching vs targeted lookups by a
+  person in their own browser and accounts (or a browser assistant in the author's own
+  session, at their direction); never CAPTCHA solving, bot-check tools, others' credentials or
+  bulk harvesting. Hand-off templates: `templates/research/MANUAL-LOOKUPS.md`,
+  `manual-lookups-results.csv`, and `REQUESTS.md` (archive requests and replies);
+  `make new` copies them into `research/`.
+- **The service-record method** (family-history-chapters §6a): for anyone who served, the
+  official record first as the spine; then the hometown and country, how the war drew them in
+  and their reputation, enlistment, training and shipping, the unit's battles, weapons and
+  generals, being sent home, and what veterans came home to; first-hand accounts from soldiers
+  in or near the unit, quoted exactly and verified.
+- **Sensitive record entries** (memoir-style-guide §2): kept out of the prose until the author
+  decides; then told plainly from the record, without moralising.
+- **Page minimum and combining** (style guide §6, chapter-index-builder): chapters of at least
+  `chapters.min_pages` (default 10) in the layout, reached with real material; sparse chapters
+  are combined, never padded. `build_book.py chapter` (`make chapter`) prints a note when a
+  chapter is short.
+- **Template:** `#family-tree(...)`, a three-generation tree (parents → couple → children, the
+  line of descent continued under one child) that stands in for or beside `#descent`;
+  `#story-panel` and `#story-page`, an eight-panel illustrated story over two facing pages, each
+  panel captioned with the subject's exact words.
+- **Illustration generator** (`scripts/generate_images.py`, `templates/images/`): plans in
+  `photos/images-plan.yaml` with period style presets, a one-line lock on every prompt, a
+  required scene citation, and an optional likeness lock (real photographs as references
+  through the edit endpoint); writes the original and a grayscale print copy; `--dry-run`
+  prints every prompt. The key comes from `OPENAI_API_KEY` or `~/.openai_api_key` (chmod 600,
+  outside every repo) and is never printed or written.
+- **The book swarm** (`docs/BOOK-SWARM.md`, `templates/swarm/book-swarm.js`): a parameterized
+  Workflow script for a full first pass: per chapter two researchers → writer → fidelity,
+  taste and layout editors → two judges with revisions to a pass score → a 100% sources pass;
+  then front matter, images plan, index, assembly and a whole-book continuity review.
+- `book.yaml` template: `front.illustrations_note`, `chapters.min_pages`, `chapters.epigraphs`,
+  `research.user_agent`, `workflow.gates`. Project `.gitignore`: `photos/generated/`,
+  `photos/reference/`, `research/manual-lookups/`. Project CLAUDE.md: gates, dossiers, research.
+- Docs: HOWTO (research access, dossiers, family tree, anyone who served, generating
+  illustrations, the illustrated story, page minimum, gates and the full first pass), README,
+  scripts/README, EXAMPLE-CHAPTER notes; the dashboard's standing rule on generated images.
+- Typst gotchas documented: a `;` after an embedded call in markup is swallowed (write
+  `\u{3B}`); a full-page float sized to the text block.
+
+Also in this release (made on `development` after 0.5.0):
 
 Dashboard:
 - Sources: a gallery and a lightbox (arrow keys, summary, people and places linked, provenance,

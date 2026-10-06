@@ -192,6 +192,20 @@ story is a one-line change and a rebuild, and a coverage check proves no part of
 recordings got quietly dropped. **Bridges are the other trick**: anything added that the
 material didn't give is held for a person's approval, and the final build stops until it is.
 
+**Research is kept per chapter.** Each chapter has a dossier: the author's requests for it, a
+log of every search (blocked ones too), every source found or scraped, the evidence for and
+against the family's version, and lessons learned. Every chapter ends with THE RECORDS, all of
+its sources, generated from the dossier and checked. A polite fetcher handles the records a
+script may reach; a hand-off list covers the ones only a person can look up.
+
+**The defaults come from a working book:** two justified columns, one epigraph per chapter,
+chapters of at least ten pages (thin ones are combined, never padded), no "general knowledge"
+sources, a service-record method for anyone who served, a small three-generation family tree,
+an eight-panel illustrated story in the subject's own words, and illustrations generated in a
+period style with a relative's likeness locked from real photographs, marked as renderings in
+the book. When the author asks, a **[book swarm](docs/BOOK-SWARM.md)** drafts the whole book
+in one pass (researchers, a writer, three editors and two judges per chapter) for them to read.
+
 ### One chapter, start to finish
 
 This chapter came from about twenty minutes of a father talking about an ancestor he'd only
@@ -278,6 +292,7 @@ inventions, human gates, versioning). See [docs/FACTORY.md](docs/FACTORY.md).
   research records, build the genealogy and Familypedia, then stories and a book.
 - **[app/README.md](app/README.md)**: the dashboard, and exactly what it reads and writes.
 - **[docs/EXAMPLE-CHAPTER.md](docs/EXAMPLE-CHAPTER.md)**: the chapter above, annotated.
+- **[docs/BOOK-SWARM.md](docs/BOOK-SWARM.md)**: a full first pass of the whole book, chapter by chapter.
 - **[docs/FACTORY.md](docs/FACTORY.md)**: the pattern, and how to aim it at something else.
 - **[CHANGELOG.md](CHANGELOG.md)**: releases.
 
