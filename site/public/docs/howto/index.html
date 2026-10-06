@@ -1,0 +1,1595 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to use Lineage · Lineage</title>
+<meta name="description" content="Lineage: How to use Lineage.">
+<link rel="icon" href="../../assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<header class="site-top"><div class="wrap">
+  <a class="brand" href="../../"><img src="../../assets/logo.svg" alt="" width="26" height="26"><span>Lineage</span></a>
+  <nav class="site-nav" aria-label="Site"><a href="../../">Home</a><a href="../../tour/">Tour</a><a href="../../demo/">Live demo</a><a href="../" aria-current=page>Docs</a><a href="../../install/">Install</a><a href="https://github.com/rexsaurus/Lineage" class="gh">GitHub</a></nav>
+</div></header>
+<main>
+<article class="doc"><p class="muted"><a href="../">Docs</a> · <a href="https://github.com/rexsaurus/Lineage/blob/main/docs/HOWTO.md">view on GitHub</a></p><h1 id="how-to-use-lineage">How to use Lineage</h1>
+<p>Lineage is a cooperative family documentation and research platform. A family collects its
+material: recordings, photographs, documents, letters, scans, links. Lineage turns it into a
+researched, sourced, browsable record: the people, places, events, vessels, organizations and
+objects in it, a genealogy built from evidence, a timeline, and an encyclopedia of all of it
+(the <strong>Familypedia</strong>), with every fact linked to the source that supports it. Stories, a
+printed book and narration are exports of that record, made at the end.</p>
+<p>This guide follows the work in the order a family usually does it:</p>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#1-set-up-a-lineage">1. Set up a lineage</a></td>
+<td>install the tools, start a project, open the dashboard</td>
+</tr>
+<tr>
+<td><a href="#2-invite-contributors">2. Invite contributors</a></td>
+<td>the people who add material, and the review of what they add</td>
+</tr>
+<tr>
+<td><a href="#3-add-sources">3. Add sources</a></td>
+<td>intake of every file; transcription of recordings; photographs catalogued</td>
+</tr>
+<tr>
+<td><a href="#4-research-records">4. Research records</a></td>
+<td>the family's own papers and public records, catalogued by type and snapshotted</td>
+</tr>
+<tr>
+<td><a href="#5-build-the-record-timeline-genealogy-familypedia">5. Build the record</a></td>
+<td>the timeline, the genealogy and the Familypedia</td>
+</tr>
+<tr>
+<td><a href="#6-make-stories-and-a-book">6. Make stories and a book</a></td>
+<td>story units, the chapter map, writing, building, printing, narration</td>
+</tr>
+<tr>
+<td><a href="#7-troubleshooting">7. Troubleshooting</a> · <a href="#8-honest-limits">8. Honest limits</a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>It uses the sample project throughout: an invented family, the Calders. <strong>Ruth Calder</strong> (born
+1938 in Duluth, Minnesota) is interviewed by her grandson <strong>Sam</strong>, and she talks about her
+grandfather <strong>Anders Calder</strong>, who came from Norway. Everything about them is made up, so you
+can open every file and see exactly what each stage produces.</p>
+<p>Four things hold everywhere in Lineage, and the rest of this guide is how they are kept:
+- <strong>Nothing is invented.</strong> A fact enters the record only from a source, and it carries a
+  citation back to that source: a timestamp in a recording, a record's catalogue number, a URL.
+- <strong>Evidence has tiers.</strong> Every fact is <em>witnessed</em> (the speaker saw it), <em>told</em> (someone
+  named told them), <em>lore</em> (the family's story, source unclear) or <em>documented</em> (a record
+  shows it). The tier travels with the fact into every view and every export.
+- <strong>Contradictions are kept.</strong> When two tellings disagree, or the family and a record
+  disagree, both stay, side by side, and the disagreement is shown. Nothing picks a winner
+  silently.
+- <strong>A person decides.</strong> Machines propose: tags, genealogy links, chapter maps, connecting
+  sentences. People accept them. The places where a person must decide are named, and the
+  tools stop there.</p>
+<hr />
+<h2 id="1-set-up-a-lineage">1. Set up a lineage</h2>
+<h3 id="11-what-you-need">1.1 What you need</h3>
+<p><strong>The material.</strong> Whatever the family has. Recordings in any common format (m4a, mp3, wav,
+aac, flac, aiff, ogg, opus, wma, mp4 or mov; phone voice memos are fine), photographs and
+scans, PDFs, letters, Word documents, notes, links. Originals are only ever read, never
+changed.</p>
+<p><strong>A Claude subscription and Claude Code.</strong> The model work (understanding sources, the
+timeline, the genealogy rebuild, story units, shaping, captions, the introduction) is done by
+<a href="https://claude.com/claude-code">Claude Code</a> following the rules in <code>.claude/skills/</code>. You
+talk to it in plain English ("where are we?", "build the timeline", "shape the units for
+chapter 3") and it runs the scripts and writes the files. Text is sent to Anthropic while it
+works; audio is not (see <a href="../privacy/">PRIVACY.md</a>).</p>
+<p><strong>A Mac or Linux computer.</strong> Windows is not tested. Apple Silicon works, but speech
+recognition runs on the CPU there, because the engine has no Metal backend. An NVIDIA GPU
+on Linux makes it much faster.</p>
+<p><strong>Software:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Why</th>
+<th>Install</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python 3.10+</td>
+<td>everything, including the dashboard</td>
+<td>usually present; on Debian/Ubuntu also <code>apt install python3-venv</code></td>
+</tr>
+<tr>
+<td>ffmpeg</td>
+<td>reads recordings</td>
+<td><code>brew install ffmpeg</code> / <code>apt install ffmpeg</code></td>
+</tr>
+<tr>
+<td>poppler (<code>pdfinfo</code>, <code>pdffonts</code>, <code>pdftotext</code>)</td>
+<td>text from PDFs at intake; page counts and the print preflight</td>
+<td><code>brew install poppler</code> / <code>apt install poppler-utils</code></td>
+</tr>
+<tr>
+<td>tesseract (optional)</td>
+<td>OCR of scans and image-only PDFs at intake</td>
+<td><code>brew install tesseract</code> / <code>apt install tesseract-ocr</code></td>
+</tr>
+<tr>
+<td>WhisperX, pyannote, PyTorch</td>
+<td>speech recognition and speaker labels for recordings</td>
+<td><code>make install-transcribe</code> (pinned versions)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/typst/typst#installation">Typst</a></td>
+<td>rendering stories as pages, and the printed book</td>
+<td><code>brew install typst</code>, or see Typst's install page</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Fonts.</strong> EB Garamond is bundled in <code>fonts/</code> under the SIL Open Font License, and every
+build points Typst at it. You don't need to install anything. The one exception is the map
+tool (section 6.6), which uses EB Garamond only if it's installed system-wide.</p>
+<p><strong>Disk and network.</strong> The first transcription downloads about 5 GB of models. Each hour of
+audio needs about 110 MB more for a working copy. The first book build downloads one small
+Typst package (<code>droplet</code>, for the drop caps). After that, everything except the model work
+and the research runs offline.</p>
+<p><strong>A Hugging Face token</strong> (only if you have recordings). <a href="https://huggingface.co">Hugging Face</a>
+is where the speech models are published. The speaker-labelling model (pyannote) is <em>gated</em>:
+it's free, but its authors ask you to accept their licence and share contact details before
+you download it. The token is how the download proves you've done that. <strong>The model runs on
+your computer. The token is only used to download it, and no audio is ever sent.</strong> To set it
+up once:</p>
+<ol>
+<li>Create a free account and a <strong>Read</strong> token at <a href="https://huggingface.co/settings/tokens">https://huggingface.co/settings/tokens</a>.</li>
+<li>While logged in as that same account, open both of these pages and accept the
+   conditions on each:
+   - <a href="https://huggingface.co/pyannote/speaker-diarization-3.1">https://huggingface.co/pyannote/speaker-diarization-3.1</a>
+   - <a href="https://huggingface.co/pyannote/segmentation-3.0">https://huggingface.co/pyannote/segmentation-3.0</a></li>
+</ol>
+<p>The first model depends on the second, and accepting only the first is the usual mistake.
+3. Put it in your shell, never in a file in the project:</p>
+<pre><code class="language-sh">export HF_TOKEN=hf_xxxxxxxxxxxxxxxx
+</code></pre>
+<p>Without a token you can still transcribe. The speakers just stay unlabelled until you run
+the diarization step later.</p>
+<h3 id="12-install-the-tools">1.2 Install the tools</h3>
+<pre><code class="language-sh">git clone https://github.com/rexsaurus/Lineage.git ~/Lineage
+cd ~/Lineage
+make install              # Python venv in .venv with the build tools; checks for typst
+make install-transcribe   # adds WhisperX + pyannote to the same venv (a large download)
+make sample               # optional: proves the build works (see the README)
+</code></pre>
+<h3 id="13-start-a-lineage">1.3 Start a lineage</h3>
+<p>A family's lineage lives in its <strong>own folder</strong>, outside the repo, so your family's material
+never mixes with the public code:</p>
+<pre><code class="language-sh">make new PROJECT=&quot;$HOME/lineages/calder&quot;
+</code></pre>
+<p>Use <code>$HOME</code> rather than <code>~</code>. In zsh, the default shell on macOS, <code>PROJECT=~/lineages/calder</code>
+is not expanded, and make would create a folder literally named <code>~</code> inside the repo.</p>
+<p><code>make new</code> creates:</p>
+<pre><code>calder/
+  book.yaml            names, the subject's birth year, print settings (fill this in now)
+  lineage.lock         the Lineage release this project runs (section 1.5)
+  Makefile             make dashboard, make lineage-version, make update-lineage
+  CLAUDE.md            standing rules Claude Code reads at the start of every session
+  local-overrides/     the few things specific to this family (section 1.5)
+  .gitignore           keeps audio, photos, raw web caches and PDFs out of git
+  .claude/skills  -&gt;   a link to the skills in your Lineage checkout
+  audio/               recordings (never modified)
+  transcript/          raw JSON, verbatim and clean transcripts, sessions.csv, corrections.json
+  facts/               timeline.csv, glossary.md, gaps.md (questions for you), records/
+  content/units/       one file per story
+  data/                archives.csv, chapters.csv, reader_glossary.csv, indexes
+  chapters/            generated chapter files
+  book/front/          title, copyright, dedication, contents, introduction
+  photos/source/       original images (never modified)
+  photos/print/        print-ready copies
+  output/              PDFs and spreadsheets
+</code></pre>
+<p>The dashboard adds its own files as you use it: <code>sources/</code> (files added through the Sources
+tab), <code>lineage.json</code> (settings), <code>data/sources.json</code> (the source index), <code>data/genealogy/</code>,
+<code>data/familypedia/</code>, <code>data/requests.json</code>, and <code>.lineage/</code> (logs, rendered pages,
+thumbnails). <code>app/README.md</code> lists everything it reads and writes.</p>
+<h3 id="14-fill-in-bookyaml">1.4 Fill in <code>book.yaml</code></h3>
+<p><code>book.yaml</code> is the project's identity file, and every skill reads it first. (It keeps its
+name from when the book was the only output; the dashboard's <strong>Family details</strong> page holds
+the family-level identity: title, family name, summary, crest.) Here is the sample's:</p>
+<pre><code class="language-yaml">title: &quot;The Lake Was Always There&quot;
+subtitle: &quot;A Life of Ruth Calder&quot;
+narrator:                       # the main speaker on the recordings
+  name: &quot;Ruth Calder&quot;
+  label: &quot;Grandma&quot;              # speaker label used in the transcripts
+  birth_year: 1938              # anchors every &quot;when I was twelve&quot;
+  birthplace: &quot;Duluth, Minnesota&quot;
+interviewer:                    # the family member who recorded the interviews
+  name: &quot;Sam Calder&quot;
+  label: &quot;Sam&quot;
+other_speakers: []
+family_figures:                 # relatives who get their own family-history section
+  - &quot;Anders Calder&quot;
+proper_nouns:                   # KEEP SHORT: surnames and odd place names only
+  - &quot;Calder&quot;
+  - &quot;Duluth&quot;
+transcription_locked: true      # set once timestamps are cited (section 3.2)
+print:
+  trim: &quot;7x10&quot;                  # 6x9 | 7x10 | 8x10 | 8.5x11
+  color: &quot;bw&quot;                   # bw | color
+  printer: &quot;kdp&quot;                # kdp | ingramspark | lulu | blurb
+  in_chapter_contents: false
+narration:
+  mode: &quot;third_person&quot;
+  subject_name: &quot;Ruth&quot;          # how stories refer to the subject after first mention
+front:
+  introduction_title: &quot;Introduction&quot;
+</code></pre>
+<p>The field that matters most is <strong><code>birth_year</code></strong>. People date their lives by age: "when I
+was twelve", "the year I started school", "after I turned sixteen". Every one of those
+becomes a year by adding it to the birth year. Get it from a document if you can. If it's
+off by one, every derived date in the timeline, the Familypedia and the book is off by one.</p>
+<p>Two more to get right early:
+- <strong><code>label</code></strong> values are the names that will appear on transcript paragraphs (<code>**Grandma**</code>,
+  <code>**Sam**</code>). They must match what you put in the speaker map in section 3.2.
+- <strong><code>proper_nouns</code></strong> are a <em>few</em> names the speech engine will otherwise mangle. Keep the list
+  short (section 3.2 explains why).</p>
+<h3 id="15-lineagelock-and-updates">1.5 <code>lineage.lock</code> and updates</h3>
+<p>A project <strong>uses</strong> Lineage; it doesn't contain it. It keeps only its own material (sources,
+transcripts, stories, people, records, photos, settings). Everything else (skills, style
+rules, templates, scripts, the dashboard) stays in Lineage and reaches the project as a
+release. <code>lineage.lock</code> pins the release the project runs:</p>
+<pre><code class="language-sh">make lineage-version          # what this project runs
+make update-lineage           # what a newer release would change, and which of your files it touches
+make update-lineage APPLY=1   # install and pin it
+make update-lineage TO=v0.4.0 APPLY=1   # a particular release instead of the newest
+</code></pre>
+<p>Releases install read-only under <code>~/.lineage/releases/&lt;tag&gt;</code>. An update never touches your
+material. When a release changes something that would alter stories already generated (the
+book template, fonts or skills), those stories are marked stale and listed, never rewritten.</p>
+<p>Improvements found while working on one family's record go into Lineage and come back down
+as a release, so every project gets them. Things only one family would want go in that
+project's <code>local-overrides/</code>.</p>
+<h3 id="16-the-dashboard">1.6 The dashboard</h3>
+<pre><code class="language-sh">make dashboard                     # in a project: the dashboard of the pinned release
+~/Lineage/app/lineage ~/lineages/calder   # or from a checkout, on any project folder
+</code></pre>
+<p>It runs on your own computer at <code>http://127.0.0.1:8777</code> and binds to <code>127.0.0.1</code> only.
+<code>python3 server.py --demo</code> (in <code>app/</code>) shows invented sample content with a banner; it is
+never the default.</p>
+<p>There is no wizard. Every tab works whenever you open it and says plainly what it still
+needs:</p>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>What it's for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Home</strong></td>
+<td>story of the day, a featured relative, <strong>Needs you</strong> (one-click actions ordered by what they unblock), <strong>Request more</strong> (question lists built from open questions, gaps and unconfirmed links), counts, and an activity feed</td>
+</tr>
+<tr>
+<td><strong>Sources</strong></td>
+<td>every file the family has added, and its intake (section 3.1)</td>
+</tr>
+<tr>
+<td><strong>Familypedia</strong></td>
+<td>an article for every subject the material names (section 5.3)</td>
+</tr>
+<tr>
+<td><strong>Genealogy</strong></td>
+<td>the tree, derived from the sources with evidence on every link (section 5.2)</td>
+</tr>
+<tr>
+<td><strong>Stories</strong></td>
+<td>the written stories, rendered as pages, with narration (sections 6 and 6.10)</td>
+</tr>
+<tr>
+<td><strong>Timeline</strong></td>
+<td>every dated event, with tiers, conflicts and gaps (section 5.1)</td>
+</tr>
+</tbody>
+</table>
+<p>Behind the <strong>settings gear</strong>: <strong>Family details</strong> (title, family name, summary, crest),
+<strong>Connectors</strong> (Google Drive, GitHub, Anthropic, OpenAI, ElevenLabs, agent CLIs),
+<strong>Contributors</strong> (section 2) and <strong>Project settings</strong> (repo, Drive folder, narration voice,
+writing style, story templates, trim and printer, the terminal command). A dot on the gear
+means something needs attention.</p>
+<p>The <strong>Terminal</strong> button in the header (or Ctrl+`) opens a drawer over any tab with a real
+terminal running Claude Code in the project: the Genealogist, quick prompts, the pipeline
+actions and the approvals list. Buttons that need real work done ("Generate", pipeline
+actions) hand it to the Genealogist there.</p>
+<h3 id="17-every-session-set-up-the-shell-then-open-claude-code">1.7 Every session: set up the shell, then open Claude Code</h3>
+<pre><code class="language-sh">export LINEAGE=&quot;$HOME/Lineage&quot;     # put this line in your shell profile
+source &quot;$LINEAGE/.venv/bin/activate&quot;     # so `python` is the Lineage venv
+cd &quot;$HOME/lineages/calder&quot;
+claude
+</code></pre>
+<p>Claude Code picks up the skills from <code>.claude/skills/</code> and the rules from <code>CLAUDE.md</code>. Start
+each session by asking <strong>"where are we?"</strong>. It runs the status check and resumes at the
+first unfinished stage. You can run the same check yourself:</p>
+<pre><code class="language-sh">make -C &quot;$LINEAGE&quot; status PROJECT=&quot;$PWD&quot;
+</code></pre>
+<p>The output lists the pipeline's stages, each marked ✓ or ·, followed by a <code>NEXT:</code> line.</p>
+<p>Everything in this guide can be done more than one way: in the dashboard, by asking Claude
+("transcribe the recordings", "build the timeline", "rebuild the genealogy"), or by running
+the commands shown here yourself. The commands assume you are in the project folder with the
+venv active.</p>
+<hr />
+<h2 id="2-invite-contributors">2. Invite contributors</h2>
+<p>A lineage is cooperative: many people add to one shared record. The family is the <em>subject</em>;
+contributors are the people who add material about it, from wherever they are.</p>
+<p><strong>Settings → Contributors</strong> holds:
+- <strong>people and roles</strong>: <code>contributor</code> (adds material), <code>reader</code>, <code>editor</code>;
+- <strong>invite links</strong>, one per person, with an expiry, revocable;
+- <strong>requests outstanding</strong>: what you've asked each person for (Home's <strong>Request more</strong>
+  builds these lists from open questions, gaps and unconfirmed links, and saves them as
+  asked or answered in <code>data/requests.json</code>);
+- <strong>the shared folder</strong> contributors can drop files into (with the Google Drive connector);
+- <strong>the review queue</strong>: material a contributor added waits here until someone accepts it.
+  Home's <strong>Needs you</strong> says when something is waiting.</p>
+<p>Members and invites are kept in <code>.lineage/family.json</code> in the project.</p>
+<p><strong>What is not there yet.</strong> The dashboard runs on your own computer, so <strong>an invite link only
+works on that machine</strong> until the project is hosted, and the page says so. The management
+side (people, roles, invites, requests, the review queue) is built; the <strong>contributor-facing
+view</strong> behind an invite link waits for hosting (see <code>app/ROADMAP.md</code>). Until then, the
+practical route is the shared Drive folder, email, or the post: you add what arrives through
+the Sources tab and record who it came from.</p>
+<hr />
+<h2 id="3-add-sources">3. Add sources</h2>
+<h3 id="31-the-sources-tab-intake">3.1 The Sources tab: intake</h3>
+<p>Drop files onto the <strong>Sources</strong> tab, or put them in the project and they are indexed where
+they are. Every file runs the same visible stages, and each stage's result is kept in
+<code>data/sources.json</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Saved</strong> (ingest)</td>
+<td>the file is copied into <code>sources/</code> and given a SHA-256 hash. A file already in the project is recognised by its hash and not added twice. The original is never modified or renamed.</td>
+</tr>
+<tr>
+<td><strong>Reading</strong> (extract)</td>
+<td>text comes out: a PDF's text layer, OCR for scans and image-only PDFs (needs tesseract), Word and text files directly. With an Anthropic key, an image also gets a short description and a transcription of any writing on it. It <strong>never names a person from how they look</strong>; a person is named only when writing on the item names them.</td>
+</tr>
+<tr>
+<td><strong>Understanding</strong></td>
+<td>a summary, the people, places and organizations named, a date range and the kind of item (letter, photo, certificate, record, transcript, recording, notes). With an Anthropic key this is a model pass; without one, a simpler heuristic. Everything here is marked as derived.</td>
+</tr>
+<tr>
+<td><strong>Indexed</strong></td>
+<td>the source joins the full-text search (<code>data/search_index.json</code>).</td>
+</tr>
+<tr>
+<td><strong>Drive</strong> (optional)</td>
+<td>a copy goes to the project's Drive folder when the Google Drive connector is enabled and a folder is set.</td>
+</tr>
+</tbody>
+</table>
+<p>A stage that fails never loses the file; it shows the failure and can be re-run. Your edits
+in the edit drawer (name, summary, people, dates, notes) are kept apart from the derived
+values and always win, including across a <strong>re-ingest</strong>. Sources can be renamed, trashed
+and restored (and then deleted permanently), and most actions work in bulk.</p>
+<p>Tagging a source to the people and subjects it concerns happens in the Familypedia (section
+5.3). A gallery and lightbox for photographs, and annotation and people tagging on the image
+itself, are not built yet (<code>app/ROADMAP.md</code>, #5).</p>
+<h3 id="32-recordings-transcription">3.2 Recordings: transcription</h3>
+<p>A recording becomes useful when it becomes a timestamped, speaker-labelled transcript: then
+every fact taken from it can point at the second it was said. A recording added through the
+Sources tab shows <strong>waiting for transcription</strong> until its session's transcript exists;
+re-ingest it afterwards and the transcript text becomes its searchable content.</p>
+<p>Transcription runs on files in <code>audio/</code>. Copy the recordings there by any means. Then:</p>
+<pre><code class="language-sh">$LINEAGE/scripts/transcribe.sh --dry-run   # list sessions and the plan; do nothing
+$LINEAGE/scripts/transcribe.sh --smoke     # the shortest session only: check it all works
+$LINEAGE/scripts/transcribe.sh             # everything, shortest first
+</code></pre>
+<p>For each recording, this:
+1. gives it a session ID (<code>S1</code>, <code>S2</code>, … in recording-date order) in <code>transcript/sessions.csv</code>.
+   IDs never change once assigned, so adding a recording later never renumbers anything.
+   If a file has no embedded date, fill in the <code>recorded</code> column by hand; it won't be
+   overwritten.
+2. makes a 16 kHz mono working copy in <code>transcript/work/</code>;
+3. runs WhisperX (large-v3, with word timestamps) into <code>transcript/raw/S1.json</code>;
+4. if <code>HF_TOKEN</code> is set, adds speaker labels (diarization).</p>
+<p>It is safe to stop and restart. A session that already has its JSON is skipped, and output
+is only moved into place when a session finishes, so a crash never leaves a half-written
+file that looks done. A log is kept in <code>transcript/work/transcribe.log</code>.</p>
+<p>Other useful forms: <code>transcribe.sh S3</code> (one session), <code>transcribe.sh --no-diarize</code> (speech
+only, label speakers later). Environment overrides include <code>MODEL</code>, <code>LANGUAGE</code> (default
+<code>en</code>), <code>DEVICE</code>, and <code>MIN_SPEAKERS</code>/<code>MAX_SPEAKERS</code>. By default it expects two speakers plus
+any <code>other_speakers</code>.</p>
+<h4 id="keep-the-initial-prompt-short">Keep the initial prompt short</h4>
+<p>The speech engine accepts an "initial prompt" of vocabulary to listen for, and
+<code>transcribe.sh</code> builds it from <code>proper_nouns</code>. <strong>A long prompt gets echoed back into the
+transcript as fake speech</strong>: during a pause, the model "hears" your list of names read
+aloud in the middle of a real answer. The script warns above 120 characters. Keep it to a
+few surnames and unusual place names, and fix every other misspelling afterwards (below).</p>
+<p>After every run, search the output for your prompt text. If an echo slips through, cut it at
+render time in <code>transcript/corrections.json</code>:
+- <code>drop_segments.patterns</code> drops a whole raw segment that is nothing but echo;
+- <code>drop_word_runs.runs</code> removes an echoed phrase word by word from inside a real segment;
+- <code>scrub_inline.patterns</code> strips an echo embedded inside a real paragraph.</p>
+<h4 id="long-recordings-chunked-diarization">Long recordings: chunked diarization</h4>
+<p>Speaker labelling gets disproportionately slower as files get longer. Measured on a CPU, it
+took about 32 seconds of compute per audio-minute on 6–10 minute files but about 119 seconds
+per audio-minute on a 34-minute file. A two-hour interview in one piece would take something
+like 14 hours. So any session longer than 20 minutes is automatically labelled in
+overlapping 10-minute windows, which are then stitched together. You can also run it
+directly:</p>
+<pre><code class="language-sh">python $LINEAGE/scripts/diarize.py                    # every session without speakers
+python $LINEAGE/scripts/diarize.py S1 S3
+python $LINEAGE/scripts/diarize_chunked.py S5         # force chunking
+python $LINEAGE/scripts/diarize_chunked.py S5 --chunk 600 --overlap 60
+</code></pre>
+<p>Each window logs a line like <code>stitched 2/2 by overlap</code>. Anything less than all speakers
+matched deserves a listen at that seam.</p>
+<h4 id="never-re-run-speech-recognition-once-timestamps-are-cited">Never re-run speech recognition once timestamps are cited</h4>
+<p>Two runs over the same audio never produce the same segment boundaries. Every citation in
+the record (<code>[S2 00:14:07]</code>) would silently point at the wrong words. So:</p>
+<ul>
+<li><code>transcript/raw/*.json</code> is <strong>never edited</strong>.</li>
+<li>Every fix (a misheard name, a speaker label, a prompt echo) goes in
+  <strong><code>transcript/corrections.json</code></strong> and is applied when the Markdown is rendered. Start from
+  the template: <code>cp $LINEAGE/scripts/corrections.example.json transcript/corrections.json</code>.</li>
+<li>Once anything cites a timestamp (the timeline, story units, the Familypedia's passages),
+  set <strong><code>transcription_locked: true</code></strong> in <code>book.yaml</code>. After that, <code>transcribe.sh --force</code> and
+  <code>diarize.py --force</code> refuse to run. New recordings can still be added; they just become new
+  sessions.</li>
+</ul>
+<h4 id="gate-1-confirm-the-speakers">GATE 1: confirm the speakers</h4>
+<p>Diarization labels voices <code>SPEAKER_00</code>, <code>SPEAKER_01</code>, … and the numbers mean nothing. Listen
+to a minute of each session and decide which cluster is the subject. The interviewer
+usually asks short questions, and the subject tells long stories. Then write the map into
+<code>transcript/corrections.json</code>, using the labels from <code>book.yaml</code>:</p>
+<pre><code class="language-json">{
+  &quot;speaker_map&quot;: { &quot;SPEAKER_00&quot;: &quot;Grandma&quot;, &quot;SPEAKER_01&quot;: &quot;Sam&quot; },
+  &quot;spelling&quot;: [ { &quot;find&quot;: &quot;\\b[Cc]aulder\\b&quot;, &quot;replace&quot;: &quot;Calder&quot; } ],
+  &quot;drop_segments&quot;: { &quot;patterns&quot;: [] },
+  &quot;scrub_inline&quot;: { &quot;patterns&quot;: [] }
+}
+</code></pre>
+<p>Then render:</p>
+<pre><code class="language-sh">python $LINEAGE/scripts/render_transcripts.py
+</code></pre>
+<p>This writes three layers:
+- <code>transcript/verbatim/S1.md</code>: every word, with low-confidence words marked <code>[?word?]</code>;
+- <code>transcript/clean/S1.md</code>: fillers (um, uh) and stutters removed, everything else kept. This
+  is <strong>the layer everything quotes and cites</strong>;
+- <code>transcript/master.md</code>: all clean sessions in order.</p>
+<p>A clean paragraph looks like this:</p>
+<pre><code>**Grandma** [S1 00:00:29] When I was little, maybe seven or eight, I'd walk my dad's lunch down to the ore dock. A tin pail. ...
+</code></pre>
+<p>The render prints a line per session ending in <code>unmapped none</code> when every voice has a name.
+If Claude is running this stage, it stops here and shows you three sample turns per speaker
+to confirm. <strong>Nothing is written until you say the mapping is right.</strong></p>
+<p>One limitation: <code>render_transcripts.py</code> applies a single <code>speaker_map</code> to every session.
+Cluster numbers can come out swapped from one session to the next. If that happens, you can
+render that session by hand with the skill's converter, but this skips the spelling and echo
+fixes, and a later full re-render will overwrite it:</p>
+<pre><code class="language-sh">python .claude/skills/interview-transcriber/scripts/whisperx_to_md.py transcript/raw/S3.json \
+  --session S3 --map SPEAKER_01=Grandma --map SPEAKER_00=Sam \
+  --verbatim transcript/verbatim/S3.md --clean transcript/clean/S3.md
+</code></pre>
+<p>Also confirm the basics in <code>book.yaml</code> (names, birth year) at this gate. Claude keeps a
+spelling list in <code>facts/glossary.md</code>. Each spelling you approve goes into
+<code>corrections.json</code> → <code>spelling</code>, and you re-render.</p>
+<h3 id="33-photographs-catalogue-with-evidence">3.3 Photographs: catalogue with evidence</h3>
+<p>People will treat a photograph's label as fact for generations. So every label says what it
+rests on, every guess looks like a guess, and nothing that isn't a photograph can pass for
+one. The photo-processor skill holds the full rules.</p>
+<p>A family photos document (Word, PDF, an exported Google Doc, a zip or a folder of scans) is
+split into catalogued images:</p>
+<pre><code class="language-sh">python .claude/skills/photo-processor/scripts/extract_photos.py &quot;Family photos.docx&quot;   # or a PDF, zip or folder
+</code></pre>
+<p>Images get permanent IDs (<code>P001</code>, …). Originals are copied to <code>photos/source/</code> and never
+edited, and any nearby text is saved as <code>original_caption</code>, which is often the best evidence
+there is. Export a Google Doc as .docx first. Everything about each image goes in
+<code>photos/photo_index.csv</code> (which the Familypedia reads), and each identification records its
+<strong>basis</strong>, strongest first:</p>
+<ol>
+<li><strong>inscription</strong>: writing on the photo or its back, a printed lab date;</li>
+<li><strong>document</strong>: a caption in the family's photo document, an archive catalogue, the owner's word;</li>
+<li><strong>transcript</strong>: the subject describes this scene (cite <code>[S2 00:31:05]</code>);</li>
+<li><strong>visual estimate</strong>: clothing, cars, print format. Never better than medium confidence.</li>
+</ol>
+<p><strong>Never name a person from facial resemblance.</strong> A wrong name in the record is worse than
+none. Without an inscription, document, transcript or the owner's word, describe instead
+("unidentified woman, about 30"). Dates are exact only if inscribed; otherwise they're a
+range or "about 1925". Only you or the owner can mark an image <code>confirmed</code>.</p>
+<p>Generated images are marked as generated everywhere: rows in <code>photos/photo_index.csv</code> whose
+subject starts "Illustration" show as illustrations in the Familypedia, and section 6.6 sets
+the rules for using one in a book.</p>
+<hr />
+<h2 id="4-research-records">4. Research records</h2>
+<p>The family's version is half the record. The other half is what the archives hold: census
+returns, military rosters and pension files, ship registers and crew lists, digitized
+newspapers, museum and library catalogues, period books. Lineage catalogues both, snapshots
+what it finds, and sets the records beside the family's version. The records-archives skill
+does this work; ask Claude to "research Anders Calder" or "index the family's papers".</p>
+<h3 id="41-the-familys-own-papers">4.1 The family's own papers</h3>
+<p><code>data/archives.csv</code> is an index of what the family holds and what it has lost: Bibles,
+letters, discharge papers, albums, the recordings themselves, heirlooms. Each row is typed
+(<code>photographs · letters · documents · bible · military · legal · recordings · heirlooms ·
+institutional · other</code>), says who holds it in general terms, and has a status (<code>confirmed ·
+mentioned · unknown · lost · destroyed · institutional</code>). <strong>Lost and destroyed items get rows
+too</strong>: "the letters burned in 1962" saves a future relative years. Street addresses and phone
+numbers live only in the private column, and a living holder is printed only with
+<code>print_permission: yes</code>.</p>
+<pre><code class="language-sh">python .claude/skills/records-archives/scripts/archives_tools.py check   # flags addresses/phones in public columns
+python .claude/skills/records-archives/scripts/archives_tools.py asks    # follow-up list, one call per relative
+</code></pre>
+<h3 id="42-public-records">4.2 Public records</h3>
+<p>Research beyond the family's own material is welcome anywhere in the record. <strong>Check the
+records first</strong>, because archives often hold the person.</p>
+<ul>
+<li><strong>Free and public sources first</strong>: national and state archives, the Internet Archive and
+  HathiTrust for period books, Chronicling America for newspapers, free census indexes,
+  museum catalogues. Note any paywalled source as such, and give the free route if there is
+  one.</li>
+<li><strong>Fetch politely.</strong> Respect robots.txt and site terms, make at most one request every
+  couple of seconds per site, and use no logins or CAPTCHA tricks. <strong>Never put anyone's
+  name, email or credentials in a request.</strong></li>
+<li><strong>Fact sheets before prose.</strong> For an episode worth building out (a voyage, a regiment, a
+  mill town), the research goes first into <code>facts/records/&lt;person&gt;/context_&lt;topic&gt;.md</code>, one
+  fact per bullet with URL, page and a confidence note. Anything written later is written
+  from the sheets, never from memory.</li>
+<li><strong>Catalogue every source by type.</strong> Each research folder keeps a <code>sources.csv</code> (<code>id,
+  title, url, holder, type, date_retrieved</code>, or a <code>sources.json</code>). The Familypedia reads
+  these and shows each record on the articles it concerns, with archive, number, link and
+  retrieval date.</li>
+<li><strong>Snapshot what you use.</strong> Raw downloads go in <code>facts/records/_raw/</code>, which is gitignored
+  because catalogues often forbid reproduction. This is what lets the record outlive the
+  links. Then export the shareable text into the project:</li>
+</ul>
+<pre><code class="language-sh">python $LINEAGE/scripts/export_sources.py --dry-run
+python $LINEAGE/scripts/export_sources.py --restricted '^museum/'
+</code></pre>
+<p>This copies text files to <code>facts/records/sources/</code> and writes <code>MANIFEST.csv</code> listing
+  <em>every</em> raw file with its size and SHA-256 hash, plus whether it was exported and why not.
+  Restricted paths are never copied. Rules can live in <code>facts/records/export.yaml</code>; see the
+  script's header.</p>
+<p>Low-confidence OCR from a record goes into the fact sheets flagged as such, and never into
+anything written without being checked.</p>
+<p>A dashboard screen for pasting record links and scanning them into the typed catalogue, with
+a by-archive view, is not built yet (<code>app/ROADMAP.md</code>, #7). Today the research runs through
+Claude Code and the files above.</p>
+<h3 id="43-routes">4.3 Routes</h3>
+<p>Journeys (a crossing, a voyage, a regiment's march) are kept as sourced CSVs, one row per
+recorded point:</p>
+<pre><code class="language-csv">seq,date,place,lat,lon,kind,aboard,source,label,gap_before
+1,,Bergen,60.39,5.32,port,subject,&lt;record ID or URL&gt;,Bergen,
+2,,New York,40.70,-74.01,port,subject,&lt;record ID or URL&gt;,New York,yes
+3,,Duluth,46.78,-92.10,port,subject,&lt;record ID or URL&gt;,Duluth,
+</code></pre>
+<p>Only <code>seq</code>, <code>lat</code> and <code>lon</code> are required, but every point should carry a <code>source</code>. A file
+named <code>*track*.csv</code> or <code>*route*.csv</code> under <code>facts/</code> gives the Familypedia its ports, positions
+and map coordinates. A new <code>leg</code>, <code>gap_before</code>, or a row without coordinates is an
+<strong>unrecorded leg</strong>, and it is shown as unrecorded rather than drawn. Section 6.6 turns the
+same file into a printed map.</p>
+<h3 id="44-when-records-contradict-the-family">4.4 When records contradict the family</h3>
+<p><strong>Keep both, and say so.</strong> Never silently correct the family's story, and never silently
+repeat it. The timeline keeps both tellings (section 5.1), the genealogy rebuild keeps
+contradictions for review (section 5.2), and the Familypedia shows the family's tiers and
+"what the records show" as separate sections of the same article. Log the conflict in
+<code>facts/gaps.md</code>, where it becomes a question for whoever can answer it. When the
+disagreement reaches a written story, section 6.5 says how to tell both.</p>
+<p>Say honest gaps out loud ("Which route the boat took that winter, no surviving record
+says") and never fill them. Don't give an ancestor a famous battle or ship their unit or
+crew did not have.</p>
+<p>Include <strong>a note on the name</strong> whenever a record could be confused with a similar one, such
+as two ships or two men with the same name: say which is which, and why, and keep the
+reasoning in <code>facts/records/&lt;person&gt;/</code>. The worked example
+(<a href="https://github.com/rexsaurus/Lineage/blob/main/docs/EXAMPLE-CHAPTER.md">EXAMPLE-CHAPTER.md</a>) ends with exactly such a note about two
+whaleships called <em>Hannibal</em>.</p>
+<hr />
+<h2 id="5-build-the-record-timeline-genealogy-familypedia">5. Build the record: timeline, genealogy, Familypedia</h2>
+<h3 id="51-the-timeline">5.1 The timeline</h3>
+<p>People don't tell their lives in order. <code>facts/timeline.csv</code> puts every event on one line,
+and each date shows how it was worked out. Ask Claude to "build the timeline" (the
+timeline-organizer skill), then check its work:</p>
+<pre><code class="language-sh">python .claude/skills/timeline-organizer/scripts/timeline_tools.py sort
+python .claude/skills/timeline-organizer/scripts/timeline_tools.py check   # fix whatever it reports
+python .claude/skills/timeline-organizer/scripts/timeline_tools.py md      # facts/timeline.md, by decade
+</code></pre>
+<h4 id="resolving-relative-dates">Resolving relative dates</h4>
+<p>Each row records the arithmetic in <code>date_basis</code>, and how it will be said in <code>date_display</code>.
+From the sample:</p>
+<table>
+<thead>
+<tr>
+<th>event</th>
+<th>quote</th>
+<th>date_basis</th>
+<th>date_display</th>
+<th>confidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>E003 Ruth walks her father's lunch to the ore dock</td>
+<td>"maybe seven or eight"</td>
+<td><code>'maybe seven or eight' + birth year 1938</code></td>
+<td>about 1945</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>E004 The big snow; school closed for a week</td>
+<td>"around 1950, I think"</td>
+<td><code>'around 1950, I think'</code></td>
+<td>around 1950</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>E005 Ruth begins nursing school</td>
+<td>"nursing school in 1956"</td>
+<td>stated</td>
+<td>1956</td>
+<td>high</td>
+</tr>
+</tbody>
+</table>
+<p>The rules:
+- <strong>Never invent precision.</strong> There's no month or day unless she said it or a document
+  gives it.
+- <strong>Hedges carry over.</strong> "Around 1950, I think" stays "around 1950". Nothing downstream may
+  state a date more precisely than <code>date_display</code>.
+- "Right after the war" is resolved by saying which war and why, labelled as historical
+  context.
+- A bare "yeah" to a leading question ("Was that 1952?" "Yeah.") gets low confidence.</p>
+<h4 id="conflicts-are-kept-not-settled">Conflicts are kept, not settled</h4>
+<p>When two tellings disagree, or the family's story and a document disagree, <strong>both stay</strong>.
+The <code>conflicts</code> column says what disagrees with what, confidence drops to low, and a
+question for you goes into <code>facts/gaps.md</code>. Nobody picks a winner silently.</p>
+<h4 id="the-timeline-tab">The Timeline tab</h4>
+<p>The dashboard draws the same file as a vertical spine with decade bands and a year rail.
+Each card shows the date and its precision, the tier, the people, the place, the citations
+and links to stories. Conflicts get their own cards; <strong>gaps</strong> get cards with "Add to
+questions"; events with no date wait in an undated drawer. Filter, search, star, and export
+as SVG, PNG or a printable appendix. (The printed book also takes an appendix, "A Timeline",
+built by <code>make draft</code> from the high- and medium-confidence rows.)</p>
+<h3 id="52-the-genealogy">5.2 The genealogy</h3>
+<p>The <strong>Genealogy</strong> tab derives the family tree from the sources. <strong>Every link carries its
+quoted evidence: no evidence, no link.</strong></p>
+<ul>
+<li><strong>Rebuild</strong> asks Claude to read the material and propose the tree; each proposed link is
+  checked against the passage it quotes. The proposal is saved in
+  <code>data/genealogy/proposed.json</code> and shown as a <strong>review of what changed</strong> since the approved
+  tree. Contradictions are kept for you, never resolved silently. Nothing changes until you
+  apply it (<code>derived.json</code>; earlier versions in <code>history.json</code>).</li>
+<li><strong>Your edits</strong> (merge two people, split one, add a link or a note) are kept in
+  <code>data/genealogy/mine.json</code> and survive every rebuild.</li>
+<li><strong>Views</strong>: a pan-and-zoom tree with descendant, ancestor and hourglass layouts, nodes for
+  unknown parents, and line styles by evidence tier; and a Cast view of everyone.</li>
+<li><strong>GEDCOM</strong> in and out. An imported GEDCOM arrives <strong>unconfirmed</strong>: it is someone else's
+  claim until the material supports it.</li>
+<li><strong>Exports</strong>: SVG, PNG and a printable chart. <strong>Living people are left out of exports.</strong></li>
+</ul>
+<h3 id="53-the-familypedia">5.3 The Familypedia</h3>
+<p>The Familypedia is the record's encyclopedia: an article for every subject the material
+names, of nine types:</p>
+<p><strong>person · place · event · vessel/vehicle · organization/unit · object · publication ·
+occupation/trade · theme</strong></p>
+<p>Each article has a lead from the material, a typed infobox, <strong>tier sections</strong> (witnessed ·
+told · lore · what the records show), the passages that mention it, its sources with
+thumbnails, typed records with archive, number, link and retrieval date, photographs and
+marked illustrations, stories, related articles, backlinks, open questions, and a separate
+"Beyond the family" section for public background. Browse by type, A–Z, most material or
+needs more; search the full text with type filters; follow <code>[[links]]</code> across types.</p>
+<p><strong>Where articles come from.</strong> Only the project's files; everything is optional, and a
+project with less material simply has fewer articles. The main inputs:</p>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Gives</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>content/units/*.md</code> front matter <code>people</code>, <code>places</code>, <code>subjects</code> (<code>"vessel: Hannibal"</code>)</td>
+<td>subjects, and the passages that mention them (section 6.2)</td>
+</tr>
+<tr>
+<td><code>facts/timeline.csv</code></td>
+<td>events, their people and places, tiers, conflicts</td>
+</tr>
+<tr>
+<td><code>facts/people/*.md</code> (<code># Name</code>, <code>Also called:</code>, <code>Relationship to …:</code>, <code>Dates:</code>)</td>
+<td>person profiles and other names</td>
+</tr>
+<tr>
+<td><code>knowledge/graph.json</code> (or <code>nodes.csv</code> + <code>edges.csv</code>)</td>
+<td>typed subjects, records and relations (<code>crew_on</code>, <code>master_of</code>, <code>served_in</code>, <code>held_by</code>, …)</td>
+</tr>
+<tr>
+<td><code>data/archives.csv</code>, <code>facts/records/**/sources.csv</code></td>
+<td>the records catalogue and research sources (section 4)</td>
+</tr>
+<tr>
+<td><code>facts/**/*track*.csv</code>, <code>*route*.csv</code></td>
+<td>ports, positions and map coordinates (section 4.3)</td>
+</tr>
+<tr>
+<td><code>photos/photo_index.csv</code></td>
+<td>photographs, with illustrations marked (section 3.3)</td>
+</tr>
+<tr>
+<td><code>facts/gaps.md</code>, <code>facts/records/**/context_*.md</code></td>
+<td>open questions; public background for "Beyond the family"</td>
+</tr>
+</tbody>
+</table>
+<p><code>app/README.md</code> has the full table, including where map coastlines come from. <strong>No map tiles
+are ever fetched</strong>: the map is drawn from the records' own coordinates, with unrecorded legs
+shown as unrecorded.</p>
+<p><strong>Tagging.</strong> Any source, record, photograph or event can be tagged to any article, one at a
+time or in bulk from the Records and Photographs views. Lineage <strong>suggests</strong> tags only from
+names written in the item, shows the words that name them, and tags nothing until you
+accept: no faces, no resemblance. Tags, your notes, infobox values, "same as" merges and
+subjects you create are saved under <code>data/familypedia/</code>, and they are yours: rebuilding from
+the material never overwrites them.</p>
+<hr />
+<h2 id="6-make-stories-and-a-book">6. Make stories and a book</h2>
+<p>Everything above is the record. This part turns it into <strong>stories</strong> (written pieces, which
+the dashboard renders as pages and can narrate) and a <strong>printed book</strong>. It is an export: the
+record is complete without it, and the book can be rebuilt from the record at any time.</p>
+<p>The book pipeline adds two more points where a person decides, after GATE 1 (section 3.2):</p>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>When</th>
+<th>What you decide</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GATE 1</strong></td>
+<td>after transcription</td>
+<td>which voice on the tape is the subject and which is you; the basics in <code>book.yaml</code></td>
+</tr>
+<tr>
+<td><strong>GATE 2</strong></td>
+<td>after the chapter map is proposed</td>
+<td>how the book is organized, before any prose is written</td>
+</tr>
+<tr>
+<td><strong>GATE 3</strong></td>
+<td>at the end</td>
+<td>that the book is finished: every bridge approved, every flag dealt with</td>
+</tr>
+</tbody>
+</table>
+<p>The dashboard calls the written pieces <strong>stories</strong>; the printed book still has chapters,
+and the files keep their names (<code>chapters/</code>, <code>data/chapters.csv</code>).</p>
+<h3 id="61-how-it-fits-together">6.1 How it fits together</h3>
+<pre><code>transcripts + records ─► story units ─► chapter map ─► chapters ─► book PDF
+                          content/units/  data/chapters.csv  chapters/   output/
+                                              ▲                          ▲
+                                           GATE 2                     GATE 3
+</code></pre>
+<p>Story units are worth cutting even if you never print a book: their <code>people</code>, <code>places</code> and
+<code>subjects</code> front matter is how the Familypedia knows which passages of which recording
+concern which article.</p>
+<h3 id="62-story-units">6.2 Story units</h3>
+<p>A <strong>story unit</strong> is one story, memory or explanation that stands on its own: typically one
+to five minutes of tape, stored as one file in <code>content/units/</code>. Each unit holds the exact
+clean transcript excerpt (<code>## Source</code>), its metadata (people, places, subjects, timeline
+events, part, era or relative), and later the finished prose (<code>## Shaped</code>) plus notes for
+you.</p>
+<p><strong>Why units instead of chapters?</strong> Chapter boundaries move. A life stage splits in two, or
+an uncle turns out to deserve his own chapter. Because chapters are <em>generated</em> from units,
+moving a story is a one-line metadata change and a rebuild, not a rewrite. All editing
+happens in units, and generated chapter files are never edited by hand.</p>
+<p>Signs that a new unit is starting: a question that changes the subject, a jump in time or
+place, "and another time…", "that reminds me…". A story told in pieces across sessions is
+<strong>one</strong> unit with several spans. A story told twice is one unit: the fuller telling gets
+shaped, and the differences go in its notes.</p>
+<h4 id="contentboundariescsv"><code>content/boundaries.csv</code></h4>
+<p>You (or Claude) list the cut points. For the sample it would be:</p>
+<pre><code class="language-csv">session,start,id,title,part,section,tier,people,places,events,flags
+S1,00:00:02,U001,The boots,family,Others in the Family,told,Anders Calder,&quot;Norway;Duluth, Minnesota&quot;,E001;E002,
+S1,00:00:29,U002,The ore dock,life,The Ore Dock,,,&quot;Duluth, Minnesota&quot;,E003,
+S1,00:00:48,U003,The big snow,life,The Ore Dock,,Pete,&quot;Duluth, Minnesota&quot;,E004,
+S2,00:00:03,U004,The shoes,life,Walt and the Cabin,,,&quot;Minneapolis, Minnesota&quot;,E005,
+S2,00:00:17,U005,The dance,life,Walt and the Cabin,,Walt,&quot;Minneapolis, Minnesota&quot;,E006,
+S2,00:00:36,U006,The cabin,life,Walt and the Cabin,,Walt,&quot;Pike Lake, Minnesota&quot;,E007,
+</code></pre>
+<ul>
+<li><code>start</code> is the timestamp of the unit's first paragraph, as printed in
+  <code>transcript/clean/</code>. A unit runs until the next cut in that session.</li>
+<li><code>id</code> <code>X</code> excludes a span (warm-up, a phone ringing, logistics, a prompt echo). Put the
+  reason in <code>title</code>; the span goes to <code>content/excluded.md</code>.</li>
+<li>The same id in two sessions makes one unit with two spans.</li>
+<li>Lists are <code>;</code>-separated. Quote any cell that contains a comma.</li>
+<li><code>part: family</code> units take a relative's name as <code>section</code> and a <code>tier</code> (section 6.5).</li>
+</ul>
+<p>Then generate the unit files and check coverage:</p>
+<pre><code class="language-sh">python $LINEAGE/scripts/make_units.py --check    # coverage only
+python $LINEAGE/scripts/make_units.py            # write content/units/U###-*.md
+</code></pre>
+<h4 id="the-coverage-check">The coverage check</h4>
+<p>Because each cut runs to the next one, every paragraph lands in exactly one unit or in the
+excluded list. That makes loss checkable instead of a hope:</p>
+<pre><code>paragraphs: 14 in 2 session(s)
+  in units:   14  (6 units)
+  excluded:   0  (0 spans)
+  UNCOVERED:  0
+</code></pre>
+<p>The script exits with an error if anything is uncovered. Two more checks:</p>
+<pre><code class="language-sh">python .claude/skills/content-separator/scripts/units.py coverage   # every subject paragraph accounted for
+python .claude/skills/content-separator/scripts/units.py check      # missing fields, uncited or Q&amp;A-style Shaped text
+</code></pre>
+<p>Re-running <code>make_units.py</code> after you change boundaries is safe for the fields it knows:
+<code>chapter</code>, <code>order</code>, <code>lead_in</code>, <code>break_before</code>, <code>status</code>, <code>## Shaped</code> and <code>## Notes</code> carry
+over. Frontmatter it doesn't know about is rewritten away, though. That includes
+<code>lead_in_approved</code>, <code>kind</code>, and any <code>date_display</code> you added by hand. An apparatus unit
+(section 6.5) has no spans, so it shows up as "not in boundaries.csv". Leave it in place and
+don't use <code>--prune</code> while you have one. New units start with <code>break_before: false</code>; set it to
+<code>true</code> where you want a ❧ break between stories.</p>
+<h3 id="63-the-chapter-map">6.3 The chapter map</h3>
+<p>Claude proposes the map (the chapter-index-builder skill) from the timeline and the units,
+not from the order things were said. It writes the map to <code>data/chapters.csv</code>.</p>
+<p><strong>Two parts:</strong>
+- <strong>The family part</strong> ("Those Who Came Before"), first by default: <strong>one chapter per named
+  relative, titled with just the name</strong>, oldest generation first. Relatives with only a
+  story or two share a chapter called <strong>"Others in the Family"</strong>, each under their own
+  heading.
+- <strong>The life part</strong>: the subject's own life, <strong>chronological</strong>, one stage or place per
+  chapter. A theme that spans decades can be its own chapter, placed where it peaks.</p>
+<p><strong>Sizing.</strong> Aim for roughly 1,000–2,500 words of the subject's speech per life chapter.
+Under about 600, merge with a neighbour; over about 3,000, split at a natural turn. A
+relative's chapter can be a single page.</p>
+<p><strong>Columns per chapter</strong> (<code>data/chapters.csv</code>):</p>
+<table>
+<thead>
+<tr>
+<th>column</th>
+<th>what goes in it</th>
+<th>sample</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chapter</code>, <code>file</code>, <code>title</code>, <code>part</code></td>
+<td>order, file name, title, part name</td>
+<td><code>2</code>, <code>chapters/02-the-ore-dock.typ</code>, <code>The Ore Dock</code>, <code>Her Life</code></td>
+</tr>
+<tr>
+<td><code>setting</code>, <code>dates</code></td>
+<td>the place-and-years line under the title</td>
+<td><code>Duluth, Minnesota</code>, <code>1938–1950</code></td>
+</tr>
+<tr>
+<td><code>summary_line</code></td>
+<td>a short line in the old-book manner, never a list</td>
+<td><code>On Tin Pails and Tunnels</code></td>
+</tr>
+<tr>
+<td><code>epigraph</code>, <code>epigraph_source</code></td>
+<td>optional, public-domain, verified (section 6.4)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>columns</code></td>
+<td><code>1</code> for narrative chapters, <code>2</code> for research-dense ones</td>
+<td><code>1</code></td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td>2–4 neutral sentences, for you and the introduction</td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>proposed</code> → <code>approved</code> → <code>drafted</code> → <code>reviewed</code> → <code>final</code></td>
+<td><code>approved</code></td>
+</tr>
+</tbody>
+</table>
+<p>Titles are plain stage or place names, or a phrase the subject said.</p>
+<h4 id="gate-2-approve-the-map">GATE 2: approve the map</h4>
+<p>Claude shows you a simple outline (number, title, setting, years, one line each). <strong>Nothing
+is shaped or assembled until every row's <code>status</code> is past <code>proposed</code>.</strong> Shaping against the
+wrong structure is the most expensive mistake in the pipeline, so take your time here.
+Move stories around, merge, rename.</p>
+<p>After approval, each unit gets a <code>chapter</code> and an <code>order</code>, and the chapter number is written
+back into the timeline. To see what lands where, and what landed nowhere:</p>
+<pre><code class="language-sh">python .claude/skills/chapter-generator/scripts/assemble.py --list
+</code></pre>
+<p>A unit that fits nowhere goes on your list. It is never silently dropped.</p>
+<h3 id="64-writing">6.4 Writing</h3>
+<p>The stories are a <strong>biography written about the subject in the third person, past tense</strong>,
+by the family member who recorded it (you, the <em>author</em>). They should read like a real book,
+not an interview. The master rulebook is <code>.claude/skills/memoir-style-guide/SKILL.md</code>, and
+every other writing skill defers to it. Here are the rules that matter most.</p>
+<h4 id="the-rules">The rules</h4>
+<p><strong>Voice</strong>
+- Third person, past tense: "Ruth left Duluth in 1956." The subject never narrates.
+- <strong>The author never appears in a chapter.</strong> Your voice belongs in the introduction and an
+  optional afterword only. No "my grandmother", no "I asked her".
+- <strong>No interview format anywhere.</strong> No questions, no "when asked", no "she recalled in an
+  interview", no speaker labels. A question's content is folded into the answer as a plain
+  statement, and both timestamps are cited. (If <code>#asked</code> ever appears in a chapter, the
+  template refuses to compile.)
+- Tone: warm, plain, lightly wry about the world, never at the subject's expense.</p>
+<p><strong>Facts: narration may restate, order and connect. It may not add.</strong>
+- No feelings, thoughts or motives she didn't state. No weather, sensory detail or dialogue
+  she didn't give. No "she must have…".
+- <strong>Hedges carry over.</strong> "I think it was '72" becomes "around 1972", never "in 1972".
+- <strong>A bare "yeah" to a leading question is a weak fact.</strong> Hedge it or flag it; don't state it.
+- Interpretation ("it was the end of her childhood") goes in a <strong>bridge</strong> for you to approve.
+- Unclear names, dates or relationships become questions in <code>facts/gaps.md</code>, never guesses.
+- <strong>Sensitive material</strong> (living people, legal trouble, health, violence, trauma) is written
+  accurately and flagged with <code>// REVIEW:</code>. <strong>It is never cut or softened by the writer.</strong>
+  You and the family decide what prints.</p>
+<p><strong>Quotation: how her voice survives</strong>
+- About one or two direct quotes per page. <strong>A chapter with no quotes has lost the subject.</strong>
+- Quotes are <strong>exact</strong> from <code>transcript/clean/</code>. Only fillers and false starts are removed,
+  with "…" for an internal cut. Her grammar and dialect stay.
+- Quote the verdicts, the humor and the punchlines, and paraphrase the logistics.
+- Short quotes run inline. Passages of 40+ words go in <code>#verbatim[...]</code>, at most a few per
+  chapter.
+- <strong>Never invent or tidy a quote.</strong> If the wording isn't on tape, it's paraphrase.</p>
+<p><strong>Sourcing: every paragraph ends with a comment that never prints</strong></p>
+<pre><code class="language-typst">// src: [S1 00:00:29]-[S1 00:00:47]        what the paragraph rests on
+// src: transition                          pure connective text; no new facts allowed
+// src: context                             a paragraph about the world, with...
+// context: &lt;the claim&gt; — &lt;source, page or URL&gt;   ...one line per borrowed fact
+// src: record R014                         a document from data/archives.csv
+// REVIEW: &lt;a doubt or sensitive item for the author&gt;
+// NOTE: &lt;a research caveat&gt;
+</code></pre>
+<p><strong>Context about the world</strong> (what Duluth was like then, what a nurse earned) is welcome, but:
+it describes the world, never the subject. It stays local to the chapter's place and years.
+Every fact is sourced on a <code>// context:</code> line and listed in the chapter's THE RECORDS, and it
+takes up no more than about a quarter of a chapter. Juxtaposition is allowed and causation is
+not: "That spring the mill cut its hours" is fine, but "so she left" is not unless she said
+so. For a real example, see section 7 of <a href="https://github.com/rexsaurus/Lineage/blob/main/docs/EXAMPLE-CHAPTER.md">EXAMPLE-CHAPTER.md</a>:</p>
+<pre><code class="language-typst">// context: Elmo P. Hohman, The American Whaleman (1928), p. 15 (green hand's lay 1/200),
+// p. 240 (about 20¢ a day vs about 90¢ for unskilled labor ashore)
+</code></pre>
+<p><strong>Epigraphs</strong> are optional: at most one per chapter (two for a family-history chapter),
+from public-domain literature only, never quoted from memory, and checked with
+<code>verify_quotes.py</code> against a saved copy of the text listed in <code>facts/sources/works.csv</code>.</p>
+<h4 id="before-and-after-one-story-three-ways">Before and after: one story, three ways</h4>
+<p>This is the sample's unit U002. Here is the clean transcript:</p>
+<pre><code>**Grandma** [S1 00:00:29] When I was little, maybe seven or eight, I'd walk my dad's lunch
+down to the ore dock. A tin pail. And the dock was so tall you had to tip your head all the
+way back. The trains ran right out on top of it.
+
+**Sam** [S1 00:00:44] Were you scared of it?
+
+**Grandma** [S1 00:00:45] No. Well, yeah. A little.
+</code></pre>
+<p><strong>WRONG: smoothed.</strong> This version reads nicely and is full of things she never said:</p>
+<blockquote>
+<p>On warm summer mornings, seven-year-old Ruth proudly carried her father's lunch down to
+the ore dock. The towering structure terrified her: "you had to tip your head back to see
+the top." She loved those walks with all her heart.</p>
+</blockquote>
+<ul>
+<li>"warm summer mornings": the weather and season are invented.</li>
+<li>"seven-year-old": she said "maybe seven or eight". The hedge has been firmed up.</li>
+<li>"proudly", "loved those walks with all her heart": feelings she never stated.</li>
+<li>"terrified her": her answer was "No. Well, yeah. A little.", given to a leading question.
+  A weak, wavering yes has been turned into a strong fact.</li>
+<li>The quote has been tidied. The checker catches it (this is its output on a test file
+  holding the paragraph):</li>
+</ul>
+<pre><code>QUOTE NOT FOUND chapters/99-wrong.typ:4: &quot;you had to tip your head back to see the top.&quot;
+    not in transcript: &quot;you had to tip your head back to see the top&quot;
+</code></pre>
+<p><strong>WRONG: interview format.</strong> This version is accurate and still wrong:</p>
+<blockquote>
+<p>When Sam asked whether the dock scared her, Ruth recalled: "No. Well, yeah. A little."</p>
+</blockquote>
+<ul>
+<li>The interviewer has walked into the chapter, and "when … asked" is interview format. The
+  reader should never see the tape recorder. (Written as <code>Q:</code>/<code>A:</code> lines it's worse.)</li>
+</ul>
+<p><strong>RIGHT.</strong> This is the sample's shaped text, exactly as it is in
+<code>content/units/U002-the-ore-dock.md</code>:</p>
+<pre><code class="language-typst">When she was seven or eight, as best she remembered, Ruth walked her father's lunch down to
+the ore dock#idx(&quot;Duluth, Minnesota!ore dock&quot;) in a tin pail. The dock was so tall &quot;you had to tip your head all the way back,&quot;
+and the trains ran right out on top of it. Whether it frightened her, she never quite
+settled: &quot;No. Well, yeah. A little.&quot;
+// src: [S1 00:00:29]-[S1 00:00:47]
+</code></pre>
+<ul>
+<li>The hedge survives ("as best she remembered").</li>
+<li>Logistics are paraphrased (the pail, the trains), and the vivid line is quoted exactly.</li>
+<li>The question is gone, but its content survives: "Whether it frightened her" folds Sam's
+  question into the narrative, and her wavering answer is quoted rather than resolved.</li>
+<li><code>#idx(...)</code> marks an index entry at first mention. It is invisible in print.</li>
+<li><code>// src:</code> cites the span, including the question's timestamp.</li>
+</ul>
+<p>Two more patterns from the sample:
+- <strong>Folding a question.</strong> Sam asked "And that's where you met Grandpa?" and she answered "At
+  a dance. A church dance, in 1959." The book says: "She met Walt at a church dance in 1959."
+  (U005)
+- <strong>Keeping a hedge.</strong> "We built the cabin on Pike Lake ourselves, starting in, oh, 1964 or
+  so" becomes "Starting in 1964 or so, Ruth and Walt built a cabin on Pike Lake with their
+  own hands." (U006)</p>
+<h4 id="bridges">Bridges</h4>
+<p>A <strong>bridge</strong> is any sentence the writer added that isn't plain fact: an interpretation, or a
+connecting line that might color the story. In the sample, unit U005 has this lead-in:</p>
+<pre><code class="language-yaml">lead_in: &quot;Three years later, the thing she remembered best about Minneapolis had nothing to do with nursing.&quot;
+</code></pre>
+<p>Nothing on the tape says that, so it's assembled as <code>#bridge[...]</code>. In drafts it prints
+highlighted, like this: ⟦BRIDGE: …⟧. <strong>The final build refuses to compile while any bridge
+remains</strong>, and <strong>an unapproved bridge is never narrated</strong>. To decide on one:
+- <strong>Approve a lead-in:</strong> add <code>lead_in_approved: true</code> to that unit's frontmatter. It then
+  prints as plain text.
+- <strong>Approve a bridge inside Shaped text:</strong> replace <code>#bridge[...]</code> with the sentence itself.
+- <strong>Reject it:</strong> delete it.</p>
+<p><code>make status</code> shows how many bridges are pending, and the Stories tab can filter to the
+stories that still have them.</p>
+<h4 id="writing-the-units-and-checking-quotes">Writing the units and checking quotes</h4>
+<p>Ask Claude to "shape the units for chapter 2" (content-separator plus the style guide). It
+writes each unit's <code>## Shaped</code> section, usually with:</p>
+<pre><code class="language-sh">python $LINEAGE/scripts/shape.py U002 drafts/U002.md        # writes ## Shaped, status: shaped
+python $LINEAGE/scripts/shape.py U002 --status approved     # only you set approved
+</code></pre>
+<p>Then check every quotation in the chapters against what the subject actually said:</p>
+<pre><code class="language-sh">python $LINEAGE/scripts/verify_quotes.py --transcript chapters/[0-8]*.typ
+</code></pre>
+<p>This matches every double-quoted passage of three or more words against the subject's
+paragraphs in <code>transcript/clean/</code>. Case and punctuation are ignored, and nothing else is. A
+quote found only in the interviewer's words is reported as "check attribution". A quotation
+from a letter or another relative is exempted by putting
+<code>// quote-source: &lt;where it's from&gt;</code> in the same paragraph. <code>make draft</code> runs this check and
+warns, and <code>make final</code> stops on any failure.</p>
+<p>Before a unit or chapter is done, Claude runs the style guide's checklist. Read it yourself
+at least once (section 9 of the style guide). The scripts catch speaker labels, <code>#asked</code>,
+missing citations and misquotes. They do <strong>not</strong> catch "when asked" phrasing, invented
+feelings or firmed-up hedges. Those need a reader.</p>
+<h3 id="65-family-history-chapters">6.5 Family-history chapters</h3>
+<p>Stories about people nobody alive has met are the most fragile part of any record. Usually
+they're secondhand, sometimes contradictory, and once printed they become "what happened".
+The family-history-chapters skill adds rules on top of the style guide. Read
+<a href="https://github.com/rexsaurus/Lineage/blob/main/docs/EXAMPLE-CHAPTER.md">EXAMPLE-CHAPTER.md</a> alongside this section: it's a real ancestor's
+chapter, annotated rule by rule. The research behind such a chapter is section 4.</p>
+<h4 id="tiers-and-the-chain-of-telling">Tiers and the chain of telling</h4>
+<p>Every fact sits in exactly one tier:
+- <strong>witnessed</strong>: the subject saw it herself;
+- <strong>told</strong>: someone named told her ("as her father told it");
+- <strong>lore</strong>: the family's story, source unclear ("that's what they always said").</p>
+<p>A fact a record supports is <strong>documented</strong>, and its record is cited. The chain stays visible
+in the prose: "According to Ruth's father, Anders crossed at sixteen", not "Anders crossed
+at sixteen". Lore keeps its hedges.</p>
+<p>The chapter's <strong>first paragraph says what kind of material this is and who it passed
+through</strong>, and the opening section makes a promise: <strong>"Where the records and the family
+part company, this chapter says so."</strong> The sample's chapter 1 does both in one paragraph
+(<code>content/units/U001-the-boots.md</code>).</p>
+<h4 id="line-of-descent">Line of descent</h4>
+<p>A box at the foot of the opening page runs from the earliest known ancestor down to the
+living family, with marriages included. It's built only from documents and links you've
+confirmed, and unconfirmed links are marked. From the sample:</p>
+<pre><code class="language-typst">#descent(
+  ([Anders Calder (link from Norway unconfirmed)], none),
+  ([Ruth's father], none),
+  ([Ruth Calder (b. 1938)], [Walt]),
+  ([their children and grandchildren], none),
+)
+</code></pre>
+<h4 id="the-records">THE RECORDS</h4>
+<p>Every family-history chapter, and any chapter with <code>// context:</code> lines, ends with a
+small-type <strong>THE RECORDS</strong> block after the closing paragraph. It lists where each documented
+claim came from: catalogue numbers, record titles, database IDs, newspaper titles and dates,
+books with years and pages, and links. It is drawn from the catalogue built in section 4.</p>
+<pre><code class="language-typst">#records(
+  [*Census.* &lt;census year, place, page and line&gt;: Anders Calder, &lt;age&gt;, &lt;occupation&gt;.
+   &lt;where the free index is&gt;. #link(&quot;https://…&quot;)],
+  [*A note on the name.* &lt;which of two similar records is meant, and why&gt;.],
+)
+</code></pre>
+<p>The angle-bracket parts are yours to fill in. The sample hasn't consulted any records yet,
+and its <code>#records</code> block says exactly that. Include <strong>a note on the name</strong> whenever a
+record could be confused with a similar one (section 4.4).</p>
+<p>THE RECORDS and the photographs page (section 6.6) go in a final <strong>apparatus unit</strong> for the
+chapter (<code>kind: apparatus</code>, same <code>section</code>, highest <code>order</code>, no spans), so they survive
+reassembly. The sample keeps it inside U001 instead, which works for a one-unit chapter.</p>
+<h4 id="when-documents-contradict-the-family">When documents contradict the family</h4>
+<p><strong>Print both, and say so.</strong> Tell the life once, in order, with the record as the spine.
+Where the family's version differs, tell it at that point, attributed ("The family
+remembered his war differently…"). Let the record confirm what it can. Dates in narration
+follow the record, with the family's date given as theirs. Log the conflict in
+<code>facts/gaps.md</code> and mark it <code>// REVIEW:</code>. Section 4 of <a href="https://github.com/rexsaurus/Lineage/blob/main/docs/EXAMPLE-CHAPTER.md">EXAMPLE-CHAPTER.md</a>
+shows this done well: the family's "surgeon, drafted" set beside the records' "soldier,
+enlisted", and the bounty money that turned out to be real.</p>
+<h4 id="where-the-records-are">Where the Records Are</h4>
+<p><code>make draft</code> turns the printable rows of <code>data/archives.csv</code> (section 4.1) into the
+back-matter appendix "Where the Records Are". Only rows with <code>print_permission: yes</code> print,
+and private details never do.</p>
+<h3 id="66-photos-and-illustrations-in-stories">6.6 Photos and illustrations in stories</h3>
+<p>Images are catalogued in section 3.3. Putting them on a page adds these rules.</p>
+<h4 id="print-copies">Print copies</h4>
+<pre><code class="language-sh">python .claude/skills/photo-processor/scripts/prepare_print.py --color bw
+python .claude/skills/photo-processor/scripts/prepare_print.py --only P007 --crop P007=40,30,1880,1400
+</code></pre>
+<p>Allowed: rotating, cropping away the scanner bed or album page, converting to grayscale.
+<strong>Not allowed on a real photograph without the owner's say: colorizing, upscaling, face
+restoration, or removing people or objects.</strong> These fabricate detail. Flag the damage and let
+the owner decide whether to get a better scan or a professional restorer.</p>
+<p><strong>Resolution: 300 ppi at the printed size; 200 ppi is a hard floor.</strong> Below that, print it
+smaller or get a better scan. Never upscale to hide it. Note that <code>make final</code>'s preflight
+measures resolution only for images placed with <code>#photo(...)</code>. For <code>#plate(...)</code> images,
+check <code>max_print_width_in</code> in the photo index yourself.</p>
+<h4 id="placing-and-captioning">Placing and captioning</h4>
+<p>Use few images, and only where they belong: a portrait near where a key person is
+introduced, and one or two pictures at the exact moments they show. Nothing decorative, and
+no more than one per page. Each image is anchored <strong>after</strong> the paragraph it belongs to, in
+the unit's Shaped text:</p>
+<pre><code class="language-typst">#plate(&quot;/photos/print/P014.jpg&quot;, caption: &quot;Anders Calder&quot;, id: &quot;P014&quot;)
+</code></pre>
+<p>About 3.9 in wide for portraits and 4.4 in for landscapes. <code>#plate-pair</code> sets two side by
+side, and <code>span: false</code> keeps a plate in one column of a two-column chapter.</p>
+<p>Caption conventions:</p>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Caption</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a portrait</td>
+<td>the name exactly as you give it: <code>Anders Calder</code></td>
+</tr>
+<tr>
+<td>a scene</td>
+<td>a short title in the text's own words: <code>The cabin on Pike Lake</code></td>
+</tr>
+<tr>
+<td>date and place confirmed</td>
+<td><code>Ruth and Walt at Pike Lake, 1966</code>. Add a date or place <strong>only</strong> if confirmed.</td>
+</tr>
+<tr>
+<td>identification uncertain</td>
+<td><code>Probably Pete, about 1950</code> or <code>Believed to be the Duluth ore dock</code>, or no caption until you ask</td>
+</tr>
+<tr>
+<td>an illustration</td>
+<td><code>The tunnel to the street, as the family told it (illustration)</code></td>
+</tr>
+<tr>
+<td>a map</td>
+<td><code>Positions from the logbook; lines between them are approximate.</code></td>
+</tr>
+</tbody>
+</table>
+<p>If you supply a caption, it's used word for word, and any mismatch with the text gets a
+<code>// REVIEW:</code>. Images with no matching story go on a candidates list, not into a random
+chapter.</p>
+<h4 id="illustrations-ai-generated-or-an-artists-strict-rules">Illustrations (AI-generated or an artist's): strict rules</h4>
+<p>Often no photograph of an ancestor exists. A rendering is allowed <strong>only if all four hold</strong>:</p>
+<ul>
+<li><strong>(a)</strong> <strong>The caption itself marks it</strong>, with "as the family told it" or an explicit
+  "illustration", so a reader in fifty years cannot mistake it for a photograph.</li>
+<li><strong>(b)</strong> <strong>A note in the chapter</strong> says the illustrations are renderings and what likeness or
+  source each was based on. This can go in the photographs page note or a closing line.</li>
+<li><strong>(c)</strong> <strong>It depicts a scene described in the material</strong>, never an invented event, and
+  matches its details: season, place, clothing.</li>
+<li><strong>(d)</strong> <strong>The distinction survives in the printed book</strong>, not just in drafts or the index.</li>
+</ul>
+<p>Also: nothing that poses as an archival document, no caricature, nothing graphic. A real
+photograph may serve as the likeness reference (say so under (b)), but the photograph itself
+is never altered. The worked example admits that some of its illustration captions break
+rule (a); see section 10 of <a href="https://github.com/rexsaurus/Lineage/blob/main/docs/EXAMPLE-CHAPTER.md">EXAMPLE-CHAPTER.md</a>.</p>
+<h4 id="maps-drawn-from-data-never-generated">Maps: drawn from data, never generated</h4>
+<p>A route CSV (section 4.3) becomes a printed map:</p>
+<pre><code class="language-sh">python $LINEAGE/scripts/make_route_map.py facts/records/anders/crossing_track.csv \
+    --out photos/print/P050.png --title &quot;The crossing&quot; --subject &quot;Anders&quot; \
+    --caption &quot;Positions from the records; lines between them are approximate.&quot;
+</code></pre>
+<p>The <code>--subject</code> flag names whose journey it is in the legend. Without it, the legend uses
+the book's subject. The map is black and white and <strong>evidence-coded</strong>. Filled dots are places
+recorded with the subject aboard. Open dots are places recorded without them. A dashed line
+marks the subject's track, approximate between recorded points. <strong>Legs no record covers are
+not drawn and are labelled "not recorded"</strong>. In the example, <code>gap_before=yes</code> on New York
+leaves the Atlantic crossing blank and labels it that way. The output is a 300 dpi PNG.
+Coastlines come from Natural Earth (public domain) and are downloaded once. For the map
+lettering to be EB Garamond, copy <code>$LINEAGE/fonts/*.otf</code> into your system font folder
+(<code>~/Library/Fonts</code> on a Mac, <code>~/.local/share/fonts</code> on Linux). <code>make_route_map.py --help</code>
+lists the label and extent options.</p>
+<h4 id="the-photographs-page-and-permissions">The photographs page and permissions</h4>
+<p>At the end of each family-history chapter, after THE RECORDS, the <strong>photographs page</strong>
+(<code>#photo-addendum</code>) lists real photographs held by archives: catalogue number, date,
+description, link, and a note on what permission printing them would need. <strong>Thumbnails
+print only once the holder has given permission</strong> (<code>show-images: true</code>).</p>
+<pre><code class="language-typst">#photo-addendum(note: [Held by &lt;the archive&gt;; reproduction needs its written permission.],
+  (none, [&lt;catalogue number&gt; · &lt;date&gt;], [&lt;what the photograph shows&gt;], &quot;https://…&quot;),
+)
+</code></pre>
+<p>The first item in each row is a thumbnail path, or <code>none</code> until permission arrives.</p>
+<p>Family photographs need permission too: ask whoever holds the original before it prints, and
+record it in the index (<code>print_permission</code>).</p>
+<h3 id="67-assembling-and-building">6.7 Assembling and building</h3>
+<h4 id="generate-the-chapters">Generate the chapters</h4>
+<p>Once units are shaped, ask Claude to "assemble the chapters", or run:</p>
+<pre><code class="language-sh">python .claude/skills/chapter-generator/scripts/assemble.py        # all chapters
+python .claude/skills/chapter-generator/scripts/assemble.py 2 3    # just these
+</code></pre>
+<p>Each chapter opens with its title, the setting · dates line, the summary line and any
+epigraph. The units follow in order, with ❧ between them, a drop cap on the first paragraph,
+and <code>==</code> headings where one chapter holds several relatives. Claude then does a <strong>seam
+pass</strong>. It reads each chapter start to finish and fixes jumps and repeated setup <strong>in the
+units</strong>, never in <code>chapters/*.typ</code>. Those files carry a GENERATED header and are overwritten
+on every build.</p>
+<p>The Stories tab shows the same stories oldest first in era bands, with <strong>Read</strong> (real book
+pages rendered through the Typst template) on each row, story states (draft · in the book ·
+kept aside), and marks on stories that are stale because a source changed. "Generate" there
+hands the work to the Genealogist in the terminal drawer.</p>
+<h4 id="build-a-draft">Build a draft</h4>
+<pre><code class="language-sh">make -C &quot;$LINEAGE&quot; draft PROJECT=&quot;$PWD&quot;
+</code></pre>
+<p>In order, this runs:
+1. <strong>sync</strong>: refreshes <code>book/template.typ</code> from the repo (the design lives in one file,
+   <code>$LINEAGE/book/template.typ</code>);
+2. <strong>assemble</strong>: regenerates every chapter from its units;
+3. <strong>quote check</strong>: <code>verify_quotes.py --transcript</code>, which warns here and blocks in final;
+4. <strong>appendices</strong>: "A Timeline" from <code>facts/timeline.csv</code> and "Where the Records Are" from
+   <code>data/archives.csv</code>;
+5. <strong>front, glossary, sources</strong>: the title and copyright pages from <code>book.yaml</code>, the reader's
+   glossary from <code>data/reader_glossary.csv</code>, and "About the Recordings" from
+   <code>transcript/sessions.csv</code>;
+6. <strong>main</strong>: generates <code>book/main.typ</code> from <code>data/chapters.csv</code>;
+7. <strong>compile</strong>: writes <code>output/book-draft.pdf</code>, padded to an even page count;
+8. <strong>back index</strong>: reads the resolved index page numbers into <code>data/back_index.csv</code>.</p>
+<p>Drafts show bridges highlighted, editor notes in red and image IDs. Afterwards, actually look
+at the title page, the contents, a part page, two chapter openers, a spread with a plate, and
+the index. Fix anything wrong at its source (a unit, <code>chapters.csv</code>, <code>book.yaml</code>), never in a
+generated file.</p>
+<p>To look at one chapter without building the whole book, run <code>build_book.py chapter
+chapters/NN-x.typ</code> (→ <code>output/preview-NN-x.pdf</code>); add <code>--final --pages</code> for one image per page
+in <code>output/pages/</code> to share outside the PDF.</p>
+<h4 id="front-matter">Front matter</h4>
+<p>In print order: title, copyright, dedication, contents, then the introduction.</p>
+<ul>
+<li><strong>Title and copyright</strong> are generated from <code>book.yaml</code> on every build. Don't edit them.</li>
+<li><strong>Dedication</strong>: write <code>book/front/dedication.typ</code> yourself. <code>make new</code> copies in a stock
+  line ("For the grandchildren."), so replace it. The sample's reads "For everyone who sat at
+  that kitchen table."</li>
+<li><strong>Introduction</strong>: this is <em>your</em> first-person voice, and one of only two places you appear
+  (the other is an optional afterword). Ask Claude to "write the introduction" (the
+  foreword-generator skill). It gathers verifiable numbers with
+  <code>python .claude/skills/foreword-generator/scripts/foreword_facts.py</code> and asks you what only
+  you know: how the recordings happened, why you made the book, who it's for, whether to say
+  AI helped. Then it drafts <code>book/front/introduction.typ</code>. Every number in it comes from
+  <code>data/foreword_facts.md</code>, and every motive comes from your answers. Nothing is invented.</li>
+<li>A <strong>foreword</strong> by someone else goes in <code>book/front/foreword.typ</code> and prints first. An
+  <strong>afterword</strong> is a hand-written chapter file (for example <code>chapters/89-afterword.typ</code>)
+  listed last in <code>data/chapters.csv</code>. Acknowledgments go in
+  <code>chapters/94-acknowledgments.typ</code>, which is included in the back matter if it exists.</li>
+</ul>
+<h4 id="the-index">The index</h4>
+<p>Index terms are marked <strong>in the text as it's written</strong>, at first mention per paragraph, and
+they're invisible in print:</p>
+<pre><code class="language-typst">Her grandfather Anders#idx(&quot;Calder, Anders&quot;) worked the ore boats.#idx(&quot;ore boats&quot;)
+#idx(&quot;Duluth, Minnesota!ore dock&quot;)            // a sub-entry
+#idx-see(&quot;Grandpa Walt&quot;, &quot;Calder, Walt&quot;)      // a cross-reference
+</code></pre>
+<p>People are entered as "Surname, Given", and places as "Town, State". Page numbers are
+computed during typesetting, so they stay right when pages move. After a build, review
+<code>data/back_index.csv</code> for duplicate spellings and entries with too many page references.
+For a spreadsheet of chapters and index:</p>
+<pre><code class="language-sh">python .claude/skills/chapter-index-builder/scripts/index_tools.py wordcount
+python .claude/skills/chapter-index-builder/scripts/index_tools.py xlsx      # output/chapters.xlsx
+</code></pre>
+<h4 id="versions">Versions</h4>
+<p>Every PDF that leaves the project should be traceable to the exact text that produced it:</p>
+<pre><code class="language-sh">python .claude/skills/book-generator/scripts/version.py init      # once: git repo, originals' checksums
+python .claude/skills/book-generator/scripts/version.py snapshot &quot;chapter map approved&quot;
+python .claude/skills/book-generator/scripts/version.py snapshot &quot;review copy for Ruth&quot; --major --note &quot;mailed Nov 3&quot;
+python .claude/skills/book-generator/scripts/version.py list
+</code></pre>
+<p>Take a snapshot at every gate, and <strong>always a major version before anything is sent to
+anyone</strong>. "Page 41, line 3" only means something against the exact copy they received. If
+you put the project on GitHub, keep the repository private, because transcripts are in it.</p>
+<h4 id="gate-3-final-build-and-preflight">GATE 3: final build and preflight</h4>
+<pre><code class="language-sh">make -C &quot;$LINEAGE&quot; final PROJECT=&quot;$PWD&quot;
+</code></pre>
+<p>This builds the draft, re-checks every quotation (and <strong>stops</strong> on a mismatch), and compiles
+<code>output/book-final.pdf</code> in final mode. Final mode <strong>refuses to compile while any unapproved
+bridge remains</strong>, so the sample stops here on purpose:</p>
+<pre><code>error: panicked with: Unapproved #bridge left in manuscript: [Three years later, the thing she remembered best about Minneapolis had nothing to do with nursing.]
+</code></pre>
+<p>Then it runs the preflight for the trim, printer and color set in <code>book.yaml</code>: page size,
+even page count, the printer's minimum page count, embedded fonts, image resolution, and no
+leftover draft markers. A clean result ends with <code>No blocking problems found.</code></p>
+<p>Before you call it final: every bridge decided, every <code>// REVIEW:</code> read
+(<code>grep -rn "REVIEW" content chapters</code>), every question in <code>facts/gaps.md</code> answered or
+consciously left open. Then you, the author, sign off.</p>
+<h3 id="68-reviewing-with-the-subject-across-a-distance">6.8 Reviewing with the subject across a distance</h3>
+<p>The best check on the record is the person it's about. If they live far away, or don't use a
+computer, here's a round trip that works by mail and phone, and that brings back a new source
+as well as corrections. The repo has no dedicated tool for this. What follows is a small
+Typst file you add yourself, plus the normal pipeline.</p>
+<h4 id="1-put-your-questions-in-the-text">1. Put your questions in the text</h4>
+<p>Where you need the subject's answer, add a draft-only note to the unit's Shaped text, right
+where the question arises:</p>
+<pre><code class="language-typst">&quot;Nobody believes that,&quot; she said. #note[Question for Ruth: which Pike Lake was it? Minnesota has several.]
+</code></pre>
+<p><code>#note[...]</code> prints in drafts only and never in the final book. Good questions come from
+<code>facts/gaps.md</code>, low-confidence timeline rows, bare-"yeah" facts, and <code>// REVIEW:</code> items you
+want her view on. (Home's <strong>Request more</strong> builds question lists from the same places.)
+Questions about other living people need more care.</p>
+<h4 id="2-make-a-large-type-review-edition">2. Make a large-type review edition</h4>
+<p>Save this as <code>book/review.typ</code> in the project. It sets 14-point body type on US Letter paper
+(so it prints at home), numbers the lines on every page, leaves a wide margin for writing,
+and keeps the bridges and your questions visible. List your own chapter files at the end:</p>
+<pre><code class="language-typst">// Large-type review edition: 14 pt body, numbered lines, a wide margin for notes,
+// and draft notes, bridges and questions printed. Not for the printer.
+#import &quot;/book/template.typ&quot;: *
+
+#show: book.with(title: &quot;The Lake Was Always There&quot;, trim: &quot;8.5x11&quot;)
+#set page(margin: (inside: 1in, outside: 2in, top: 1in, bottom: 1in))
+#show par: set text(size: 14pt)
+#show regex(&quot;⟦[^⟧]*⟧&quot;): set text(size: 12pt)
+#set par.line(numbering: &quot;1&quot;, numbering-scope: &quot;page&quot;, number-clearance: 1.2em)
+
+#show: main-matter
+#include &quot;/chapters/01-others-in-the-family.typ&quot;
+#include &quot;/chapters/02-the-ore-dock.typ&quot;
+#include &quot;/chapters/03-walt-and-the-cabin.typ&quot;
+</code></pre>
+<p>Build the draft first, so the chapters and template are current. Then:</p>
+<pre><code class="language-sh">make -C &quot;$LINEAGE&quot; draft PROJECT=&quot;$PWD&quot;
+typst compile --root . --font-path &quot;$LINEAGE/fonts&quot; book/review.typ output/review.pdf
+</code></pre>
+<p>Line numbers restart on each page, so a note can say "page 4, line 12". Two-column
+chapters stay two columns. Typst line numbering needs Typst 0.12 or newer.</p>
+<h4 id="3-print-it-send-it-call">3. Print it, send it, call</h4>
+<ul>
+<li>Print single-sided, so the backs are free for notes. Send it with a pen, a short cover
+  letter explaining the red questions and the yellow highlights, and a stamped return
+  envelope if you want the marked copy back.</li>
+<li>Snapshot first: <code>version.py snapshot "review copy for Ruth" --major --note "mailed …"</code>.</li>
+<li>When it has arrived and been read, <strong>record a call</strong> and go through the notes page by
+  page. Tell her you're recording, and get her agreement on the tape. Recording a call
+  without consent is illegal in many places. A phone or video call recorded on your end is
+  fine. Speaker labelling works best when each of you is clearly audible.</li>
+</ul>
+<h4 id="4-feed-the-corrections-back-in-as-a-new-source">4. Feed the corrections back in as a new source</h4>
+<p>The call is a new recording, and it goes through intake and transcription like any other.
+<strong>Never edit the old transcripts.</strong></p>
+<pre><code class="language-sh">cp ~/Downloads/review-call.m4a audio/
+$LINEAGE/scripts/transcribe.sh         # only the new session is processed (say S3)
+</code></pre>
+<p>Earlier sessions are skipped. <code>transcription_locked: true</code> stops nothing here, because this
+session has never been transcribed. Confirm its speakers (GATE 1 again, for S3 only), render,
+and then:</p>
+<ul>
+<li><strong>A new fact or a correction from her</strong>: change the unit's Shaped text and cite the new
+  session, e.g. <code>// src: [S1 00:00:36]-[S1 00:00:49]; [S3 00:12:40]</code>. Note the change under
+  <code>## Notes</code>, and update the timeline row's source. If the correction contradicts what she
+  said before, the timeline keeps both (section 5.1) and you decide what the text says.</li>
+<li><strong>A new story</strong>: add boundary rows for S3 and it becomes a new unit, or a second span of
+  an existing one.</li>
+<li><strong>A misheard word in an old transcript</strong> (she says "it's Calder, not Caulder"): add a
+  <code>spelling</code> rule to <code>corrections.json</code> and re-render. The raw transcript stays as it was.</li>
+<li><strong>The page-by-page talk itself</strong>: add boundary rows marking those spans <code>X</code>, with a reason
+  like "review call: corrections, used as citations", so the coverage check passes.</li>
+<li>Remove the <code>#note[...]</code> questions she answered, and re-run <code>make draft</code>.</li>
+</ul>
+<h3 id="69-printing">6.9 Printing</h3>
+<p><strong>Trim size</strong> (<code>print.trim</code>): 7×10 in is the default and suits a book with photographs. 6×9
+works for a mostly text book. 8×10 and 8.5×11 are also supported. A <strong>black-and-white</strong>
+interior (<code>print.color: bw</code>) costs several times less on print-on-demand than color, and red
+details print as gray. Trim and printer can also be set in <strong>Settings → Project settings</strong>.</p>
+<p><strong>Minimum page counts</strong>, as the preflight checks them:</p>
+<table>
+<thead>
+<tr>
+<th>Printer (<code>print.printer</code>)</th>
+<th>Minimum pages</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kdp</code> (Amazon KDP paperback)</td>
+<td>24 (hardcover: 75)</td>
+</tr>
+<tr>
+<td><code>ingramspark</code></td>
+<td>18</td>
+</tr>
+<tr>
+<td><code>lulu</code></td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>blurb</code></td>
+<td>20</td>
+</tr>
+</tbody>
+</table>
+<p>The build always pads to an even page count. Front and back matter add up quickly. The
+sample, from two minutes of tape, is 30 pages, which is enough for KDP, IngramSpark and
+Blurb, but not for Lulu.</p>
+<p><strong>What Lineage doesn't do:</strong>
+- <strong>The cover.</strong> Each printer has a cover calculator that sizes the spine from your final
+  page count and paper. Make the cover once the page count is final.
+- <strong>PDF/X conversion.</strong> IngramSpark prefers PDF/X-1a or X-3. If it rejects the file, convert
+  with Ghostscript or Acrobat.
+- <strong>Full bleed.</strong> Bleed is only needed for images running off the page edge, and the template
+  doesn't do it.</p>
+<p><strong>Proofs.</strong> Order a printed proof before anything else, and read it on paper. Pages that
+looked fine on screen show their problems in print: a photo too dark, a widow, a caption
+that crowds its image. Snapshot each proof as a major version so your notes match the copy.
+Allow a week or two per proof round for printing and shipping, and usually plan on two
+rounds. If the book is for a particular birthday or reunion, order the first proof at least
+a month before.</p>
+<h3 id="610-narration">6.10 Narration</h3>
+<p>The <strong>Stories</strong> tab can narrate any story with ElevenLabs (add the key under <strong>Settings →
+Connectors</strong>). Each row has <strong>Listen</strong> beside <strong>Read</strong>, and <strong>Narrate</strong> / <strong>Re-narrate</strong>;
+each story can have its own voice (the default is set in <strong>Project settings</strong>). <strong>Narrate
+all</strong> shows the character count before it spends anything. Audio is marked stale when its
+story changes, plays in a pinned player, and can be downloaded.</p>
+<p>The narration script is extracted from the story itself, and <strong>an unapproved bridge is never
+narrated</strong>: decide the bridges first (section 6.4).</p>
+<p>Narration is written but has <strong>not been tested end to end</strong> with a real key; treat the
+first run as a trial. The story's text goes to ElevenLabs to be read aloud.</p>
+<hr />
+<h2 id="7-troubleshooting">7. Troubleshooting</h2>
+<p><strong><code>UnpicklingError</code> / <code>WeightsUnpickler</code> / "weights_only" when WhisperX starts.</strong> PyTorch
+2.6 and later refuse the speech-detection checkpoints WhisperX loads. Use
+<code>$LINEAGE/scripts/wx.py</code> in place of the <code>whisperx</code> command, as <code>transcribe.sh</code> does.
+It applies the narrow fix in <code>scripts/hf_compat.py</code>.</p>
+<p><strong><code>TypeError: ... unexpected keyword argument 'use_auth_token'</code>.</strong> huggingface_hub 1.0
+removed that keyword, and pyannote 3.4 still passes it. <code>hf_compat.py</code> renames it. Run
+diarization through <code>diarize.py</code>, <code>diarize_chunked.py</code> or <code>transcribe.sh</code>, which all import
+the shim. <strong>Don't fix either error by pinning older torch or huggingface_hub</strong>, because that
+breaks WhisperX. The tested versions are in <code>requirements-transcribe.txt</code>.</p>
+<p><strong>pip can't find <code>torch==2.8.0</code>.</strong> Your Python is probably newer than the pinned PyTorch
+supports. The stack was last run on Python 3.13. Rebuild the venv with an older Python:
+<code>rm -rf "$LINEAGE/.venv" &amp;&amp; python3.13 -m venv "$LINEAGE/.venv"</code>, then
+<code>make install install-transcribe</code>.</p>
+<p><strong>401, 403 or <code>GatedRepoError</code> when diarization starts.</strong> The token is wrong, or the licence
+wasn't accepted on <strong>both</strong> pyannote pages (<code>speaker-diarization-3.1</code> <em>and</em>
+<code>segmentation-3.0</code>) while logged in as the account that owns the token. See section 1.1. Your
+transcription is safe. Fix the token and run <code>python $LINEAGE/scripts/diarize.py</code>.</p>
+<p><strong>Diarization runs for hours.</strong> One long session was labelled in one piece. Make sure you're
+running through <code>diarize.py</code>, which chunks anything over 20 minutes by default, rather than
+<code>transcribe.sh --one-pass</code>, which doesn't chunk. Or force chunking with
+<code>python $LINEAGE/scripts/diarize_chunked.py S4</code>.</p>
+<p><strong>Names in the transcript as fake speech.</strong> This is the initial prompt being echoed. Shorten
+<code>proper_nouns</code>, then cut the echoes with <code>drop_segments</code>/<code>scrub_inline</code> in
+<code>corrections.json</code>, and re-render. Don't re-transcribe a cited session.</p>
+<p><strong>A scan or image-only PDF shows no text in Sources.</strong> OCR needs tesseract (<code>brew install
+tesseract</code> / <code>apt install tesseract-ocr</code>). Install it and re-ingest the source, or paste the
+text in the edit drawer.</p>
+<p><strong><code>Lineage vX.Y.Z is not installed</code> from <code>make dashboard</code>.</strong> The release pinned in
+<code>lineage.lock</code> isn't under <code>~/.lineage/releases/</code> on this machine. Run the command it prints:
+<code>make update-lineage TO=vX.Y.Z APPLY=1</code>.</p>
+<p><strong><code>unknown font family</code> warnings, or the book comes out in the wrong typeface.</strong> You compiled
+without the bundled fonts. Always pass <code>--font-path "$LINEAGE/fonts"</code> to <code>typst
+compile</code>, or build through <code>make draft</code>, which does it for you. Check that
+<code>$LINEAGE/fonts/</code> contains the EB Garamond <code>.otf</code> files.</p>
+<p><strong><code>failed to download package @preview/droplet</code>.</strong> The first build needs internet access once
+to fetch the drop-cap package. After that it's cached.</p>
+<p><strong>The final build stops on <code>Unapproved #bridge left in manuscript</code>.</strong> This is working as
+intended. The message names the chapter and line. Approve the bridge (<code>lead_in_approved:
+true</code> on the unit, or replace <code>#bridge[...]</code> with the sentence in the Shaped text) or delete
+it, then build again. <code>make status</code> shows how many remain.</p>
+<p><strong>The final build stops on <code>QUOTE NOT FOUND</code>.</strong> A quotation doesn't match the transcript word
+for word. Fix the quote to match <code>transcript/clean/</code> or turn it into paraphrase. If it's
+someone else's words, add <code>// quote-source: &lt;where&gt;</code> to the paragraph.</p>
+<p><strong>Odd page count in the preflight.</strong> <code>build_book.py compile</code> pads to an even count by
+recompiling with a blank last page. If you compiled <code>book/main.typ</code> by hand, rebuild through
+<code>make draft</code> or <code>make final</code>.</p>
+<p><strong><code>typst not found</code>.</strong> Install Typst (<code>brew install typst</code>, or see
+<a href="https://github.com/typst/typst#installation">https://github.com/typst/typst#installation</a>) and check that <code>typst --version</code> works in the
+same terminal you run make from.</p>
+<p><strong><code>pdfinfo</code> or <code>pdffonts</code> not found, or the preflight crashes.</strong> Install poppler (<code>brew install
+poppler</code> / <code>apt install poppler-utils</code>). <code>make install</code> calls it optional, but the preflight
+in <code>make final</code> needs it.</p>
+<p><strong><code>whisperx does not import</code>.</strong> Run <code>make install-transcribe</code>. The transcription stack goes
+into the same venv as everything else.</p>
+<p><strong>A folder named <code>~</code> appeared inside the repo.</strong> <code>PROJECT=~/…</code> wasn't expanded by your shell
+(zsh). Delete that folder and use <code>PROJECT="$HOME/…"</code>.</p>
+<p><strong>A chapter edit vanished.</strong> You edited a GENERATED file in <code>chapters/</code>. Make the change in
+the unit or in <code>data/chapters.csv</code> and rebuild.</p>
+<hr />
+<h2 id="8-honest-limits">8. Honest limits</h2>
+<h3 id="what-needs-a-human">What needs a human</h3>
+<p>The tools will not, and should not, decide these for you:
+- <strong>Speaker confirmation</strong> (GATE 1): which voice is the subject.
+- <strong>Accepting tag suggestions</strong> in the Familypedia, and <strong>applying a genealogy rebuild</strong>
+  after reading what it changed.
+- <strong>Reviewing contributors' uploads</strong> before they join the record.
+- <strong>Identifying people in photographs</strong>, and permission to print them.
+- <strong>Every question in <code>facts/gaps.md</code></strong>, and every contradiction: the platform shows both
+  sides, and only a person can weigh them.
+- For a book: <strong>approving the chapter map</strong> (GATE 2), <strong>approving or rejecting every
+  bridge</strong> (meaning every interpretation), <strong>every <code>// REVIEW:</code> item</strong>, and <strong>final sign-off</strong>
+  (GATE 3).
+- <strong>Sensitive material</strong>: what to print or share about living people, illness, legal
+  trouble, family conflict. The writer is told to flag it and never cut or soften it on its
+  own, so the decision is yours and the family's.</p>
+<p>The scripts check what can be checked mechanically: quotes against the transcript, coverage,
+citations, missing fields, bridges, evidence on genealogy links, page counts. They can't
+tell whether a sentence quietly invented a feeling. Read what it writes.</p>
+<h3 id="what-isnt-built-yet">What isn't built yet</h3>
+<p>The dashboard's <code>app/ROADMAP.md</code> is the current list. Among the things this guide does
+<em>not</em> describe as working: the contributor-facing page behind an invite link (waits for
+hosting); a photo gallery and lightbox with annotation and people tagging on the image; a
+screen for pasting and scanning public-record links into the catalogue; the impact pass and
+"update everything this affects" after new material arrives (Home's <strong>Needs you</strong> already
+surfaces stale stories); and stories with hyperlinked people, places and citations and images
+editable in place. Google Drive sign-in and sync, crest generation and ElevenLabs narration
+are written but not tested end to end.</p>
+<h3 id="how-long-it-really-takes">How long it really takes</h3>
+<p><strong>Machine time</strong> is the easy part to estimate. Speech recognition with large-v3 on a laptop
+CPU runs at roughly real time or slower, so an hour of tape takes an hour or more. A CUDA GPU
+is much faster. Chunked speaker labelling costs about half a minute of compute per minute of
+audio on a CPU. You can leave both running overnight.</p>
+<p><strong>Your time</strong> is the larger part, and it doesn't shrink much with better tools:
+- listening to confirm speakers and checking a few random stretches against the audio;
+- reviewing tags, genealogy rebuilds and contributors' uploads;
+- research into records, which can take longer than everything else combined;
+- photographs: finding them, getting them scanned, asking who's in them;
+- for a book: reading and approving the chapter map, reading every chapter against the tape,
+  deciding every bridge and <code>// REVIEW:</code> item, the review round trip by mail (weeks), and one
+  or two printer proofs (a week or two each).</p>
+<p>A short book from a few hours of tape is a project of weeks of evenings, not a weekend. The
+record itself is never finished: it grows as the family adds to it.</p>
+<h3 id="how-many-pages-your-recordings-will-make">How many pages your recordings will make</h3>
+<p><strong>This is a rough estimate.</strong> Your mileage will vary with how much your subject talks, how
+much research you add, and how many photographs you have.</p>
+<ul>
+<li>A recorded hour holds about <strong>7,000–8,000 words of the subject's speech</strong>.</li>
+<li>A finished narrative uses <strong>well under half</strong> of those words. Talk repeats itself and
+  wanders, and the narrative paraphrases logistics and quotes only the best lines.</li>
+<li>A 7×10 page holds about 330 words of narrative, so the narrative alone comes to roughly ten
+  text pages per hour.</li>
+<li>The rest of the book comes from chapter openers that start on right-hand pages, researched
+  context and THE RECORDS, photographs and maps, part pages, and the front and back matter
+  (contents, introduction, timeline, glossary, records, index).</li>
+</ul>
+<p><strong>Taken together:</strong> plan on roughly <strong>10 pages of narrative per recorded hour</strong>. Add the
+openers, photographs, context and back matter on top of that. Chapters with a lot of research
+grow well beyond it: in the worked example, about 25 minutes of tape plus public records
+became a 10-page two-column chapter. No measured figure exists yet for a whole book. For your
+own number, build a draft after the first few chapters and scale up from that.</p>
+<h3 id="where-your-material-goes">Where your material goes</h3>
+<p><strong>Originals stay on your computer</strong>, unless you turn on the Google Drive connector, which
+copies sources to your own Drive folder. Speech recognition and speaker labelling run
+locally. The Hugging Face token only downloads the model. The dashboard binds to <code>127.0.0.1</code>
+only.</p>
+<p><strong>Text goes to cloud models.</strong> Claude Code does the model work, so transcript passages,
+extracted text, notes and drafts are sent to Anthropic while you work. With an Anthropic key
+set in Connectors, the Sources tab's understanding pass sends a source's extracted text (and
+a small image, for its description) to Anthropic too. Narration sends a story's text to
+ElevenLabs. If a recording or document contains something that must not leave your machine,
+keep it out of the project, or cut it from the transcript (exclude the span in
+<code>boundaries.csv</code>, or leave that session out of the writing stages) before you start.
+Research requests go to the sites concerned, and never with your personal details. See
+<a href="../privacy/">PRIVACY.md</a>.</p>
+<p><strong>The record is yours, in plain files.</strong> Everything Lineage builds is CSV, JSON, Markdown
+and Typst in the project folder, with raw snapshots of the records it used. Keep the project
+in a private git repository and it outlives the links, the apps and the people in it.</p></article>
+</main>
+<footer class="site-foot"><div class="wrap">
+  <p>Lineage is open source under the MIT license. <a href="https://github.com/rexsaurus/Lineage">github.com/rexsaurus/Lineage</a></p>
+  <p class="muted">Every family in the screenshots and the demo is invented. Your recordings, transcripts and photographs stay yours: the license does not cover them.</p>
+</div></footer>
+</body>
+</html>

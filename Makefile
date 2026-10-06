@@ -14,6 +14,8 @@
 #   make screenshots                 rebuild the invented demo lineage and capture the dashboard
 #                                    into docs/images/ (needs: pip install playwright, and Chrome)
 #   make demo                        the dashboard on the demo lineage (a scratch copy)
+#   make site                        the public website in site/public/ (landing, tour, docs, sample
+#                                    PDF, read-only demo snapshot); deploy: docs/DEPLOY.md
 #   make clean                       remove generated files from the examples
 #
 # Everything runs inside the project folder; nothing here edits your recordings.
@@ -29,7 +31,7 @@ export LINEAGE := $(BA)
 # zsh passes PROJECT=~/x through unexpanded; expand a leading ~ here.
 override PROJECT := $(patsubst ~/%,$(HOME)/%,$(PROJECT))
 
-.PHONY: install install-transcribe sample new status draft final clean check-project screenshots demo chapter
+.PHONY: install install-transcribe sample new status draft final clean check-project screenshots demo chapter site
 
 install:
 	@command -v python3 >/dev/null || { echo "python3 is required"; exit 1; }
@@ -106,6 +108,10 @@ demo: sample
 	@rm -rf /tmp/lineage-demo && cp -R $(BA)/examples/demo-lineage /tmp/lineage-demo
 	@echo "demo lineage copied to /tmp/lineage-demo (the fixture stays clean)"
 	@$(BA)/app/lineage /tmp/lineage-demo
+
+site: sample
+	@$(PY) -c "import markdown" 2>/dev/null || $(PY) -m pip install -q markdown
+	@$(PY) $(BA)/site/build_site.py $(SITEFLAGS)
 
 clean:
 	@rm -rf $(SAMPLE)/output $(SAMPLE)/chapters $(SAMPLE)/book/main.typ $(SAMPLE)/book/template.typ \

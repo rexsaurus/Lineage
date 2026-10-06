@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Changelog · Lineage</title>
+<meta name="description" content="Lineage: Changelog.">
+<link rel="icon" href="../../assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<header class="site-top"><div class="wrap">
+  <a class="brand" href="../../"><img src="../../assets/logo.svg" alt="" width="26" height="26"><span>Lineage</span></a>
+  <nav class="site-nav" aria-label="Site"><a href="../../">Home</a><a href="../../tour/">Tour</a><a href="../../demo/">Live demo</a><a href="../" aria-current=page>Docs</a><a href="../../install/">Install</a><a href="https://github.com/rexsaurus/Lineage" class="gh">GitHub</a></nav>
+</div></header>
+<main>
+<article class="doc"><p class="muted"><a href="../">Docs</a> · <a href="https://github.com/rexsaurus/Lineage/blob/main/CHANGELOG.md">view on GitHub</a></p><h1 id="changelog">Changelog</h1>
+<p>Each release is a git tag (<code>vX.Y.Z</code>). Projects record the version they run in <code>lineage.lock</code>.
+Every entry says whether it changes anything that would alter already-generated stories
+(templates, the book template, style guides, skills); when it does, a project updating to it
+marks those stories stale rather than regenerating them.</p>
+<h2 id="unreleased-on-development">Unreleased (on <code>development</code>)</h2>
+<p><strong>Alters generated stories: yes</strong>, for projects that use Lineage's skills: the writing rules
+below changed. Projects that carry their own copies of the skills are not affected
+(<code>lineage update</code> knows the difference).</p>
+<p>Dashboard:
+- Sources: a gallery and a lightbox (arrow keys, summary, people and places linked, provenance,
+  notes, subject tagging). Roadmap #5.
+- Stories: what each story rests on, above its pages: every paragraph's citation chips, and every
+  image's provenance with a toolbar (open, tag, copy reference). Roadmap #12.
+- An illustration is never a person's picture (tree, featured relative, person articles);
+  "illustration" is a kind of source.
+- Wording: the dashboard speaks of the family's record; "the book" only where the export is meant.</p>
+<p>Skills and scripts (generic improvements brought up from a working project):
+- Writing rules: locked passages (<code>voice/verbatim.md</code>) go in <code>#verbatim</code> word for word; never
+  silently correct the subject; public-domain status checked per edition for epigraphs; an
+  author's introduction to a part is a <code>#bridge</code> until approved; when the subject told a story
+  two ways, keep both, attributed; contents lines are short plain nouns; propose an album
+  section when a chapter has more good photographs than text.
+- Photo intake and archive workflow (<code>photos/inbox/</code> → <code>photos/archive/originals/…</code>); dating cues;
+  relative dates chained to the event they hang on.
+- <code>make chapter PROJECT=… CHAPTER=…</code> builds one story as a preview; <code>PAGES=1</code> exports each page
+  as an image for sharing. build_book.py falls back to the <code>typst</code> Python package without the CLI.
+- <code>transcript/corrections.json</code> → <code>drop_word_runs</code>: remove phrases the speech model echoed from
+  its prompt, word by word.
+- <code>lineage update</code>: skill changes don't mark stories stale in projects with their own skills.</p>
+<h2 id="050-2026-10-01">0.5.0 — 2026-10-01</h2>
+<p><strong>Alters generated stories: no.</strong> Eight skills' <code>description:</code> lines changed (what triggers
+them, not what they tell the writer); <code>lineage update</code> now recognizes a description-only change
+and doesn't mark stories stale for it.</p>
+<p>Lineage is described as what it is: a cooperative family documentation and research platform
+whose outputs include stories, a book and narration.
+- README rewritten around the platform, with a tour of the real dashboard; docs/HOWTO.md
+  restructured (set up a lineage, contributors, sources, records, genealogy and Familypedia,
+  then stories and a book); docs/FACTORY.md, the plugin, marketplace and skill descriptions
+  reframed.
+- <code>examples/demo-lineage/</code>: an invented family (the Calders) with recordings, scanned records,
+  a ship, a route, a genealogy, contributors and a narrated story, built by
+  <code>scripts/demo_lineage.py</code>. <code>make demo</code> opens the dashboard on it.
+- <code>make screenshots</code> (<code>scripts/screenshots.py</code>, Playwright) captures the dashboard against the
+  demo lineage into <code>docs/images/</code>, with an empty HOME so no keys or accounts appear.
+- Timeline and Familypedia tiers: a record citation (R001), manifest or ledger now counts as
+  "what the records show" (the check was case-sensitive after lower-casing).</p>
+<h2 id="040-2026-10-01">0.4.0 — 2026-10-01</h2>
+<p><strong>Alters generated stories: no.</strong> Nothing under <code>plugins/lineage/book/</code>, <code>fonts/</code> or <code>skills/</code>.</p>
+<p>Projects are consumers of Lineage:
+- <code>bin/lineage version | update | dashboard</code>. <code>update</code> fetches the releases, prints the
+  changelog between the pinned release and the target and the files of the project it would
+  touch; with <code>--apply</code> it installs the release read-only under <code>~/.lineage/releases/&lt;tag&gt;</code>,
+  pins it in <code>lineage.lock</code>, re-points <code>.claude/skills</code> when it links to a release, and marks
+  stale (never regenerates) the stories a release would alter. Material is never touched.
+- The project template gains a <code>Makefile</code> (<code>make dashboard</code>, <code>make lineage-version</code>,
+  <code>make update-lineage [APPLY=1] [TO=vX.Y.Z]</code>), <code>lineage.lock</code>, <code>local-overrides/</code>, the
+  dashboard's runtime files in <code>.gitignore</code>, and the arrangement at the top of its CLAUDE.md.
+- <code>CLAUDE.md</code> for this repo: platform changes are made here and flow down; content stays in
+  the project; one-off things go in the project's <code>local-overrides/</code>.
+- Familypedia: empty Sources, Records and Photographs sections are hidden; a lone word that
+  only names a stub person (a surname off a roster) is no longer linked automatically.</p>
+<h2 id="032-2026-10-01">0.3.2 — 2026-10-01</h2>
+<p><strong>Alters generated stories: no.</strong> Dashboard engine only (<code>app/familypedia.py</code>).</p>
+<ul>
+<li>A place on a route now links back to the ships and voyages whose route it is ("On the
+  route of"), so a vessel, its ports and its voyage are reachable from each other.</li>
+</ul>
+<h2 id="031-2026-10-01">0.3.1 — 2026-10-01</h2>
+<p><strong>Alters generated stories: no.</strong> Dashboard engine only (<code>app/familypedia.py</code>).</p>
+<p>Familypedia fixes found while building a real project's articles:
+- After two articles are folded together ("same as"), the names of the folded one now find
+  the surviving article, so its coordinates, routes, events and relations carry over.
+- The person article's link into the genealogy tree reads the tree's people as a mapping
+  (as the Genealogy tab writes it), not a list. Articles no longer fail on that.
+- <code>Also called:</code> in a person profile keeps the names (and names in quotation marks) and drops
+  commentary written on the same line.</p>
+<h2 id="030-2026-10-01">0.3.0 — 2026-10-01</h2>
+<p><strong>Alters generated stories: no.</strong> Nothing under <code>templates/</code>, <code>book/</code>, <code>plugins/lineage/book/</code>,
+<code>plugins/lineage/templates/</code> or <code>plugins/lineage/skills/</code> changed since 0.2.0.</p>
+<p>The dashboard (<code>app/</code>), new since 0.2.0:
+- Home, a settings gear (Family details · Connectors · Contributors · Project settings) and a
+  terminal drawer; Sources, Familypedia, Genealogy, Stories and Timeline tabs.
+- Source intake end to end: SHA-256 dedupe, extraction and OCR, summaries, thumbnails, edits
+  kept apart from derived values, trash and restore. No demo content unless <code>--demo</code>.
+- Stories with states, rendering to book pages, narration; Timeline with tiers, conflicts and
+  gaps; Genealogy rebuilt from the material with evidence, review, edits and GEDCOM.
+- <strong>Familypedia article types</strong>: person · place · event · vessel · organization/unit · object ·
+  publication · occupation · theme, with typed infoboxes, tier sections, passages, sources,
+  typed records, photographs and marked illustrations, related articles, backlinks, open
+  questions and "Beyond the family"; tagging of sources, records, photographs and events to
+  any type (picker, suggestions with evidence, bulk); browse, search, <code>[[links]]</code>, and a map
+  drawn from the records' own coordinates. Inputs and outputs: <code>app/README.md</code>.
+- Example chapter: the Hannibal route and voyage details.</p>
+<h2 id="020">0.2.0</h2>
+<p>The project renamed to Lineage; a Claude Code plugin marketplace with two plugins (<code>lineage</code>,
+<code>factory</code>).</p></article>
+</main>
+<footer class="site-foot"><div class="wrap">
+  <p>Lineage is open source under the MIT license. <a href="https://github.com/rexsaurus/Lineage">github.com/rexsaurus/Lineage</a></p>
+  <p class="muted">Every family in the screenshots and the demo is invented. Your recordings, transcripts and photographs stay yours: the license does not cover them.</p>
+</div></footer>
+</body>
+</html>

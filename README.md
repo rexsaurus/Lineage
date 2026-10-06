@@ -280,6 +280,7 @@ inventions, human gates, versioning). See [docs/FACTORY.md](docs/FACTORY.md).
 - **[docs/EXAMPLE-CHAPTER.md](docs/EXAMPLE-CHAPTER.md)**: the chapter above, annotated.
 - **[docs/FACTORY.md](docs/FACTORY.md)**: the pattern, and how to aim it at something else.
 - **[CHANGELOG.md](CHANGELOG.md)**: releases.
+- **[docs/DEPLOY.md](docs/DEPLOY.md)**: the public website (`make site`): landing page, docs and a read-only demo.
 
 ## License
 
