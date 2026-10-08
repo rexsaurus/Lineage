@@ -1073,7 +1073,10 @@ def _infobox(ix, s, events, units, records, related, e):
         put("When it appears", span, "timeline")
         people = [i for items in rel.values() for i in items if i["type"] == "person"]
         put("Who it touches", links(people[:20]), "", many=True)
-    for label, v in (e.get("infobox") or {}).items():
+    box = e.get("infobox") or {}
+    if not isinstance(box, dict):            # older projects store [label, value] pairs
+        box = {r[0]: r[1] for r in box if isinstance(r, (list, tuple)) and len(r) >= 2}
+    for label, v in box.items():
         if v not in (None, ""):
             rows[label] = {"label": label, "values": [{"text": str(v)}], "by": "me", "basis": "stated by me"}
     schema = INFOBOX[t]

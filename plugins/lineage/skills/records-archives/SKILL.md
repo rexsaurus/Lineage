@@ -145,3 +145,13 @@ book-generator includes it in the back matter.
 Items by type and status, lost items, research sources cached and exported, chapters missing
 THE RECORDS, disambiguation notes added, and the follow-up list grouped by holder so the
 author can make one call per relative.
+
+
+## More tools (0.7.0)
+
+- `archive_fts.py '"Surname, Given"'`: full-text search of the Internet Archive with passages: town
+  reports, school yearbooks, gazettes, newspapers. The quickest first look for anyone in print before 1970.
+- `patent_index_scan.py --name "Surname, Given" --out records/patents`: every US patent under that name
+  in the annual indexes 1872–1969; confirm numbers on Google Patents' patent pages.
+- When a record arrives as scans (a court file, a prison card), make a readable edition from
+  `templates/records/readable-edition.typ` and keep the transcription in the chapter's records folder.

@@ -43,6 +43,7 @@ import glob
 import json
 import os
 import stat
+import subprocess
 import sys
 import time
 import urllib.error
@@ -151,6 +152,13 @@ def main():
         if png.exists() and not a.force:
             print(f"skip {i} (exists)")
             continue
+        if not a.force:
+            # the image manager's guard: never regenerate what the catalogue already holds (by id or by prompt)
+            chk = subprocess.run([sys.executable, str(Path(__file__).with_name("image_manager.py")), "check",
+                                  "--id", i, "--prompt", prompt], capture_output=True, text=True)
+            if chk.returncode == 0 and "EXISTS" in chk.stdout:
+                print(f"skip {i} (catalogue: {chk.stdout.strip().splitlines()[0]})")
+                continue
         if png.exists():
             png.rename(png.with_name(f"{i}.{time.strftime('%Y%m%d-%H%M%S')}.png"))
         if img.get("likeness") and not refs:
@@ -166,6 +174,11 @@ def main():
         png.write_bytes(base64.b64decode(data["data"][0]["b64_json"]))
         print_copy(png, OUT / "print" / f"{i}.jpg")
         print(f"ok {i} ({'edit with ' + str(len(refs)) + ' refs' if refs else 'text only'}) -> {png}")
+        rec_p = Path("data/image_prompts.json")      # provenance for the image manager's prompt guard
+        rec = json.loads(rec_p.read_text()) if rec_p.exists() else {}
+        rec[i] = {"prompt": prompt, "size": fields["size"], "model": fields["model"],
+                  "refs": [str(r) for r in refs], "created": time.strftime("%Y-%m-%d"), "scene": img.get("scene")}
+        rec_p.parent.mkdir(exist_ok=True); rec_p.write_text(json.dumps(rec, indent=1))
         time.sleep(2)
 
 

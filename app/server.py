@@ -1737,6 +1737,24 @@ def _relationship(graph, subject, pid):
     return "relative (" + " → ".join({"u": "parent", "d": "child", "s": "spouse", "b": "sibling"}[c] for c in path) + ")"
 
 
+def _infobox_get(art, key, default=""):
+    """An article's infobox value. Infoboxes are a {field: value} dict in Lineage's own articles and a
+    list of [field, value] pairs (or {"k":..., "v":...} rows) in articles imported from older projects."""
+    box = (art or {}).get("infobox") or {}
+    if isinstance(box, dict):
+        return box.get(key, default)
+    for row in box:
+        if isinstance(row, dict):
+            k, v = row.get("k") or row.get("key") or row.get("label"), row.get("v") or row.get("value")
+        elif isinstance(row, (list, tuple)) and len(row) >= 2:
+            k, v = row[0], row[1]
+        else:
+            continue
+        if str(k).strip().lower() == key.lower():
+            return v
+    return default
+
+
 def home_relative(project, reroll=0):
     graph = genealogy_graph(project)
     people = graph["people"] or [{"id": _pid(a["title"]), "name": a["title"], "dates": "", "article": a["slug"], "photo": None,
@@ -1754,7 +1772,7 @@ def home_relative(project, reroll=0):
             art = None
     photos = sum(1 for r in intake_load(project).values() if not r.get("trashed") and r.get("kind") == "image"
                  and not is_illustration(r) and p.get("name") in (effective(r).get("people") or []))
-    return {"id": p["id"], "name": p.get("name"), "dates": p.get("dates") or (art or {}).get("infobox", {}).get("dates", ""),
+    return {"id": p["id"], "name": p.get("name"), "dates": p.get("dates") or _infobox_get(art, "dates"),
             "photo": p.get("photo"), "relationship": _relationship(graph, graph.get("subject"), p["id"]),
             "line": (art or {}).get("lead", ""), "article": p.get("article"),
             "counts": {"sources": p.get("n_sources", 0), "mentions": len((art or {}).get("mentions", [])), "photographs": photos},

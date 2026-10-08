@@ -442,3 +442,11 @@ Imported by the other scripts; not run directly.
   means - they are only ever read.
 - Backup, museum- or person-specific record scrapers (`fetch_records.py` is the generic,
   polite core), and project-specific verification scripts.
+
+## New in 0.7.0
+
+| Script | What it does |
+|---|---|
+| `image_manager.py` | catalogue every image; `check` before generating or fetching; `missing`, `unused`; `drive-sync` |
+| `archive_fts.py` | Internet Archive full-text search with passages |
+| `patent_index_scan.py` | every patent under a name, from the 1872–1969 annual indexes |

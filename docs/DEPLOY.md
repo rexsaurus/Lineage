@@ -69,3 +69,24 @@ Decisions for the first deploy:
 - **Project name**: for example `lineage` (gives `lineage-<team>.vercel.app` or similar).
 - **Domain**: none is configured; add one in the project's Domains settings when chosen.
 - **Production branch**: `main` or `development`.
+
+## A real family's own site (read-only dashboard + book)
+
+`site/build_instance.py` publishes any project the same way the demo is published: a static,
+read-only snapshot of the dashboard, plus the book PDF, ready for any static host.
+
+```bash
+.venv/bin/python site/build_instance.py --project ~/books/grandma --out ~/sites/grandma \
+    --title "Grandma's Lineage" --pdf ~/books/grandma/output/book.pdf --allow-real-names
+cd ~/sites/grandma && vercel link --yes --project grandma-lineage && vercel --prod
+```
+
+- The project is copied to a scratch folder and never modified. Bulky caches the dashboard does not
+  show are left out (`--skip` adds more), and links that leave the project are not followed.
+- `--allow-real-names` is required: publishing a real family is a deliberate act. Decide first what
+  the family is comfortable making public (transcripts, living people, records); remove or `--skip`
+  the rest. Anything published can be copied and indexed.
+- The build always stops on local paths, emails, API keys and localhost links, after scrubbing home
+  and temp paths from the published copies.
+- The output has its own `vercel.json`; a custom subdomain needs a CNAME at the domain's DNS host
+  (`<sub> CNAME cname.vercel-dns.com`) and `vercel domains add <sub>.<domain> <project>`.

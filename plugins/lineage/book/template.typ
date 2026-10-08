@@ -365,14 +365,36 @@
 
 // "The Records": where every documented claim in the chapter came from, with links.
 // Small type, after the closing paragraph.
-#let records(title: "The Records", ..items) = block(width: 100%, above: 1.4em, breakable: true, {
+// in-records: true while a records list is being set, so the automatic index (auto-index, below)
+// does not index the names in source titles.
+#let in-records = state("in-records", false)
+#let records(title: "The Records", ..items) = { in-records.update(true); block(width: 100%, above: 1.4em, breakable: true, {
   align(center, spaced-caps(title, size: 7.5pt, tracking: 0.2em))
   v(0.3em)
   set par(justify: false, first-line-indent: 0pt, leading: 0.42em, spacing: 0.5em)
   set text(size: 8pt)
   show link: it => underline(offset: 1.5pt, stroke: 0.3pt, it)
   for it in items.pos() { block(above: 0.55em, below: 0pt, par(hanging-indent: 1em, it)) }
-})
+}); in-records.update(false) }
+
+// An exhibit: a document's scanned pages reproduced whole after a chapter (a court file, a
+// service record, a deed). Two pages per row, captioned and numbered, opening on a fresh page.
+// pages: ((path, [caption]), ...). note: where the document came from and what is left out.
+#let exhibit(title: "Exhibit", note: none, height: 3.55in, ..pages) = {
+  pagebreak(weak: true)
+  let cells = pages.pos().enumerate().map(((i, pc)) => stack(spacing: 4pt,
+    box(stroke: 0.4pt, image(pc.at(0), width: 100%, height: height, fit: "contain")),
+    align(center, text(size: 7.5pt, style: "italic")[#(i + 1). #pc.at(1)])))
+  place(top + center, float: true, scope: "parent", block(width: 100%, {
+    align(center, spaced-caps(title, size: 11pt, tracking: 0.22em))
+    if note != none {
+      v(0.3em)
+      align(center, block(width: 85%, text(size: 8.5pt, style: "italic", note)))
+    }
+    v(0.6em)
+    grid(columns: (1fr, 1fr), column-gutter: 0.2in, row-gutter: 0.25in, ..cells)
+  }))
+}
 
 // An index of real photographs held by an archive, with links. Thumbnails print in drafts
 // (for the family to see what exists) and in the final book only once the holder has given
@@ -407,6 +429,26 @@
 // #idx("Calder, Tobias!at sea"). Cross-reference: #idx-see("Toby", "Calder, Tobias")
 #let idx(..terms) = for t in terms.pos() { [#metadata(t)<idx>] }
 #let idx-see(from, to) = [#metadata((see: from, to: to))<idx-see>]
+
+// An automatic index, for books whose chapters carry no #idx marks (or as well as them): name the
+// headings and the spellings that count for each, and every occurrence in the text is marked as the
+// book is set, without touching a chapter. Names inside a records list are skipped.
+//   #show: auto-index.with((
+//     "Calder, Tobias": ("Tobias Calder", "Toby"),
+//     "Harrow Bay": ("Harrow Bay",),
+//   ))
+// Matching is whole-word and longest-first ("Mount Holyoke" before "Holyoke").
+#let auto-index(terms, body) = {
+  let to-heading = (:)
+  for (h, names) in terms { for n in names { to-heading.insert(n, h) } }
+  let pattern = "\\b(" + to-heading.keys().sorted(key: k => -k.len())
+    .map(k => k.replace(".", "\\.")).join("|") + ")\\b"
+  show regex(pattern): it => {
+    it
+    context if not in-records.get() { [#metadata(to-heading.at(it.text, default: it.text))<idx>] }
+  }
+  body
+}
 
 #let make-index(title: "Index") = {
   pagebreak(to: "odd", weak: true)

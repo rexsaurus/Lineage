@@ -101,3 +101,14 @@ right when pages move.
 ## Done means
 Preflight passes, final mode compiles, and you've looked at rendered pages. Report page
 count, image count, low-resolution warnings, and anything that looked off.
+
+
+## Whole-book index and exhibits (0.7.0)
+
+- To index a book whose chapters carry no `#idx` marks, add to the master file, before the chapters:
+  `#show: auto-index.with(("Surname, Given": ("Given Surname", "nickname"), "Place": ("Place",)))`.
+  Every listed spelling is marked as the book is set; names inside `#records` are skipped; `make-index`
+  prints them with any hand-placed marks.
+- To reproduce a document after a chapter: `#exhibit(title: "Exhibit: …", note: [where it came from],
+  ("plates/p01.jpg", [what page 1 is]), …)`. Rotate sideways scans upright first; say which duplicate
+  pages are left out.
