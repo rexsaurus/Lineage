@@ -36,7 +36,8 @@ material from that project):
 - **Publish a real family's dashboard** (`site/build_instance.py`): the same read-only static
   snapshot as the public demo, for any project, with its book PDF. Refuses without
   `--allow-real-names`; always fails on local paths, emails, keys and localhost links; scrubs home
-  and temp paths from published files; writes a `vercel.json`. See docs/DEPLOY.md.
+  and temp paths from published files; writes a `vercel.json`. `--hide sources,settings` removes those
+  areas (tabs, addresses, data and files) from a public snapshot. See docs/DEPLOY.md.
 
 Fixed:
 - The dashboard's home page crashed when a person's article stored its infobox as a list of

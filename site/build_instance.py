@@ -156,6 +156,50 @@ def scrub_paths(out: Path):
     return n
 
 
+# what each hideable area serves; removed from the snapshot (not just hidden in the page)
+HIDE_API = {
+    "sources": ["/api/engine/sources", "/api/engine/requests", "/api/engine/trash"],
+    "settings": ["/api/settings", "/api/identity", "/api/connectors", "/api/voices", "/api/engine/approvals"],
+}
+HIDE_FILES = {"sources": ["facts", "transcript", "audio", "content", "dossiers", "work"], "settings": []}
+HIDE_JS = """
+(function(){ const HIDE = __HIDE__;
+  for (let i = TABS.length - 1; i >= 0; i--) if (HIDE.includes(TABS[i][0])) TABS.splice(i, 1);
+  const bad = h => HIDE.includes(decodeURIComponent((h || '').replace(/^#\\/?/, '')).split(/[\\/?]/)[0]);
+  if (bad(location.hash)) history.replaceState(null, '', '#home');
+  const route0 = route;
+  route = function(){ if (bad(location.hash)) { location.replace('#home'); return; } return route0.apply(this, arguments); };
+  if (HIDE.includes('settings')) {
+    const st = document.createElement('style'); st.textContent = '#gear{display:none !important}';
+    document.head.appendChild(st);
+    window.showSettings = function(){ location.replace('#home'); };
+  }
+})();
+"""
+
+
+def hide_areas(out: Path, areas):
+    """Leave whole areas out of a published snapshot: their API answers and files are deleted, the tabs
+    removed, and their addresses sent home. Hidden in the page AND absent from the files served."""
+    man_p = out / "api" / "manifest.json"
+    man = json.loads(man_p.read_text())
+    gone = 0
+    for key in list(man):
+        path = json.loads(key)[0]
+        if any(path == a or path.startswith(a + "/") for area in areas for a in HIDE_API.get(area, [])):
+            f = out / "api" / man[key]["f"] if isinstance(man[key], dict) and "f" in man[key] else None
+            if f and f.exists():
+                f.unlink()
+            del man[key]; gone += 1
+    man_p.write_text(json.dumps(man, ensure_ascii=False, sort_keys=True, indent=0))
+    for area in areas:
+        for d in HIDE_FILES.get(area, []):
+            shutil.rmtree(out / "files" / d, ignore_errors=True)
+    aj = out / "demo" / "after.js"
+    aj.write_text(aj.read_text(encoding="utf-8") + HIDE_JS.replace("__HIDE__", json.dumps(areas)), encoding="utf-8")
+    return gone
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--project", required=True, type=Path)
@@ -166,6 +210,8 @@ def main():
     ap.add_argument("--description", default="")
     ap.add_argument("--home-url", default="../", help="link back from the snapshot's banner (default: the parent page)")
     ap.add_argument("--home-label", default="Home")
+    ap.add_argument("--hide", default="", help="comma-separated areas to leave out of a public snapshot: "
+                    "sources (raw sources, transcripts, research files) and/or settings")
     ap.add_argument("--skip", action="append", default=[], help="another project-relative path to leave out")
     ap.add_argument("--allow-real-names", action="store_true",
                     help="required: this publishes a real family's material")
@@ -217,6 +263,12 @@ def main():
                       "This is a read-only snapshot: the terminal is not available here.")
         j = j.replace("Pipeline steps run on your own machine (\"make demo\").", "This is a read-only snapshot: nothing runs here.")
         aj.write_text(j, encoding="utf-8")
+    areas = [x.strip() for x in a.hide.split(",") if x.strip()]
+    if areas:
+        unknown = [x for x in areas if x not in HIDE_API]
+        if unknown:
+            raise SystemExit(f"--hide: unknown area(s) {unknown}; choose from {list(HIDE_API)}")
+        bs.log(f"  hidden: {', '.join(areas)} ({hide_areas(out, areas)} API answers and their files removed)")
     if a.pdf:
         (out / "book").mkdir(exist_ok=True)
         shutil.copy(a.pdf, out / "book" / f"{name}.pdf")

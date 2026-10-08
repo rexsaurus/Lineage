@@ -88,5 +88,11 @@ cd ~/sites/grandma && vercel link --yes --project grandma-lineage && vercel --pr
   the rest. Anything published can be copied and indexed.
 - The build always stops on local paths, emails, API keys and localhost links, after scrubbing home
   and temp paths from the published copies.
+- `--hide sources,settings` leaves those areas out of a public snapshot: the tabs and the gear menu go,
+  their addresses redirect home, and their API answers and files (raw sources, transcripts, research
+  files; settings, identity, connectors) are deleted from the output, not merely hidden. For the full
+  version, build without `--hide` and deploy it as a preview, which Vercel Authentication protects
+  (`vercel deploy --target preview`, then `vercel alias set <url> <name>.vercel.app`); check that an
+  anonymous request is redirected to Vercel's sign-in.
 - The output has its own `vercel.json`; a custom subdomain needs a CNAME at the domain's DNS host
   (`<sub> CNAME cname.vercel-dns.com`) and `vercel domains add <sub>.<domain> <project>`.
