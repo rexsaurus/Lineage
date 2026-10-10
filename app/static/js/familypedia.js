@@ -23,7 +23,7 @@ BUILDERS.familypedia = async function(el, rest, q={}){
 async function loadFamilypedia(force=false){
   if(FP.list && !force) return;
   const [m, r] = await Promise.all([api('/api/engine/familypedia/meta'), api('/api/engine/familypedia')]);
-  FP.meta=m; FP.list=r.articles; S.wiki=r.articles; buildLinker(m.links);
+  FP.meta=m; FP.list=r.articles; S.wiki=r.articles; FP.bySlug=new Map(r.articles.map(a=>[a.slug,a])); try{ const st=await api('/api/engine/stories'); FP.stories=Object.fromEntries((st.stories||[]).map(x=>[x.id,x])); }catch(e){ FP.stories={}; } buildLinker(m.links);
 }
 function setView(v){ FP.view=v; $$('.fp-views [data-view]').forEach(a=>a.setAttribute('aria-current', a.dataset.view===v?'page':'false')); }
 function showView(v, q={}){
@@ -63,7 +63,21 @@ function wikiLink(text, opts={}){
       return `${pre}<a class="wl" href="#familypedia/${encodeURIComponent(a.slug)}">${name}</a>`; });
   }).join('');
 }
-const artLink = (slug,title,type,note) => `<a class="wl" href="#familypedia/${encodeURIComponent(slug)}">${type?`<span class="ti" aria-hidden="true">${TYPE_ICON[type]||''}</span>`:''}${esc(title)}</a>${note?` <span class="derived">${esc(note)}</span>`:''}`;
+/* The portrait chip: the one way an entry is shown in any list (Rex, 2026-10-10: "use those everywhere as the
+   default"). Its picture is the person's chosen portrait or the entry's first photograph; else the type's icon. */
+const thumbSrc = rel => { const u=fileUrl(rel); return window.thumbOf ? window.thumbOf(u) : u; };
+function entryChip(slug, title, type, note, pic, attrs=''){
+  const a = FP.bySlug && slug ? FP.bySlug.get(slug) : null;
+  if(pic===undefined) pic = a && a.portrait ? a.portrait.thumb : null;
+  type = type || (a && a.type) || '';
+  const href = slug ? `href="#familypedia/${encodeURIComponent(slug)}"` : '';
+  return `<a class="pchip${pic?'':' noimg'}" ${href} ${attrs} title="${esc(title)}">${pic?`<img src="${thumbSrc(pic)}" alt="" loading="lazy">`:''}<span>${esc(title)}</span></a>${note?` <span class="derived">${esc(note)}</span>`:''}`;
+}
+const artLink = (slug,title,type,note) => entryChip(slug,title,type,note);
+function storyChip(id, title){
+  const st = (FP.stories||{})[id], pic = st && st.photo;
+  return `<a class="pchip${pic?'':' noimg'}" href="#stories?read=${encodeURIComponent(id)}" title="${esc(title)}">${pic?`<img src="${thumbSrc(pic)}" alt="" loading="lazy">`:''}<span>${esc(title)}</span></a>`;
+}
 const typeLabel = t => ((FP.meta&&FP.meta.types.find(x=>x.type===t))||{}).label||t;
 const typeSingular = t => ((FP.meta&&FP.meta.types.find(x=>x.type===t))||{}).singular||t;
 
@@ -78,7 +92,7 @@ function drawBrowse(){
         <li><a href="#" data-sort="most" aria-current="${FP.sort==='most'}">Most material</a></li>
         <li><a href="#" data-sort="needs" aria-current="${FP.sort==='needs'}">Needs more (stubs) · ${FP.list.filter(a=>a.stub).length}</a></li></ul>
       <h5>By type</h5><ul><li><a href="#" data-type="" aria-current="${!FP.type}">Everything · ${FP.list.length}</a></li>
-        ${types.filter(t=>counts[t.type]).map(t=>`<li><a href="#" data-type="${t.type}" aria-current="${FP.type===t.type}">${TYPE_ICON[t.type]} ${esc(t.label)} · ${counts[t.type]}</a></li>`).join('')}</ul>
+        ${types.filter(t=>counts[t.type]).map(t=>`<li><a href="#" data-type="${t.type}" aria-current="${FP.type===t.type}">${esc(t.label)} · ${counts[t.type]}</a></li>`).join('')}</ul>
       <p class="derived" style="margin:6px 0 0">No articles yet: ${types.filter(t=>!counts[t.type]).map(t=>esc(t.singular)).join(', ')||'none'}.</p></nav>
     <div id="wk-article"></div></div>`;
   $('#wk-random').onclick=()=>{ const l=FP.list; if(l.length) location.hash='familypedia/'+encodeURIComponent(l[Math.floor(Math.random()*l.length)].slug); };
@@ -113,7 +127,7 @@ function drawListing(){
   $('#wk-article').innerHTML = intro + `<div class="card"><div class="row"><h3 style="margin:0">${title}${FP.type?' · '+esc(typeLabel(FP.type)):''}</h3><span class="spacer"></span><span class="sub" style="margin:0">${list.length} article${list.length!==1?'s':''}</span></div>
     ${FP.sort==='needs'?'<p class="sub" style="margin-top:6px">Stubs: named in the material, little said yet. Each is a question for the next recording or a record to look for.</p>':''}
     ${FP.sort!=='most'?`<div class="row fp-az" style="gap:3px;margin:10px 0">${letters.map(l=>`<button class="btn ghost sm" data-letter="${esc(l)}" aria-pressed="${FP.letter===l}">${esc(l)}</button>`).join('')}${FP.letter?'<button class="btn ghost sm" data-letter="">all</button>':''}</div>`:''}
-    <ul class="fp-list">${list.slice(0,FP.shown).map(a=>`<li>${artLink(a.slug,a.title,a.type)}${a.kind?` <span class="derived">${esc(a.kind)}</span>`:''}${a.stub?' <span class="derived">stub</span>':''}
+    <ul class="fp-list chips">${list.slice(0,FP.shown).map(a=>`<li>${artLink(a.slug,a.title,a.type)}${a.kind?` <span class="derived">${esc(a.kind)}</span>`:''}${a.stub?' <span class="derived">stub</span>':''}
       <span class="fp-counts">${[a.stories&&`${a.stories} ${a.stories>1?L.stories:L.story}`, a.mentions&&`${a.mentions} passage${a.mentions>1?'s':''}`, a.records&&`${a.records} record${a.records>1?'s':''}`, a.photos&&`${a.photos} image${a.photos>1?'s':''}`, a.events.length&&`${a.events.length} event${a.events.length>1?'s':''}`].filter(Boolean).join(' · ')}</span></li>`).join('')}</ul>
     ${list.length>FP.shown?`<button class="btn ghost sm" id="fp-more">Show ${Math.min(400,list.length-FP.shown)} more</button>`:''}</div>`;
   $$('[data-letter]').forEach(b=>b.onclick=()=>{ FP.letter=b.dataset.letter; FP.shown=200; drawListing(); });
@@ -138,14 +152,14 @@ async function showArticle(slug){
     <td>${esc(r.archive||'—')}</td><td class="mono">${esc(r.number||'')}</td><td>${esc(r.date||'')}</td><td>${r.retrieved?esc(r.retrieved):'<span class="derived">no retrieval date</span>'}</td></tr>`;
   const photo = p => !p.thumb ? '' : `<figure class="fp-photo">${`<img src="${fileUrl(p.thumb)}" alt="${esc(p.caption)}">`}
     <figcaption>${esc(p.caption)}${p.illustration?' <span class="pill warn" title="Generated: not a photograph of the real scene">illustration</span>':''}<br><span class="derived">${esc(p.provenance||p.origin||'')}</span>${p.date?`<br><span class="derived">${esc(p.date)}${p.date_basis?' · '+esc(p.date_basis):''}</span>`:''}</figcaption></figure>`;
-  const related = a.related.map(g=>`<div class="fp-rel"><h5>${esc(g.group)} · ${g.count}</h5>${g.items.map(i=>artLink(i.slug,i.title,i.type,i.note)).join(' · ')}${g.count>g.items.length?` <span class="derived">and ${g.count-g.items.length} more</span>`:''}</div>`).join('');
+  const related = a.related.map(g=>`<div class="fp-rel"><h5>${esc(g.group)} · ${g.count}</h5>${g.items.map(i=>artLink(i.slug,i.title,i.type,i.note)).join(' ')}${g.count>g.items.length?` <span class="derived">and ${g.count-g.items.length} more</span>`:''}</div>`).join('');
   const tiers = Object.entries(a.tiers).filter(([,v])=>v.length).map(([k,v])=>sec(`<span class="tierdot t-${k}"></span>${TIER_TITLES[k]} · ${v.length}`,
       `<ul class="fp-tier">${v.slice(0,40).map(i=>`<li>${i.slug?artLink(i.slug,i.text):wikiLink(i.text,{skip:a.slug})} ${i.date?`<span style="color:var(--ink-3)">${esc(i.date)}</span>`:''}${i.archive?` <span class="derived">${esc(i.archive)}</span>`:''}${(i.cite||'').split(/;\s*/).map(chip).join('')}${i.id&&i.kind==='event'?` <a class="chiplink" href="#timeline?focus=${encodeURIComponent(i.id)}">timeline</a>`:''}</li>`).join('')}</ul>${v.length>40?`<p class="derived">and ${v.length-40} more</p>`:''}`)).join('');
   const outLinks = [
     a.events.length?`<a class="chiplink" href="#timeline?focus=${encodeURIComponent(a.events[0].id)}">On the timeline · ${a.events.length}</a>`:'',
     a.type==='person'?`<a class="chiplink" href="#genealogy?focus=${encodeURIComponent(a.genealogy||a.slug)}">In the tree</a>`:'',
     a.coords||a.routes.length?`<a class="chiplink" href="#familypedia?view=map&focus=${encodeURIComponent(a.slug)}">On the map</a>`:'',
-    ...a.stories.slice(0,4).map(s=>`<a class="chiplink" href="#stories?read=${encodeURIComponent(s.id)}">${esc(L.Story)}: ${esc(s.title)}</a>`)].filter(Boolean).join('');
+    ...a.stories.slice(0,4).map(s=>storyChip(s.id, s.title))].filter(Boolean).join('');
   box.innerHTML = `<article class="card article">
     <aside class="infobox">${lead&&lead.thumb?`<img src="${fileUrl(lead.thumb)}" alt="${esc(lead.caption)}" style="width:100%;border-radius:8px;margin-bottom:6px">${lead.illustration?'<span class="pill warn">illustration, not a photograph</span>':''}`:''}
       <dl class="kv ib"><dt>article</dt><dd>${esc(a.type_label)}${a.kind?` · ${esc(a.kind)}`:''}</dd>
@@ -153,7 +167,7 @@ async function showArticle(slug){
       <dt>material</dt><dd>${[a.stories.length&&`${a.stories.length} ${a.stories.length>1?L.stories:L.story}`, a.passages.length&&`${a.passages.length} passage${a.passages.length>1?'s':''}`, a.records.length&&`${a.records.length} record${a.records.length>1?'s':''}`, a.photos.length&&`${a.photos.length} image${a.photos.length>1?'s':''}`, a.sources.length&&`${a.sources.length} source${a.sources.length>1?'s':''}`].filter(Boolean).join(' · ')||'one mention'}</dd></dl>
       <button class="btn ghost sm" id="wk-ibedit" style="margin-top:10px">Edit details</button>
       <p class="derived" style="margin:10px 0 0">No generated faces stand in for a real person. Images appear here when the material holds one or one is tagged.</p></aside>
-    <div class="kicker">${TYPE_ICON[a.type]} ${esc(a.type_label)}${a.stub?' · stub':''}${a.aliases.length?' · also '+a.aliases.slice(0,4).map(esc).join(', '):''}</div><h2>${esc(a.title)}</h2>
+    <div class="kicker">${esc(a.type_label)}${a.stub?' · stub':''}${a.aliases.length?' · also '+a.aliases.slice(0,4).map(esc).join(', '):''}</div><h2>${esc(a.title)}</h2>
     <p class="${a.lead_by==='me'?'mine':''}" id="wk-lead">${wikiLink(a.lead,{skip:a.slug})} <span class="derived">${a.lead_by==='me'?'written by me':'derived from the material'}</span> <button class="btn ghost sm" id="wk-edit">Edit</button></p>
     ${outLinks?`<div class="row" style="gap:6px;margin:6px 0 4px">${outLinks}</div>`:''}
     ${(a.conflicts||[]).length?`<div class="note" style="margin:10px 0;background:#FFFBF1;border:1px solid #E3D2AB"><b>The sources disagree.</b> ${a.conflicts.map(c=>esc(c)).join(' · ')} <span class="derived">both versions are kept</span></div>`:''}
@@ -172,7 +186,7 @@ async function showArticle(slug){
     <section class="tier"><h4>Notes <span class="derived">stated by me</span></h4><textarea id="wk-notes" rows="3" placeholder="What you know that the material doesn't say. [[Links]] work here. Your notes outrank anything derived.">${esc(a.notes)}</textarea>
       <div class="row" style="margin-top:6px"><button class="btn ghost sm" id="wk-notes-save">Save notes</button></div></section>
     ${a.open_questions.length?sec('Open questions', `<ul>${a.open_questions.map(q=>`<li>${wikiLink(q.text,{skip:a.slug})} <span class="derived">${esc(q.from)}</span></li>`).join('')}</ul>`, a.type==='person'?`<button class="btn ghost sm" id="wk-ask">Ask for more about ${esc(a.title)}</button>`:''):''}
-    ${sec(`What links here · ${a.backlinks.length}`, a.backlinks.map(b=>artLink(b.slug,b.title,b.type)).join(' · '))}
+    ${sec(`What links here · ${a.backlinks.length}`, a.backlinks.map(b=>artLink(b.slug,b.title,b.type)).join(' '))}
     <details class="tier fp-beyond" style="margin-top:18px" ${a.beyond.items.length?'open':''}><summary>Beyond the family <span class="derived">public background, kept apart from what the family knows</span></summary>
       ${a.beyond.items.map((b,i)=>`<p>${esc(b.text)} ${b.url?`<a href="${esc(b.url)}" target="_blank" rel="noopener">${esc(b.title||b.url)}</a>`:''} <span class="derived">${b.retrieved?'retrieved '+esc(b.retrieved):'no retrieval date'}</span> <button class="btn ghost sm" data-bdel="${i}">remove</button></p>`).join('')||'<p class="sub">Nothing added.</p>'}
       ${a.beyond.suggestions.length?`<p class="sub" style="margin:10px 0 4px">From this project's context sheets (already sourced):</p><ul>${a.beyond.suggestions.map(s=>`<li style="font-size:13px">${esc(s.text)} <span class="derived">${esc(s.file)}</span></li>`).join('')}</ul>`:''}
@@ -228,10 +242,10 @@ async function drawMapView(focus){
     ${m.svg?`<div class="fp-mapwrap">${m.svg}</div>`:'<p class="empty">No coordinates in the material yet. They come from track or route files (lat, lon), the knowledge graph, or coordinates you give a place.</p>'}
     <div class="row fp-legend"><span><i class="lg rec"></i>recorded position</span><span><i class="lg open"></i>recorded, subject not aboard</span><span><i class="lg dash"></i>route between recorded positions (approximate)</span><span><i class="lg approx"></i>approximate place</span><span><b class="gapt">not recorded</b> a leg no record covers</span></div>
     ${m.land?`<p class="derived">Coastlines: ${esc(m.land)} (Natural Earth, public domain). No map tiles are fetched.</p>`:'<p class="derived">No coastline file in the project (facts/records/_raw/geo/*.geojson), so only the points are drawn.</p>'}</div>
-    <div class="grid two"><div class="card"><h3>Routes · ${m.tracks.length}</h3>${m.tracks.map(t=>`<p style="margin:4px 0">${t.subjects.map(s=>artLink(s.slug,s.title)).join(', ')||'<span class="pill warn">not attached</span>'} <span class="derived">${esc(t.file)} · ${t.points} positions</span></p>`).join('')||'<p class="empty">None.</p>'}
+    <div class="grid two"><div class="card"><h3>Routes · ${m.tracks.length}</h3>${m.tracks.map(t=>`<p style="margin:4px 0">${t.subjects.map(s=>artLink(s.slug,s.title)).join(' ')||'<span class="pill warn">not attached</span>'} <span class="derived">${esc(t.file)} · ${t.points} positions</span></p>`).join('')||'<p class="empty">None.</p>'}
       ${m.unattached_routes.length?`<p class="note">Routes whose subject is ambiguous (more than one match, or none): ${m.unattached_routes.map(esc).join(', ')}. Name the subject in data/familypedia/routes.json.</p>`:''}</div>
     <div class="card"><h3>Places not on the map · ${m.not_on_map.length}</h3><p class="sub">No coordinates in the records. Add them on the place's article (marked approximate) if you know them.</p>
-      <p style="font-size:13px">${m.not_on_map.slice(0,300).map(t=>{ const a=resolveName(t); return a?artLink(a.slug,t):esc(t); }).join(' · ')}</p></div></div>`;
+      <p style="font-size:13px">${m.not_on_map.slice(0,300).map(t=>{ const a=resolveName(t); return a?artLink(a.slug,t):esc(t); }).join(' ')}</p></div></div>`;
 }
 
 /* ------------------------------------------------------------------ records and photographs: browse and bulk tag */
@@ -249,7 +263,7 @@ async function drawCatalogue(what){
   const draw=()=>{
     const q=($('#cat-q').value||'').toLowerCase(), ty=$('#cat-type')?$('#cat-type').value:'';
     const list=items.filter(i=>(!ty||i.type===ty) && (!q || JSON.stringify(i).toLowerCase().includes(q)));
-    const subj = i => i.subjects.map(s=>artLink(s.slug,s.title,s.type)).join(' · ')||'<span class="derived">untagged</span>';
+    const subj = i => i.subjects.map(s=>artLink(s.slug,s.title,s.type)).join(' ')||'<span class="derived">untagged</span>';
     $('#cat-list').innerHTML = what==='records'
       ? `<table class="fp-rec"><thead><tr><th></th><th>Type</th><th>Record</th><th>Archive</th><th>Number</th><th>Retrieved</th><th>About</th></tr></thead><tbody>${list.slice(0,600).map(i=>`<tr id="rec-${esc(i.id)}" class="${focus===i.id?'hl':''}"><td><input type="checkbox" data-csel="${esc(i.id)}" ${FP.sel.has(i.id)?'checked':''}></td><td>${esc(i.type)}</td>
           <td>${i.url?`<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title)}</a>`:esc(i.title)}</td><td>${esc(i.archive||'—')}</td><td class="mono">${esc(i.number||'')}</td><td>${esc(i.retrieved||'—')}</td><td style="font-size:12.8px">${subj(i)} <button class="btn ghost sm" data-ctag="${esc(i.id)}">tags</button></td></tr>`).join('')}</tbody></table>${list.length>600?`<p class="derived">Showing 600 of ${list.length}; filter to narrow.</p>`:''}`
@@ -275,7 +289,7 @@ function openPicker({title='Choose a subject', onPick, newOnly=false}){
       <div class="grid two" style="margin-top:8px"><input type="text" id="pk-title" placeholder="Name, as the material gives it"><select id="pk-type">${types.map(t=>`<option value="${t.type}">${esc(t.singular)}</option>`).join('')}</select></div>
       <div class="row" style="margin-top:8px"><button class="btn go sm" id="pk-create">Create</button><span class="sub" style="margin:0;font-size:12.4px">Created as a stub, marked as yours. It fills in as material is tagged to it.</span></div></details>`);
   const draw=async()=>{ const r=await api('/api/engine/familypedia/picker?q='+encodeURIComponent($('#pk-q').value||''));
-    $('#pk-res').innerHTML=r.groups.map(g=>`<h5>${TYPE_ICON[g.type]} ${esc(g.label)} · ${g.count}</h5>${g.items.map(i=>`<button class="linkish fp-pick" data-slug="${esc(i.slug)}" data-title="${esc(i.title)}" data-type="${g.type}">${esc(i.title)}${i.kind?` <span class="derived">${esc(i.kind)}</span>`:''}${i.stub?' <span class="derived">stub</span>':''}</button>`).join('')}`).join('')||'<p class="empty">No subject by that name. Create it below.</p>';
+    $('#pk-res').innerHTML=r.groups.map(g=>`<h5>${esc(g.label)} · ${g.count}</h5>${g.items.map(i=>`<button class="linkish fp-pick" data-slug="${esc(i.slug)}" data-title="${esc(i.title)}" data-type="${g.type}">${esc(i.title)}${i.kind?` <span class="derived">${esc(i.kind)}</span>`:''}${i.stub?' <span class="derived">stub</span>':''}</button>`).join('')}`).join('')||'<p class="empty">No subject by that name. Create it below.</p>';
     $$('.fp-pick').forEach(b=>b.onclick=()=>{ closeOverlay(); onPick({slug:b.dataset.slug, title:b.dataset.title, type:b.dataset.type}); }); };
   if(!newOnly){ let t; $('#pk-q').oninput=()=>{ clearTimeout(t); t=setTimeout(draw,160); }; $('#pk-q').focus(); draw(); }
   $('#pk-create').onclick=async()=>{ const title=$('#pk-title').value.trim(), type=$('#pk-type').value; if(!title){ alertNote('Give the subject a name.'); return; }

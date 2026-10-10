@@ -862,9 +862,10 @@ def summaries(project):
 
 def _portrait_of(ix, s):
     """The image a list shows beside a person: the chosen portrait, else a real photograph, else a chapter cover."""
-    if s["type"] != "person":
-        return None
     ph = [ix["photos"][p] for p in dict.fromkeys(s["photos"]) if p in ix["photos"] and ix["photos"][p].get("thumb")]
+    if s["type"] != "person":                       # places, events, ships…: their first photograph, else an illustration
+        pick = next((p for p in ph if not p.get("illustration")), None) or (ph[0] if ph else None)
+        return {"thumb": pick["thumb"], "illustration": bool(pick.get("illustration"))} if pick else None
     # only an image chosen as this person's portrait (data/portraits.csv); a shared group photo is not a likeness
     pick = next((p for p in ph if p.get("portrait")), None)
     return {"thumb": pick["thumb"], "illustration": bool(pick.get("illustration"))} if pick else None

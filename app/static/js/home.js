@@ -134,7 +134,7 @@ async function drawHomeStories(){
 }
 async function drawHomeGallery(){
   const box=$('#h-gal'); if(!box) return;
-  const r=await api('/api/engine/familypedia/catalogue?what=photos'); const DOC=/clipping|newspaper|directory|deed|record|register|census|certificate|yearbook|catalog|patent|court|letter|page|card|form|ledger|roll|report|notice|obituary|article|advert|index|drawing|diagram|map|scan|transcript|minutes|program/i;
+  const r=await api('/api/engine/familypedia/catalogue?what=photos'); const DOC=/clipping|newspaper|directory|deed|record|register|census|certificate|yearbook|catalog|patent|court|letter|page|card|form|ledger|roll|report|notice|obituary|article|advert|index|drawing|diagram|map|scan|transcript|minutes|program|journal|argus|\bally\b|gold bug|red book|microcosm|blue and white|staff box|\bp\. ?\d|nominal|embarkation|licen[cs]e|births|penitentiary|digest|schedule|half\)|\d{4}-\d{2}-\d{2}/i;
   const seen=new Set(); const items=(r.items||[]).filter(p=>{ if(!p.thumb||DOC.test(p.caption||'')||DOC.test(p.thumb)) return false;
     const k=(p.caption||p.thumb).toLowerCase(); if(seen.has(k)) return false; seen.add(k); return true; });
   // real photographs first, then illustrations; a stable daily shuffle so the gallery changes from day to day
@@ -144,12 +144,20 @@ async function drawHomeGallery(){
 }
 async function drawHomeRelatives(){
   const box=$('#h-rels'); if(!box) return;
-  const r=await api('/api/engine/familypedia'); const ppl=(Array.isArray(r)?r:(r.articles||[])).filter(a=>a.type==='person');
+  // everyone in the family tree when the project keeps one (data/family_tree.csv): the same people the tree shows
+  const [g, r] = await Promise.all([api('/api/engine/genealogy'), api('/api/engine/familypedia')]);
+  if(g && g.from_file){
+    const byLetter={}; g.people.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>{ const k=(p.name[0]||'#').toUpperCase(); (byLetter[k]=byLetter[k]||[]).push(p); });
+    box.innerHTML = Object.keys(byLetter).sort().map(k=>`<div class="hrel-group"><div class="hrel-letter">${k}</div><div class="hrels">${byLetter[k].map(p=>
+      entryChip(p.article, p.name, 'person', '', p.photo||null, p.article?'':`href="#genealogy?focus=${encodeURIComponent(p.id)}"`)).join('')}</div></div>`).join('');
+    return;
+  }
+  const ppl=(Array.isArray(r)?r:(r.articles||[])).filter(a=>a.type==='person');
   // one entry per relative: the articles one person has (nicknames, "Last, First" museum forms) fold under their name
   const people={}; ppl.forEach(a=>{ const n=a.family_name||a.title; (people[n]=people[n]||[]).push(a); });
   const rank=a=>(a.portrait?1e6:0)+(a.sources||0)*10+(a.units||0)+(a.mentions||0);
   const one=Object.entries(people).map(([n,arts])=>{ const best=[...arts].sort((x,y)=>rank(y)-rank(x))[0];
     return {...best, title:n, portrait:best.portrait||(arts.find(x=>x.portrait)||{}).portrait}; });
   const byLetter={}; one.sort((a,b)=>a.title.localeCompare(b.title)).forEach(a=>{ const k=(a.title.replace(/^[^A-Za-z]+/,'')[0]||'#').toUpperCase(); (byLetter[k]=byLetter[k]||[]).push(a); });
-  box.innerHTML = Object.keys(byLetter).sort().map(k=>`<div class="hrel-group"><div class="hrel-letter">${k}</div><div class="hrels">${byLetter[k].map(a=>`<a class="hrel" href="#familypedia/${encodeURIComponent(a.slug)}">${a.portrait&&a.portrait.thumb?`<img src="${fileUrl(a.portrait.thumb)}" alt="" loading="lazy">`:''}<span>${esc(a.title)}</span></a>`).join('')}</div></div>`).join('') || '<p class="empty">No relatives yet.</p>';
+  box.innerHTML = Object.keys(byLetter).sort().map(k=>`<div class="hrel-group"><div class="hrel-letter">${k}</div><div class="hrels">${byLetter[k].map(a=>entryChip(a.slug, a.title, 'person', '', a.portrait?a.portrait.thumb:null)).join('')}</div></div>`).join('') || '<p class="empty">No relatives yet.</p>';
 }

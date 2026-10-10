@@ -1504,9 +1504,36 @@ def _ghistory(project, event, detail=None):
     _gsave(project, "history", h)
 
 
+def _tree_from_csv(project):
+    """data/family_tree.csv (name, father, mother, spouse, dates, living, how_sure, evidence): the project's own
+    family tree. When present it replaces the tree derived from the recordings, which names one person many ways."""
+    p = project.root / "data" / "family_tree.csv"
+    rows = list(csv.DictReader(open(p, encoding="utf-8"))) if p.exists() else []
+    people, links = {}, []
+    for r in rows:
+        pid = _pid(r["name"])
+        people[pid] = {"id": pid, "name": r["name"], "aliases": [], "dates": r.get("dates", ""),
+                       "living": (r.get("living") or "").lower() == "yes",
+                       "evidence": [{"quote": "", "cite": r.get("evidence", "")}]}
+    seen = set()
+    for r in rows:
+        pid, tier = _pid(r["name"]), (r.get("how_sure") or "told")
+        ev = [{"quote": "", "cite": r.get("evidence", "")}]
+        for k in ("father", "mother"):
+            if r.get(k):
+                links.append({"id": f"{_pid(r[k])}>{pid}", "a": _pid(r[k]), "b": pid, "rel": "parent", "tier": tier, "evidence": ev})
+        if r.get("spouse"):
+            key = tuple(sorted([pid, _pid(r["spouse"])]))
+            if key not in seen:
+                seen.add(key)
+                links.append({"id": f"{key[0]}={key[1]}", "a": key[0], "b": key[1], "rel": "spouse", "tier": tier, "evidence": ev})
+    return {"people": people, "links": links, "conflicts": []} if rows else None
+
+
 def genealogy_graph(project):
     """The tree as shown: derived, with my corrections laid over it (they always win)."""
-    d = _gload(project, "derived", {"people": {}, "links": [], "conflicts": []})
+    csv_tree = _tree_from_csv(project)
+    d = csv_tree or _gload(project, "derived", {"people": {}, "links": [], "conflicts": []})
     mine = _gload(project, "mine", {"people": {}, "links": {}, "merges": [], "notes": {}})
     people = {k: dict(v, by="derived") for k, v in d["people"].items()}
     for pid, p in mine.get("people", {}).items():
@@ -1534,9 +1561,24 @@ def genealogy_graph(project):
                 sources_by_person.setdefault(_pid(nm), []).append(r.get("thumb") if r.get("kind") == "image" and not is_illustration(r) else None)
     stories = engine_stories(project)
     portraits = project_portraits(project)
+    if csv_tree:                                   # the article for each relative, and only chosen portraits
+        by_family = {}
+        for a in engine_familypedia(project):
+            if a.get("type") == "person" and a.get("family_name"):
+                by_family.setdefault(a["family_name"], []).append(a)
+        sources_by_person = {}
     for pid, p in people.items():
         p["note"] = mine.get("notes", {}).get(pid, "")
         p["article"] = pid if pid in slugs else None
+        if csv_tree:
+            arts = sorted(by_family.get(p["name"], []), key=lambda a: (not a.get("portrait"), -(a.get("sources") or 0)))
+            p["article"] = arts[0]["slug"] if arts else None
+            pic = next((a["portrait"] for a in arts if a.get("portrait")), None)
+            p["photo"] = pic["thumb"] if pic else None
+            p["photo_illustration"] = bool(pic and pic.get("illustration"))
+            p["n_sources"] = sum(a.get("sources") or 0 for a in arts)
+            p["has_story"] = any(a.get("stories") for a in arts) if arts else False
+            continue
         thumbs = [t for t in sources_by_person.get(pid, []) if t]
         p["photo"] = thumbs[0] if thumbs else None
         if not p["photo"]:                          # the project's chosen portrait (data/portraits.csv)
@@ -1549,10 +1591,12 @@ def genealogy_graph(project):
         p["has_story"] = any(p["name"].split()[0] in (project.root / st["file"]).read_text(encoding="utf-8", errors="ignore")
                              for st in stories if st["exists"]) if p.get("name") else False
     subject = project.read().get("subject") or ""
+    if csv_tree and csv_tree["people"]:
+        subject = next(iter(csv_tree["people"]))       # the family tree file starts with the book's subject
     return {"people": list(people.values()), "links": list(links.values()), "conflicts": d.get("conflicts", []),
             "subject": _pid(subject) if subject else None, "note": d.get("note", ""), "applied": d.get("applied"),
             "pending": genealogy_diff(project).get("pending", False), "history": _gload(project, "history", [])[-30:],
-            "merges": mine.get("merges", [])}
+            "merges": mine.get("merges", []), "from_file": "data/family_tree.csv" if csv_tree else None}
 
 
 def genealogy_edit(project, op, data):

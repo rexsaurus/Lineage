@@ -260,8 +260,8 @@ body.docked .page{padding-bottom:calc(var(--dockh,0px) + 90px)}
 .gnode.sel rect{fill:#FBF2EC}
 .gnode.unknown rect{fill:#F3EEE4;stroke-dasharray:4 3}
 .gnode.mine rect{stroke:var(--green)}
-.gnode text{font-family:var(--sans);font-size:12.5px;fill:var(--ink)}
-.gnode text.d{font-size:11px;fill:var(--ink-3)}
+.gnode text{font-family:var(--sans);font-size:14px;font-weight:600;fill:#1C1A17}
+.gnode text.d{font-size:12px;font-weight:500;fill:#4A453E}
 .gnode{cursor:pointer}
 .glink{fill:none;stroke-width:1.6}
 .glink.documented{stroke:#3D3A35} .glink.told{stroke:var(--clay)} .glink.lore{stroke:#B07BB0;stroke-dasharray:6 4}
@@ -386,3 +386,19 @@ body.docked .page{padding-bottom:calc(var(--dockh,0px) + 90px)}
 .hrel{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;border:1px solid var(--line);border-radius:999px;color:var(--ink);text-decoration:none;font-size:14px}
 .hrel img{width:30px;height:30px;border-radius:50%;object-fit:cover}
 .ts-chip{display:inline-block;font:11px/1.6 var(--mono,ui-monospace,monospace);color:var(--ink-3);background:#F3EEE4;border-radius:6px;padding:0 5px;vertical-align:1px;white-space:nowrap}
+
+/* the portrait chip: every entry in every list */
+.pchip{display:inline-flex;align-items:center;gap:8px;max-width:100%;padding:3px 11px 3px 3px;margin:2px 0;border:1px solid var(--line);border-radius:999px;background:var(--card,#FFFDF8);color:var(--ink);text-decoration:none;font-size:14px;line-height:1.25;vertical-align:middle;cursor:pointer}
+.pchip:hover{border-color:var(--ink-3);background:#F7F2E9}
+.pchip img{width:30px;height:30px;border-radius:50%;object-fit:cover;flex:none}
+.pchip.noimg{padding-left:11px}.pchip .pchip-i{width:22px;height:22px;margin-left:-6px;display:inline-grid;place-items:center;border-radius:50%;background:#F3EEE4;font-size:12px;flex:none}
+.pchip span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ul.fp-list.chips{list-style:none;padding:0}ul.fp-list.chips li{padding:3px 0}
+.fp-rel .pchip,.tier .pchip{margin:2px 2px}
+.gnode image{pointer-events:none}.gnode.linked{cursor:pointer}.gnode.linked:hover rect{stroke:var(--ink-3)}
+
+/* every remaining bubble takes the portrait-chip look */
+.chiplink{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;margin:2px 0;border:1px solid var(--line);border-radius:999px;background:var(--card,#FFFDF8);color:var(--ink);text-decoration:none;font-size:14px;line-height:1.25;font-weight:500;cursor:pointer;vertical-align:middle}
+.chiplink:hover{border-color:var(--ink-3);background:#F7F2E9}
+.chiplink[aria-current="page"],.chiplink[aria-selected="true"]{background:var(--ink);color:#FFFDF8;border-color:var(--ink)}
+.pchip span:last-child{font-weight:500}

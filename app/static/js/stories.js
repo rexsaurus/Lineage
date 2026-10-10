@@ -139,8 +139,8 @@ async function readStory(id){
   $$('[data-nav]').forEach(b=>b.onclick=()=>readStory(b.dataset.nav));
   api('/api/engine/story/apparatus?id='+encodeURIComponent(s.id)).then(ap=>{ const box=$('#rd-pages'); if(!box||ap.error) return;
     box.insertAdjacentHTML('beforebegin', storyApparatusHtml(ap)); bindStoryApparatus(ap); });
-  api('/api/engine/familypedia/story?id='+encodeURIComponent(s.id)).then(r=>{ const box=$('#rd-pages'); if(!box||!r.subjects.length) return;
-    box.insertAdjacentHTML('beforebegin', `<div class="row fp-instory" style="gap:5px;margin:-4px 0 14px"><span class="derived">In this ${esc(L.story)}:</span>${r.subjects.map(x=>`<a class="chiplink" href="#familypedia/${encodeURIComponent(x.slug)}" onclick="closeOverlay()">${TYPE_ICON[x.type]||''} ${esc(x.title)}</a>`).join('')}</div>`); });
+  Promise.all([api('/api/engine/familypedia/story?id='+encodeURIComponent(s.id)), ensureFP()]).then(([r])=>{ const box=$('#rd-pages'); if(!box||!r.subjects.length) return;
+    box.insertAdjacentHTML('beforebegin', `<div class="row fp-instory" style="gap:5px;margin:-4px 0 14px"><span class="derived">In this ${esc(L.story)}:</span>${r.subjects.map(x=>entryChip(x.slug, x.title, x.type, '', undefined, 'onclick="closeOverlay()"')).join(' ')}</div>`); });
   const r = await api('/api/engine/story/render',{method:'POST',body:{id:s.id}});
   pollJob(r.job, null, res=>{ const box=$('#rd-pages'); if(box) box.innerHTML = res.pages.map(p=>`<img src="${fileUrl(p)}&v=${Date.now()}" alt="page">`).join(''); },
     err=>{ const box=$('#rd-pages'); if(box) box.innerHTML=`<div class="note">Couldn't set this ${L.story} as pages: ${esc(err)}</div>`; });
