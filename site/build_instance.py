@@ -190,7 +190,7 @@ R2_JS = """
 (function(){ const A = __A__, T = __T__, f0 = window.demoFileUrl;
   // every image comes from Cloudflare R2: full size by path, thumbnails where the page shows it small
   window.demoFileUrl = rel => { const k = String(rel || '').split('?')[0].replace(/^\\//, ''); return A[k] || f0(rel); };
-  const SMALL = '.fp-photo img, .story img, img.portrait, .ap-img img, .fp-src img, .hero img, .infobox img, .cast img, img.ph, .tl img';
+  const SMALL = '.fp-photo img, .story img, img.portrait, .ap-img img, .fp-src img, .hero img, .infobox img, .cast img, img.ph, .tl img, .hstory img, .hgal img, .hrel img';
   const swap = i => { const s = i.getAttribute('src'); if (T[s] && i.matches(SMALL)) { i.dataset.full = s; i.loading = 'lazy'; i.src = T[s]; } };
   new MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes) { if (n.nodeType !== 1) continue;
       if (n.tagName === 'IMG') swap(n); else n.querySelectorAll && n.querySelectorAll('img').forEach(swap); } })

@@ -16,18 +16,16 @@ BUILDERS.home = async function(el){
         <a class="btn ghost" href="#/settings/connectors" style="text-decoration:none">Connect a model</a></div></div>`;
     return;
   }
+  // Home = Story of the day, Stories, Gallery, Relatives (Rex, 2026-10-10)
   el.innerHTML = `<div class="row" style="margin-bottom:16px"><div><div class="kicker">${esc(S.data.identity.family_name||'Home')}</div>
       <h2 style="margin:0">${esc(S.data.identity.display_title)}</h2></div><span class="spacer"></span>
       <span class="pill" title="${esc(h.updated||'')}">${h.updated?'Last updated '+esc(ago(h.updated)):'Nothing recorded yet'}</span></div>
-    <div class="homegrid">
-      <div class="card" id="h-story"></div>
-      <div class="card" id="h-rel"></div>
-      <div class="card" id="h-needs"></div>
-      <div class="card" id="h-ask"></div>
-      <div class="card" id="h-glance" style="grid-column:1/-1"></div>
-      <div class="card" id="h-feed" style="grid-column:1/-1"></div>
-    </div>`;
-  drawHomeStory(h); drawHomeRelative(h); drawNeeds(h); drawAsk(h); drawGlance(h); drawFeed(h);
+    <div class="card" id="h-story"></div>
+    <section class="hsec"><div class="row"><h3>${esc(L.Stories||'Stories')}</h3><span class="spacer"></span><a href="#stories">All ${esc((L.stories||'stories'))} →</a></div><div class="hstories" id="h-stories"><p class="empty">Loading…</p></div></section>
+    <section class="hsec"><div class="row"><h3>Gallery</h3><span class="spacer"></span><a href="#familypedia?view=photos">All photographs →</a></div><div class="hgal" id="h-gal"><p class="empty">Loading…</p></div></section>
+    <section class="hsec"><div class="row"><h3>Relatives</h3><span class="spacer"></span><a href="#familypedia">Familypedia →</a></div><div id="h-rels"><p class="empty">Loading…</p></div></section>`;
+  drawHomeStory(h);
+  drawHomeStories(); drawHomeGallery(); drawHomeRelatives();
 };
 function drawHomeStory(h){
   const box=$('#h-story'), s=h.story;
@@ -126,4 +124,32 @@ function drawGlance(h){
 function drawFeed(h){
   $('#h-feed').innerHTML = `<h3>Recently</h3><ul class="feed" style="margin-top:8px">${h.activity.length?h.activity.map(a=>`<li><time datetime="${esc(a.at)}" title="${esc(a.at)}">${esc(ago(a.at))}</time><a href="${esc(a.go||'#home')}">${esc(a.text)}</a>${a.by&&a.by!=='me'?`<span class="derived" style="margin-left:auto">${esc(a.by)}</span>`:''}</li>`).join('')
     :'<li><span class="empty" style="padding:0">Nothing yet.</span></li>'}</ul>`;
+}
+
+async function drawHomeStories(){
+  const box=$('#h-stories'); if(!box) return;
+  const r=await api('/api/engine/stories'); const list=(r.stories||[]).filter(s=>s.exists);
+  box.innerHTML = list.map(s=>`<a class="hstory" href="#stories?read=${encodeURIComponent(s.id)}">${s.photo?`<img src="${fileUrl(s.photo)}" alt="" loading="lazy">`:''}
+      <div><b>${esc(s.title)}</b><span>${esc(s.dates||'')}</span>${s.summary?`<em>${esc(s.summary)}</em>`:''}</div></a>`).join('') || '<p class="empty">No stories yet.</p>';
+}
+async function drawHomeGallery(){
+  const box=$('#h-gal'); if(!box) return;
+  const r=await api('/api/engine/familypedia/catalogue?what=photos'); const DOC=/clipping|newspaper|directory|deed|record|register|census|certificate|yearbook|catalog|patent|court|letter|page|card|form|ledger|roll|report|notice|obituary|article|advert|index|drawing|diagram|map|scan|transcript|minutes|program/i;
+  const seen=new Set(); const items=(r.items||[]).filter(p=>{ if(!p.thumb||DOC.test(p.caption||'')||DOC.test(p.thumb)) return false;
+    const k=(p.caption||p.thumb).toLowerCase(); if(seen.has(k)) return false; seen.add(k); return true; });
+  // real photographs first, then illustrations; a stable daily shuffle so the gallery changes from day to day
+  const day=Math.floor(Date.now()/864e5); const key=p=>{let x=0; for(const c of String(p.id)+day) x=(x*31+c.charCodeAt(0))|0; return x;};
+  const pick=[...items.filter(p=>!p.illustration), ...items.filter(p=>p.illustration)].sort((a,b)=>(a.illustration-b.illustration)||(key(a)-key(b))).slice(0,24);
+  box.innerHTML = pick.map(p=>`<a href="${fileUrl(p.thumb)}" target="_blank" rel="noopener" title="${esc(p.caption||'')}"><img src="${fileUrl(p.thumb)}" alt="${esc(p.caption||'')}" loading="lazy">${p.illustration?'<span class="pill warn">illustration</span>':''}</a>`).join('') || '<p class="empty">No photographs yet.</p>';
+}
+async function drawHomeRelatives(){
+  const box=$('#h-rels'); if(!box) return;
+  const r=await api('/api/engine/familypedia'); const ppl=(Array.isArray(r)?r:(r.articles||[])).filter(a=>a.type==='person');
+  // one entry per relative: the articles one person has (nicknames, "Last, First" museum forms) fold under their name
+  const people={}; ppl.forEach(a=>{ const n=a.family_name||a.title; (people[n]=people[n]||[]).push(a); });
+  const rank=a=>(a.portrait?1e6:0)+(a.sources||0)*10+(a.units||0)+(a.mentions||0);
+  const one=Object.entries(people).map(([n,arts])=>{ const best=[...arts].sort((x,y)=>rank(y)-rank(x))[0];
+    return {...best, title:n, portrait:best.portrait||(arts.find(x=>x.portrait)||{}).portrait}; });
+  const byLetter={}; one.sort((a,b)=>a.title.localeCompare(b.title)).forEach(a=>{ const k=(a.title.replace(/^[^A-Za-z]+/,'')[0]||'#').toUpperCase(); (byLetter[k]=byLetter[k]||[]).push(a); });
+  box.innerHTML = Object.keys(byLetter).sort().map(k=>`<div class="hrel-group"><div class="hrel-letter">${k}</div><div class="hrels">${byLetter[k].map(a=>`<a class="hrel" href="#familypedia/${encodeURIComponent(a.slug)}">${a.portrait&&a.portrait.thumb?`<img src="${fileUrl(a.portrait.thumb)}" alt="" loading="lazy">`:''}<span>${esc(a.title)}</span></a>`).join('')}</div></div>`).join('') || '<p class="empty">No relatives yet.</p>';
 }

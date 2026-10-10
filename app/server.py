@@ -1704,7 +1704,13 @@ def _lead_photo(project, st):
 def _opening(project, st, n=3):
     raw = (project.root / st["file"]).read_text(encoding="utf-8", errors="ignore")
     text = _plain_story(st, raw, drop_bridges=True)
-    body = next((para for para in text.split("\n\n") if len(para.split()) > 12), text)
+    def prose(para):                                  # skip typeset layout code (#block, = headings, {…}, width: …)
+        q = para.strip()
+        return len(q.split()) > 12 and not re.search(r"[{}#\\]|^[=/\[(]|\b(width|height|stroke|inset|fill|align)\s*:|\)\s*\[", q)
+    paras = [re.sub(r"(?<!\w)[_*]([^_*]+)[_*](?!\w)", r"\1", x) for x in text.split("\n\n")]
+    body = next((para for para in paras if prose(para)), "")
+    if not body:
+        return ""
     body = re.sub(r"\s+", " ", body)
     sentences = re.findall(r"[^.!?]+[.!?]+[”\"’']?", body)
     out = sentences[:n]

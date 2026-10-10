@@ -307,3 +307,27 @@ function bindTagPanel(target, redraw, done){
   $('#tg-add').onclick=()=>openPicker({title:'Tag to…', onPick:async s=>{ await api('/api/engine/tags',{method:'POST',body:{targets:[target], subject:s.slug, state:'accepted'}}); await loadFamilypedia(true); redraw(); done&&done(); }});
   $$('[data-tset]').forEach(b=>b.onclick=async()=>{ await api('/api/engine/tags',{method:'POST',body:{targets:[target], subject:b.dataset.tset, state:b.dataset.state, evidence:b.dataset.ev||''}}); await loadFamilypedia(true); redraw(); done&&done(); });
 }
+
+/* Recording citations such as "[S5 01:25:44]" written into prose become small chips, so a reader never sees raw
+   bracket codes in a sentence (Rex, 2026-10-10). Text that is already a citation chip on its own is left alone. */
+(function(){
+  const RE=/\s*\[(S\d+) (\d{1,2}:\d{2}:\d{2})\]/g, SKIP=new Set(['SCRIPT','STYLE','TEXTAREA','INPUT','CODE','PRE']);
+  const fix=root=>{
+    const w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT), hits=[];
+    for(let n=w.nextNode(); n; n=w.nextNode()){
+      const p=n.parentElement; if(!p || SKIP.has(p.tagName) || p.closest('.ts-chip,[contenteditable="true"]')) continue;
+      if(!n.nodeValue.includes('[S')) continue; RE.lastIndex=0; if(!RE.test(n.nodeValue)) continue;
+      if(p.textContent.trim().replace(RE,'')==='') continue;          // already a chip of its own
+      hits.push(n);
+    }
+    for(const n of hits){
+      const f=document.createDocumentFragment(); let last=0, m; const s=n.nodeValue; RE.lastIndex=0;
+      while((m=RE.exec(s))){ f.append(s.slice(last,m.index)); const c=document.createElement('span'); c.className='ts-chip';
+        c.title=`Recording ${m[1]} at ${m[2]}`; c.textContent=`${m[1]} ${m[2]}`; f.append(' ',c); last=RE.lastIndex; }
+      f.append(s.slice(last)); n.replaceWith(f);
+    }
+  };
+  let queued=false;
+  new MutationObserver(()=>{ if(queued) return; queued=true; requestAnimationFrame(()=>{ queued=false; fix(document.body); }); })
+    .observe(document.documentElement,{childList:true,subtree:true});
+})();

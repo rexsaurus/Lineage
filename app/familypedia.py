@@ -344,6 +344,41 @@ def _family_names(project):
                 out.add(norm(parts[-1] + ", " + " ".join(parts[:-1])))
     return out
 
+
+def _family_canon(project):
+    """norm(name | alias | 'Last, First' | 'First Last') -> the person's name in data/family_members.csv, so the
+    several articles one relative has (museum index forms, nicknames) can be shown as one person."""
+    p = project.root / "data" / "family_members.csv"
+    out, firstlast = {}, {}
+    if not p.exists():
+        return out
+    for r in _read_csv(p):
+        canon = (r.get("name") or "").strip()
+        for n in [canon] + (r.get("aliases") or "").split(";"):
+            n = re.sub(r"\s*\([^)]*\)\s*$", "", n.strip())
+            if len(n) < 2:
+                continue
+            out.setdefault(norm(n), canon)
+            parts = n.replace(".", "").split()
+            if len(parts) >= 2:
+                out.setdefault(norm(parts[-1] + ", " + " ".join(parts[:-1])), canon)
+                firstlast.setdefault((parts[0].lower(), parts[-1].lower()), set()).add(canon)
+    for k, v in firstlast.items():
+        if len(v) == 1:
+            out.setdefault("fl:" + k[0] + "|" + k[1], next(iter(v)))
+    return out
+
+
+def family_name_of(canon, title):
+    if not canon:
+        return None
+    t = norm(title)
+    if t in canon:
+        return canon[t]
+    m = re.match(r"\s*([^,]+),\s*(\S+)", title)                       # Burnham, Charles Lee
+    first, last = (m.group(2), m.group(1)) if m else ((title.split() or [""])[0], (title.split() or [""])[-1])
+    return canon.get("fl:" + first.replace(".", "").lower() + "|" + last.strip().lower())
+
 # ------------------------------------------------------------------------------- the index
 class Subject(dict):
     pass
@@ -811,15 +846,28 @@ def summaries(project):
     """Every article, with the counts the browse views sort and filter by. Compatible with the
     older person/place/event list: slug, title, type, stub, units, events, mentions."""
     ix = index(project)
+    canon = _family_canon(project)
     out = []
     for s in ix["subs"].values():
         out.append({"slug": s["slug"], "title": s["title"], "type": s["type"], "kind": s["kind"],
                     "aliases": sorted(s["aliases"]), "stub": s["stub"], "score": s["score"],
                     "units": sorted(s["units"]), "events": sorted(s["events"]), "mentions": len(s["mention_paras"]),
                     "records": len(s["records"]), "photos": len(s["photos"]), "stories": len(s["stories"]),
-                    "sources": len(s["sources"]), "has_coords": bool(s["coords"]), "origins": sorted(s["origins"])})
+                    "sources": len(s["sources"]), "has_coords": bool(s["coords"]), "origins": sorted(s["origins"]),
+                    "portrait": _portrait_of(ix, s),
+                    "family_name": family_name_of(canon, s["title"]) if s["type"] == "person" else None})
     return sorted(out, key=lambda a: (TYPES.index(a["type"]), a["title"].lower()))
 
+
+
+def _portrait_of(ix, s):
+    """The image a list shows beside a person: the chosen portrait, else a real photograph, else a chapter cover."""
+    if s["type"] != "person":
+        return None
+    ph = [ix["photos"][p] for p in dict.fromkeys(s["photos"]) if p in ix["photos"] and ix["photos"][p].get("thumb")]
+    # only an image chosen as this person's portrait (data/portraits.csv); a shared group photo is not a likeness
+    pick = next((p for p in ph if p.get("portrait")), None)
+    return {"thumb": pick["thumb"], "illustration": bool(pick.get("illustration"))} if pick else None
 
 def link_table(project):
     """Names the project knows -> article, longest first, for [[links]] and automatic links."""
