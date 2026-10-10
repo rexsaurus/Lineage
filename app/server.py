@@ -1164,6 +1164,12 @@ def story_apparatus(project, story_id):
             text = re.sub(r"#\w+\[|[\[\]]|#\w+", "", text)
             chips = CITE_TOKEN.findall(src)
             rest = CITE_TOKEN.sub("", src).strip(" ;,-")
+            # layout code is not prose: drop key: value arguments, quoted file paths and stray brackets
+            text = re.sub(r"\b[\w-]+:\s*(?:\"[^\"]*\"|\d+(?:\.\d+)?(?:in|pt|em|%)?|true|false|none)", "", text)
+            text = re.sub(r"\"/[^\"]+\"|[(){}\"*_]|\\u\{[0-9A-Fa-f]+\}", " ", text)
+            text = re.sub(r"\s*,\s*(?=,|$)", "", re.sub(r"\s+", " ", text)).strip(" ,;")
+            if len(re.findall(r"[A-Za-z]{3,}", text)) < 6 or re.search(r"\b(?:setting|epigraph|summary|width|caption)\b", text):
+                text = ""
             paras.append({"excerpt": re.sub(r"\s+", " ", text).strip()[:220], "cites": chips, "note": rest})
             buf = []
             continue
@@ -1762,6 +1768,68 @@ def _opening(project, st, n=3):
         out = out[:-1]                                # never stop inside a quotation
     return " ".join(x.strip() for x in out) or body[:400]
 
+
+
+def engine_gallery(project):
+    """Original photographs only, each once (Rex, 2026-10-10: "Only put original raw photos in the gallery"):
+    no illustrations, no digital restorations (anything with an unretouched original), no document scans, no crops
+    or halves of the same picture — near-duplicates are found by a perceptual hash and the largest copy is kept."""
+    import familypedia as _fp
+    root = project.root
+    restored = set()
+    rj = root / "data" / "image_restorations.json"
+    if rj.exists():
+        try:
+            restored = {k.lstrip("/") for k in json.loads(rj.read_text())}
+        except Exception:
+            pass
+    DOC = re.compile(r"clipping|newspaper|directory|deed|record|register|census|certificate|yearbook|catalog|patent|court|letter|"
+                     r"page|card|form|ledger|roll|report|notice|obituary|article|advert|index|drawing|diagram|map|scan|transcript|"
+                     r"minutes|program|journal|argus|gold bug|red book|microcosm|blue and white|staff box|\bp\. ?\d|nominal|"
+                     r"embarkation|licen[cs]e|births|penitentiary|digest|schedule|\bhalf\b|\bthe same\b|crop|close\b|styled as|stylised|stylized|engraving|aged-print|rendering|generated|illustration|\bthe ally\b|ally\d|blue-and-white|/cover\.", re.I)
+    items, cat = [], _fp.catalogue(project, "photos")
+    # an image is out if ANY catalogue entry for it is an illustration or a document (one file can have several rows)
+    banned = {(it.get("thumb") or "").lstrip("/") for it in cat
+              if it.get("illustration") or DOC.search(it.get("caption") or "") or DOC.search(it.get("thumb") or "")}
+    seen = set()
+    for it in cat:
+        th = (it.get("thumb") or "").lstrip("/")
+        if not th or th in banned or th in seen or th in restored or "-restored" in th or "/_orig/" in th:
+            continue
+        seen.add(th)
+        f = root / th
+        if not f.is_file():
+            continue
+        items.append((it, f))
+    try:
+        from PIL import Image
+    except Exception:
+        Image = None
+    def dhash(f):
+        with Image.open(f) as im:
+            g = im.convert("L").resize((9, 8))
+            px = list(g.getdata())
+            w, h = im.size
+        bits = 0
+        for r in range(8):
+            for c in range(8):
+                bits = (bits << 1) | (px[r * 9 + c] > px[r * 9 + c + 1])
+        return bits, w * h
+    kept = []   # (hash, area, item)
+    for it, f in items:
+        if Image is None:
+            kept.append((None, 0, it)); continue
+        try:
+            hsh, area = dhash(f)
+        except Exception:
+            continue
+        dup = next((k for k in kept if k[0] is not None and bin(k[0] ^ hsh).count("1") <= 10), None)
+        if dup:
+            if area > dup[1]:
+                kept[kept.index(dup)] = (hsh, area, it)
+            continue
+        kept.append((hsh, area, it))
+    return {"items": [k[2] for k in kept]}
 
 def home_story(project, reroll=0):
     drafts = [st for st in engine_stories(project) if st["exists"]]
@@ -3215,6 +3283,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def h_requests(self, q):
         return self.send_json(_requests(self.project))
 
+    def e_gallery(self, q):
+        return self.send_json(engine_gallery(self.project))
+
     def g_graph(self, q):
         return self.send_json(genealogy_graph(self.project))
 
@@ -3931,6 +4002,7 @@ ROUTES = {
     ("GET", "/api/engine/tags"): Handler.e_tags,
     ("POST", "/api/engine/tags"): Handler.e_tags_set,
     ("GET", "/api/engine/home"): Handler.h_home,
+    ("GET", "/api/engine/gallery"): Handler.e_gallery,
     ("GET", "/api/engine/attention"): Handler.h_attention,
     ("GET", "/api/engine/requests"): Handler.h_requests,
     ("POST", "/api/engine/request/draft"): Handler.h_request_draft,

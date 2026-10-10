@@ -120,6 +120,14 @@ class Instance(bs.Demo):
         shutil.rmtree(self.proj.parent, ignore_errors=True)
         self.proj.parent.mkdir(parents=True)
         skipped, denied = copy_project(self.src, self.proj, SKIP + self.extra_skip)
+        # images the book prints from skipped folders (listed by the project in data/lineage_assets.txt): put them back at
+        # their own paths so chapters that reference them still render (e.g. museum photographs under facts/records/_raw/)
+        la = self.src / "data" / "lineage_assets.txt"
+        for rel in (la.read_text().split() if la.exists() else []):
+            f = self.src / rel
+            if f.is_file() and not (self.proj / rel).exists():
+                (self.proj / rel).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(f, self.proj / rel)
         bs.log(f"  scratch copy: skipped {len(skipped)} paths, {len(denied)} unreadable files")
         sys.path.insert(0, str(bs.APP))
         import server  # noqa: E402

@@ -1008,13 +1008,22 @@ def article(project, slug):
     open_q = _open_questions(project, ix, s, events, infobox)
     beyond = {"items": e.get("beyond") or [], "suggestions": _beyond_suggestions(project, s)}
     lead = e.get("lead") or _derived_lead(s, infobox, events, units, records, photos, stories, related)
+    # a passage belongs on this page only if it names the subject (Rex, 2026-10-10: quotes "with no mention of him")
+    names = {w for k in [s["title"], *s["aliases"]] for w in [norm(k)] if len(w) >= 3}
+    tokens = {t for n in names for t in [n.split()[0], n.split()[-1]] if len(t) >= 3} if s["type"] == "person" else names
+    def _names_subject(m):
+        t = norm(m.get("text", ""))
+        return any(n in t for n in names) or any(re.search(r"\b" + re.escape(t2) + r"\b", t) for t2 in tokens)
+    passages = [m for m in passages if _names_subject(m)]
     out = {"slug": slug, "title": s["title"], "type": s["type"], "type_label": TYPE_SINGULAR[s["type"]], "kind": s["kind"],
            "aliases": sorted(s["aliases"]), "stub": s["stub"], "score": s["score"], "origins": sorted(s["origins"]),
            "lead": lead, "lead_by": "me" if e.get("lead") else "derived", "notes": e.get("notes", ""),
            "infobox": infobox, "tiers": tiers, "passages": passages, "mentions": passages,
            "sources": sources, "records": records, "photos": photos, "stories": stories,
-           "book_sources": [{"story": sid, "title": ix["book_sources"][sid]["title"], "items": ix["book_sources"][sid]["items"]}
-                            for sid in sorted(s["stories"], key=lambda z: (len(z), z)) if sid in ix.get("book_sources", {})],
+           # only the sources that name the subject (Rex, 2026-10-10: "only sources directly naming the person")
+           "book_sources": [g for g in ({"story": sid, "title": ix["book_sources"][sid]["title"],
+                                         "items": [it for it in ix["book_sources"][sid]["items"] if _names_subject({"text": it.get("text", "")})]}
+                                        for sid in sorted(s["stories"], key=lambda z: (len(z), z)) if sid in ix.get("book_sources", {})) if g["items"]],
            "units": [{"id": u["id"], "title": u["title"], "chapter": u["chapter"]} for u in units],
            "events": [{"id": ev["event_id"], "title": ev.get("event", "").rstrip("."), "date": ev.get("date_display", "")} for ev in events],
            "related": related, "backlinks": backlinks, "open_questions": open_q, "beyond": beyond,
@@ -1023,7 +1032,30 @@ def article(project, slug):
            "history": e.get("history", [])[-12:]}
     if s["type"] == "event":
         out.update(_event_extra(project, s))
+    if s["type"] == "person":
+        out["wiki"], out["wiki_title"] = _wiki_html(project, s)
     return out
+
+
+def _wiki_html(project, s):
+    """The curated encyclopedia article (data/wiki/<family-name slug>.md) for this person, rendered; or None."""
+    import wiki
+    canon = _family_canon(project)
+    fam = family_name_of(canon, s["title"]) or s["title"]
+    art = wiki.load(project.root, fam)
+    if not art:
+        return None, None
+    best = {}
+    for a in summaries(project):
+        if a.get("family_name"):
+            cur = best.get(a["family_name"])
+            if not cur or (bool(a.get("portrait")), a.get("sources") or 0) > (bool(cur.get("portrait")), cur.get("sources") or 0):
+                best[a["family_name"]] = a
+    import server
+    titles = {st["title"]: st["id"] for st in server.engine_stories(project) if st.get("exists")}
+    person = lambda n: ("#familypedia/" + best[n]["slug"]) if n in best else ("#genealogy?focus=" + wiki.slug(n))
+    chapter = lambda t: ("#stories?read=" + titles[t]) if t in titles else None
+    return wiki.render(art, person, chapter, file_url=lambda p: "lineage-file:" + p), art["short"]
 
 
 def _genealogy_id(project, s):

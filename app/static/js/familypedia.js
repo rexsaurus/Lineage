@@ -143,6 +143,7 @@ async function showArticle(slug){
   const a = await api('/api/engine/article?slug='+encodeURIComponent(slug));
   if(a.error){ box.innerHTML=`<div class="card"><p class="empty">${esc(a.error)}</p></div>`; return; }
   S.article=a;
+  if(a.wiki) return drawWikiArticle(a);
   const chip = c => c ? (/^https?:/.test(c)?`<a class="cite" href="${esc(c)}" target="_blank" rel="noopener">source ↗</a>`:`<a class="cite" data-cite="${esc(c)}">${esc(c)}</a>`) : '';
   // a person's picture is never an illustration; other subjects may lead with one, marked
   const lead = a.photos.find(p=>p.portrait && p.thumb) || a.photos.find(p=>p.thumb && !p.illustration) || a.photos.find(p=>p.chapter_cover && p.thumb) || (a.type==='person' ? null : a.photos.find(p=>p.thumb));
@@ -345,3 +346,27 @@ function bindTagPanel(target, redraw, done){
   new MutationObserver(()=>{ if(queued) return; queued=true; requestAnimationFrame(()=>{ queued=false; fix(document.body); }); })
     .observe(document.documentElement,{childList:true,subtree:true});
 })();
+
+
+/* A curated encyclopedia article (data/wiki/<name>.md): infobox, lead, sections and numbered references, in place of
+   the derived page (Rex, 2026-10-10: "full Wikipedia entries for each family member … sources linked at the bottom"). */
+function drawWikiArticle(a){
+  const box=$('#wk-article');
+  const html=a.wiki.replace(/src="lineage-file:([^"]+)"/g,(m,p)=>`src="${fileUrl(p)}"`);
+  const outLinks=[
+    a.events.length?`<a class="chiplink" href="#timeline?focus=${encodeURIComponent(a.events[0].id)}">On the timeline · ${a.events.length}</a>`:'',
+    `<a class="chiplink" href="#genealogy?focus=${encodeURIComponent(a.genealogy||a.slug)}">In the tree</a>`,
+    // only the chapter about this person; the article's own "In The Book of Daniel" section lists the rest
+    ...a.stories.filter(s=>[a.title, a.wiki_title].includes(s.title)).map(s=>storyChip(s.id, s.title))].filter(Boolean).join('');
+  const photos=a.photos.filter(p=>p.thumb);
+  box.innerHTML=`<article class="card article wiki-article">
+    <div class="kicker">${esc(a.type_label)} · encyclopedia article</div><h2 class="wtitle">${esc(a.wiki_title||a.title)}</h2>
+    ${outLinks?`<div class="row" style="gap:6px;margin:4px 0 12px">${outLinks}</div>`:''}
+    ${html}
+    ${photos.length?`<section class="tier" style="clear:both"><h4>Photographs and illustrations · ${photos.length}</h4><div class="fp-photos">${photos.map(p=>`<figure class="fp-photo"><img src="${fileUrl(p.thumb)}" alt="${esc(p.caption)}" loading="lazy"><figcaption>${esc(p.caption)}${p.illustration?' <span class="pill warn">illustration</span>':''}</figcaption></figure>`).join('')}</div></section>`:''}
+    ${a.backlinks.length?`<section class="tier"><h4>What links here · ${a.backlinks.length}</h4>${a.backlinks.map(b=>artLink(b.slug,b.title,b.type)).join(' ')}</section>`:''}
+  </article>`;
+  $$('#wk-article .wiki a[href^="#ref-"], #wk-article .wiki a[href^="#cite-"], #wk-article .wtoc a, #wk-article .wiki a[href="#references"]').forEach(x=>x.onclick=e=>{
+    e.preventDefault(); const t=document.getElementById(x.getAttribute('href').slice(1)); if(t) t.scrollIntoView({behavior:'smooth', block:'center'}); });
+  window.scrollTo(0,0);
+}

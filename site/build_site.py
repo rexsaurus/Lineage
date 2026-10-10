@@ -541,7 +541,7 @@ class Demo:
                   "/api/engine/timeline.svg", "/api/engine/genealogy", "/api/engine/genealogy/review",
                   "/api/engine/genealogy.ged", "/api/engine/attention", "/api/engine/requests", "/api/engine/trash",
                   "/api/engine/episodes", "/api/engine/familypedia/catalogue?what=records",
-                  "/api/engine/familypedia/catalogue?what=photos"]:
+                  "/api/engine/familypedia/catalogue?what=photos", "/api/engine/gallery"]:
             self.fetch(p)
         # Home rotates its story and relative; find each cycle and keep every combination
         def period(param, field):
@@ -593,7 +593,7 @@ class Demo:
         code, _, b = self.req("/api/engine/story/render", "POST", {"id": sid})
         job = json.loads(b).get("job") if code == 200 else None
         res = None
-        for _ in range(600):
+        for _ in range(2400):                           # long chapters (18+ pages) take minutes; 12 min ceiling
             if not job:
                 break
             j = self.get_json("/api/job/" + job) or {}
@@ -604,6 +604,8 @@ class Demo:
                 log(f"  story {sid}: render failed: {j.get('step')}")
                 break
             time.sleep(0.3)
+        if job and not res:
+            log(f"  story {sid}: render did not finish; the snapshot will not have its pages")
         if res:
             res.pop("id", None)                         # the server's random job id
             self.store(f"/api/job/demo-render-{sid}", 200, "application/json", None, override=res)
