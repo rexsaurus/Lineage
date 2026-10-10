@@ -62,7 +62,8 @@ $LINEAGE/scripts/transcribe.sh          # WhisperX large-v3 → transcript/raw/
 ```
 - **Keep the initial prompt short: a few surnames, no sentence-like lists.** Long prompts
   get echoed into the transcript as fake speech during silences. After every run, grep the
-  output for the prompt text; add echoes to `drop_segments` in corrections.json.
+  output for the prompt text; add echoes to `drop_segments` in corrections.json (a whole
+  segment) or `drop_word_runs` (an echo inside a real segment, removed word by word).
 - Version breakage between PyTorch, huggingface_hub and pyannote is patched in
   `$LINEAGE/scripts/hf_compat.py` (and the `wx.py` wrapper); import it rather than
   pinning old versions.
@@ -104,7 +105,8 @@ over 2 s, with its timestamp:
 **Sam** [S1 00:15:30] Was that the house on Elm?
 ```
 `corrections.json` holds `speaker_map`, `spelling` (`{find, replace}` regexes the author
-approved), `drop_segments` (prompt echoes and other artifacts) and optional `scrub_inline`.
+approved), `drop_segments` (prompt echoes and other artifacts) and optional `drop_word_runs`
+and `scrub_inline`.
 Fix words there, never by hand-editing one layer.
 
 ### 7. Label each session

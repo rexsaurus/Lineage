@@ -5,11 +5,19 @@
   build_book.py glossary   # chapters/92-glossary.typ from data/reader_glossary.csv
   build_book.py sources    # chapters/93-about-the-recordings.typ from transcript/sessions.csv
   build_book.py main       # book/main.typ from data/chapters.csv + existing back matter
-  build_book.py compile [--final]
+  build_book.py compile [--final] [--pages [--ppi N]]
   build_book.py all [--final]
   build_book.py sync       # copy $LINEAGE/book/template.typ and missing front files into book/
+  build_book.py chapter chapters/NN-x.typ [--final] [--pages [--ppi N]]
+                           # preview one chapter alone: output/preview-NN-x.pdf
+
+--pages also writes one image per page to output/pages/<name>/ (JPEG if Pillow is
+installed, else PNG), for sharing pages outside the PDF. --ppi defaults to the largest
+whole value that keeps the long side within 2048 px (204 for 7x10); use --final with it
+so the images carry no draft highlighting. Uses the typst CLI, or the `typst` Python
+package when the CLI is missing.
 """
-import csv, datetime, json, shutil, subprocess, sys
+import csv, datetime, json, math, shutil, subprocess, sys
 from pathlib import Path
 import os
 import yaml
@@ -56,6 +64,24 @@ def cmd_sync():
     print(f"template synced from {src}")
 
 
+ILLUSTRATIONS_NOTE = "The illustrations in this book are artist's renderings, not photographs."
+
+
+def illustrations_line(c):
+    """The front-matter line for illustrations (photo-processor §4): printed when any image
+    placed in a chapter is indexed as kind: illustration in photos/photo_index.csv.
+    book.yaml front.illustrations_note changes the wording; false or "" leaves it out."""
+    note = (c.get("front") or {}).get("illustrations_note", ILLUSTRATIONS_NOTE)
+    idx = Path("photos/photo_index.csv")
+    if not note or not idx.exists():
+        return ""
+    with open(idx, newline="", encoding="utf-8") as f:
+        placed = [r for r in csv.DictReader(f) if (r.get("kind") or "").strip().lower() == "illustration"
+                  and (r.get("chapter") or "").strip()
+                  and (r.get("status") or "").strip().lower() not in ("candidate", "removed", "superseded")]
+    return f"\n\n  {t(note)}" if placed else ""
+
+
 def cmd_front():
     c = cfg(); n = c.get("narrator", {}); i = c.get("interviewer", {})
     title = c.get("title") or "Untitled"; sub = c.get("subtitle") or ""
@@ -83,7 +109,7 @@ def cmd_front():
   Written from recorded interviews with {t(n.get("name"))}. Every fact and quotation
   traces to the original recordings, which are preserved by the family.
 
-  Set in EB Garamond.
+  Set in EB Garamond.{illustrations_line(c)}
 ]
 ''')
     if not Path("book/front/dedication.typ").exists():
@@ -170,14 +196,36 @@ def cmd_main():
 FONT_DIR = HOME / "fonts"
 
 
-def typst_compile(out, final, pad):
-    cmd = ["typst", "compile", "--root", "."]
-    if FONT_DIR.exists(): cmd += ["--font-path", str(FONT_DIR)]
-    cmd += ["--input", f"draft={'false' if final else 'true'}", "--input", f"pad={'true' if pad else 'false'}",
-            "book/main.typ", out]
-    r = subprocess.run(cmd, capture_output=True, text=True)
-    if r.returncode: sys.exit(r.stderr)
-    return r.stderr
+def typst_compile(src, out, inputs, fmt=None, ppi=None):
+    """Compile with the typst CLI, or the `typst` Python package when the CLI is missing.
+    `out` may hold {0p} (page number) for one image per page."""
+    if shutil.which("typst"):
+        cmd = ["typst", "compile", "--root", "."]
+        if FONT_DIR.exists(): cmd += ["--font-path", str(FONT_DIR)]
+        for k, v in inputs.items(): cmd += ["--input", f"{k}={v}"]
+        if fmt: cmd += ["--format", fmt]
+        if ppi: cmd += ["--ppi", str(ppi)]
+        r = subprocess.run(cmd + [src, out], capture_output=True, text=True)
+        if r.returncode: sys.exit(r.stderr)
+        return r.stderr
+    try:
+        import typst
+    except ImportError:
+        sys.exit("typst not found: run `make install` (or `pip install typst`), or see docs/HOWTO.md")
+    kw = {"root": ".", "sys_inputs": inputs, "font_paths": [str(FONT_DIR)] if FONT_DIR.exists() else []}
+    if fmt: kw["format"] = fmt
+    if ppi: kw["ppi"] = ppi
+    try:
+        if "{0p}" in out:  # the package returns one image per page instead of naming files
+            pages = typst.compile(src, **kw)
+            pages = pages if isinstance(pages, list) else [pages]
+            w = len(str(len(pages)))
+            for i, b in enumerate(pages, 1): Path(out.replace("{0p}", str(i).zfill(w))).write_bytes(b)
+        else:
+            typst.compile(src, output=out, **kw)
+    except Exception as e:  # the package raises on compile errors instead of returning a code
+        sys.exit(str(e))
+    return ""
 
 
 def pdf_pages(out):
@@ -188,24 +236,88 @@ def pdf_pages(out):
     return len(re.findall(rb"/Type\s*/Page[^s]", Path(out).read_bytes()))
 
 
-def cmd_compile(final=False):
-    if not shutil.which("typst"): sys.exit("typst not found: run `make install` or see docs/HOWTO.md")
-    out = "output/book-final.pdf" if final else "output/book-draft.pdf"
-    Path("output").mkdir(exist_ok=True)
-    warn = typst_compile(out, final, pad=False)
-    n = pdf_pages(out)
-    if n % 2:
-        warn = typst_compile(out, final, pad=True); n = pdf_pages(out)
+def inputs_for(final, pad=False):
+    return {"draft": "false" if final else "true", "pad": "true" if pad else "false"}
+
+
+def print_warnings(warn):
     for line in warn.splitlines():
         if line.startswith("warning:") and "unknown font family" not in line: print(line)
+
+
+def default_ppi():
+    """Largest whole ppi that keeps the page's long side within 2048 px."""
+    trim = str((cfg().get("print") or {}).get("trim", "7x10"))
+    try: h = max(float(x) for x in trim.lower().split("x"))
+    except ValueError: h = 10.0
+    return math.floor(2048 / h)
+
+
+def export_pages(src, name, inputs, ppi=None):
+    """One image per page in output/pages/<name>/; JPEG (quality 90) when Pillow is available."""
+    d = Path("output/pages") / name
+    if d.exists(): shutil.rmtree(d)
+    d.mkdir(parents=True)
+    ppi = ppi or default_ppi()
+    typst_compile(src, str(d / "page-{0p}.png"), inputs, fmt="png", ppi=ppi)
+    pngs = sorted(d.glob("page-*.png"))
+    try:
+        from PIL import Image
+        for p in pngs:
+            Image.open(p).convert("RGB").save(p.with_suffix(".jpg"), quality=90); p.unlink()
+        kind = "JPEG"
+    except ImportError:
+        kind = "PNG"
+    print(f"{len(pngs)} page images ({kind}, {ppi} ppi) in {d}/")
+
+
+def cmd_compile(final=False, pages=False, ppi=None):
+    out = "output/book-final.pdf" if final else "output/book-draft.pdf"
+    Path("output").mkdir(exist_ok=True)
+    warn = typst_compile("book/main.typ", out, inputs_for(final))
+    n, pad = pdf_pages(out), False
+    if n % 2:
+        pad = True
+        warn = typst_compile("book/main.typ", out, inputs_for(final, pad)); n = pdf_pages(out)
+    print_warnings(warn)
     print(f"compiled {out} Pages: {n}")
+    if pages: export_pages("book/main.typ", "book", inputs_for(final, pad), ppi)
+
+
+def cmd_chapter(file, final=False, pages=False, ppi=None):
+    """Preview one chapter on its own, in the book's template, trim and folios, without
+    rebuilding the whole book. Writes output/preview.typ (generated) and the PDF."""
+    if not file or not Path(file).exists(): sys.exit(f"chapter file not found: {file}")
+    if not Path("book/template.typ").exists(): cmd_sync()
+    c = cfg(); name = Path(file).stem
+    Path("output").mkdir(exist_ok=True)
+    Path("output/preview.typ").write_text("\n".join([
+        "// GENERATED by build_book.py chapter: a one-chapter preview. Not part of the book.",
+        '#import "/book/template.typ": *',
+        f'#show: book.with(title: "{q(c.get("title"))}", subtitle: "{q(c.get("subtitle"))}",',
+        f'  author: "{q(c.get("interviewer", {}).get("name"))}", trim: "{q(c.get("print", {}).get("trim", "7x10"))}")',
+        "#show: main-matter",
+        f'#include "/{Path(file).as_posix().lstrip("/")}"', ""]))
+    out = f"output/preview-{name}.pdf"
+    print_warnings(typst_compile("output/preview.typ", out, inputs_for(final)))
+    n = pdf_pages(out)
+    print(f"compiled {out} Pages: {n}")
+    min_pages = int(((c.get("chapters") or {}).get("min_pages", 10)) or 0)
+    if min_pages and n < min_pages and not name[:2] in ("90", "91", "92", "93", "94"):
+        print(f"note: {n} pages, under the {min_pages}-page chapter minimum (book.yaml chapters.min_pages). "
+              "Reach it with real material (the subject's full stories, records, sourced context) or "
+              "combine this chapter with a neighbour; never pad.")
+    if pages: export_pages("output/preview.typ", name, inputs_for(final), ppi)
 
 
 if __name__ == "__main__":
     a = sys.argv[1:] or [""]
-    final = "--final" in a
+    final, pages = "--final" in a, "--pages" in a
+    ppi = int(a[a.index("--ppi") + 1]) if "--ppi" in a and a.index("--ppi") + 1 < len(a) else None
+    args = [x for i, x in enumerate(a) if not x.startswith("--") and (i == 0 or a[i - 1] != "--ppi")]
     cmds = {"sync": cmd_sync, "front": cmd_front, "glossary": cmd_glossary, "sources": cmd_sources,
-            "main": cmd_main, "compile": lambda: cmd_compile(final)}
+            "main": cmd_main, "compile": lambda: cmd_compile(final, pages, ppi),
+            "chapter": lambda: cmd_chapter(args[1] if len(args) > 1 else "", final, pages, ppi)}
     if a[0] == "all":
         for k in ("sync", "front", "glossary", "sources", "main", "compile"): cmds[k]()
     elif a[0] in cmds:

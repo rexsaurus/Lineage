@@ -27,6 +27,9 @@ audio/ ──transcribe.sh──► transcript/raw/<S>.json ──diarize.py─�
 chapters ──verify_quotes.py──► exit 0 or a list of problems
 facts/records/_raw ──export_sources.py──► facts/records/sources + MANIFEST.csv
 track CSV ──make_route_map.py──► 300 dpi map plate
+record URLs ──fetch_records.py──► facts/records/_raw/<slug>/ + the chapter dossier
+dossiers/<slug>/SOURCES.csv ──dossier.py records / check──► THE RECORDS, 100% checked
+photos/images-plan.yaml ──generate_images.py──► photos/generated/<id>.png + print copy
 ```
 
 Contents: [transcribe.sh](#transcribesh) · [sessions.py](#sessionspy) ·
@@ -36,7 +39,8 @@ Contents: [transcribe.sh](#transcribesh) · [sessions.py](#sessionspy) ·
 [corrections.example.json](#correctionsexamplejson) ·
 [make_units.py](#make_unitspy) · [shape.py](#shapepy) ·
 [verify_quotes.py](#verify_quotespy) · [export_sources.py](#export_sourcespy) ·
-[make_route_map.py](#make_route_mappy) · [_project.py](#_projectpy) ·
+[make_route_map.py](#make_route_mappy) · [fetch_records.py](#fetch_recordspy) ·
+[dossier.py](#dossierpy) · [generate_images.py](#generate_imagespy) · [_project.py](#_projectpy) ·
 [Left out on purpose](#left-out-on-purpose)
 
 ---
@@ -77,7 +81,7 @@ loaded. A log is appended to `transcript/work/transcribe.log`.
   from `proper_nouns` and the script warns above 120 characters. A long list
   of names was observed coming back as fake "speech" (the list read out in
   the middle of a real answer). Keep it to a few surnames; fix any echo that
-  slips through with `drop_segments`/`scrub_inline` at render time.
+  slips through with `drop_segments`/`drop_word_runs`/`scrub_inline` at render time.
 - *Re-running ASR shifts timestamps.* Two runs of the same audio do not
   produce the same segment boundaries, so every `[S2 00:14:07]` citation
   downstream would break. Hence: idempotent (existing JSON is skipped),
@@ -235,6 +239,9 @@ into the project and edit. Keys:
 - `drop_segments.patterns` - regexes; a raw segment matching one is dropped
   whole (a prompt echo). Confirm first by re-transcribing that stretch
   without a prompt.
+- `drop_word_runs.runs` - phrases (or word lists) removed word by word from
+  each segment's word array, case and edge punctuation ignored: an echo inside
+  an otherwise real segment, before paragraphs are built
 - `scrub_inline.patterns` - `[{find, replace}]` for an echo embedded inside a
   real paragraph (text may contain `[?word?]` markers)
 
@@ -389,6 +396,39 @@ to port suggests a recorded route; this draws approximate lines only between
 recorded points, marks which points had the subject aboard, and leaves
 unrecorded legs visibly blank.
 
+## fetch_records.py
+
+Targeted lookups of a few record pages (at most 50 a run), politely: robots.txt obeyed for
+the project's User-Agent (`book.yaml` → `research.user_agent`, never an email address), at
+least 2 seconds between requests to a site, no logins, cookies or bot-check workarounds. Each
+page is saved under `facts/records/_raw/<slug>/` with a `.meta.json` (URL, retrieval time,
+status, sha256); with a dossier, each URL gets a `SOURCES.csv` row and a `RESEARCH-LOG.md`
+line. A page it may not or cannot fetch is logged as blocked and added to
+`research/MANUAL-LOOKUPS.md` for a person.
+
+```sh
+python $LINEAGE/scripts/fetch_records.py anders-calder URL [URL ...] [--group "His crossing"]
+python $LINEAGE/scripts/fetch_records.py anders-calder --list urls.txt --dry-run   # robots verdicts only
+```
+
+## dossier.py
+
+The chapter dossier (chapter-dossier skill): `new` makes `dossiers/<slug>/` from
+`templates/dossier/`; `source` and `log` add a source or a search; `records` writes the
+chapter's THE RECORDS from `SOURCES.csv` (cited sources by group, then "Further sources
+consulted", then what couldn't be reached); `check` exits 1 unless every URL in the chapter is
+in `SOURCES.csv` and every cited source is in THE RECORDS.
+
+## generate_images.py
+
+Generates the illustrations planned in `photos/images-plan.yaml` with OpenAI's image model:
+period style presets, a one-line lock on every prompt, and an optional likeness lock (the
+family's real photographs as references, through the edit endpoint). Every image must cite the
+scene it shows. Writes `photos/generated/<id>.png` and a grayscale `print/<id>.jpg`; `--dry-run`
+prints the prompts. The key comes from `OPENAI_API_KEY` or `~/.openai_api_key` (chmod 600,
+outside every repo) and is never printed or written. Example plan and style file:
+`templates/images/`.
+
 ## _project.py
 
 Shared helpers (project folder, `book.yaml`, `sessions.csv`, timestamps).
@@ -400,5 +440,13 @@ Imported by the other scripts; not run directly.
   from specific shared Drive files; that is tied to one person's account and
   file IDs, so it is not included. Copy the recordings into `audio/` by any
   means - they are only ever read.
-- Backup, museum- or person-specific record scrapers, and project-specific
-  verification scripts.
+- Backup, museum- or person-specific record scrapers (`fetch_records.py` is the generic,
+  polite core), and project-specific verification scripts.
+
+## New in 0.7.0
+
+| Script | What it does |
+|---|---|
+| `image_manager.py` | catalogue every image; `check` before generating or fetching; `missing`, `unused`; `drive-sync` |
+| `archive_fts.py` | Internet Archive full-text search with passages |
+| `patent_index_scan.py` | every patent under a name, from the 1872–1969 annual indexes |

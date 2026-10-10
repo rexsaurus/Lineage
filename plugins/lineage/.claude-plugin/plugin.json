@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "lineage",
-  "version": "0.5.0",
+  "version": "0.7.0",
   "description": "A cooperative family documentation and research platform: family members contribute recordings, photographs, documents and links; Lineage transcribes, indexes and tags them, researches public records beside the family's version, and builds a sourced record (genealogy, timeline, and a Familypedia of people, places, events, vessels, organizations and objects) with every fact cited and contradictions kept. Stories, a printed book (Typst, print preflight) and narration are exports of the record.",
   "author": { "name": "Lineage contributors" },
   "homepage": "https://github.com/rexsaurus/Lineage",

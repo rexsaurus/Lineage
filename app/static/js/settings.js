@@ -92,7 +92,7 @@ async function drawCrest(){
 SECTION_BUILDERS.project = function(el){
   const s = settings(), D = S.data, has = n => D.previews.includes(n);
   el.innerHTML='';
-  head(el,{kicker:'Project settings', title:'How the book is made, and where it lives', lede:'Styles, templates, print, the project folder and Drive. Every control writes to the same settings; nothing here blocks any tab.'});
+  head(el,{kicker:'Project settings', title:'How the record is kept, and where it lives', lede:'Styles, templates, print, the project folder and Drive. Every control writes to the same settings; nothing here blocks any tab.'});
   el.insertAdjacentHTML('beforeend', `
   <div class="grid two">
     <div class="card"><h3>The book</h3><p class="sub">The printed edition.</p>
@@ -109,7 +109,7 @@ SECTION_BUILDERS.project = function(el){
   </div>
 
   <!-- author-only surface: project repo, Drive folder, terminal command -->
-  <div class="card author"><h3>Project repo</h3><p class="sub">The folder that holds this book. Lineage checks it exists and is a git repo, so every version can be pinned.</p>
+  <div class="card author"><h3>Project repo</h3><p class="sub">The folder that holds this lineage. Lineage checks it exists and is a git repo, so every version can be pinned.</p>
     <div class="row"><input type="text" id="repo-path" value="${esc(D.project)}" style="flex:1;min-width:280px"><button class="btn" id="repo-verify">Verify</button></div>
     <div id="repo-out" style="margin-top:12px"></div></div>
   <div class="card author"><h3>Google Drive folder</h3><p class="sub">A Drive folder for sources and finished outputs, and the shared family folder. Paste its ID or URL.</p>
@@ -142,7 +142,7 @@ SECTION_BUILDERS.project = function(el){
       <div><label>Bridges in drafts</label><label class="toggle" style="padding:6px 0"><input type="checkbox" data-setting="bridges_in_drafts" ${s.bridges_in_drafts?'checked':''}><div><b>Print highlighted</b><span>The final build refuses unapproved bridges either way.</span></div></label></div>
     </div></div>
   <div class="card"><h3>Photographs and illustrations</h3><p class="sub">The look for generated illustrations.</p>
-    <div class="note" style="margin-bottom:14px"><b>Standing rule:</b> generated images are always captioned as illustrations ("as the family told it", "illustration") and listed apart from the real photographs. They never pass as records.</div>
+    <div class="note" style="margin-bottom:14px"><b>Standing rule:</b> generated images are always recorded as illustrations (kind: illustration), named as renderings in the book's front matter and the chapter's note, and listed apart from the real photographs. They never pass as records.</div>
     <div class="grid five">${D.photo_styles.map(p=>`<div class="choice" data-choice-for="photo_style" data-id="${p.id}" data-on="${s.photo_style===p.id?1:0}">
       ${has('photo-'+p.id+'.png')?`<img class="swatch" src="/previews/photo-${p.id}.png" alt="">`:''}<h4>${esc(p.name)}</h4><p>${esc(p.blurb)}</p></div>`).join('')}</div></div>
   <div class="card"><h3>Where things are</h3><p class="sub">Resolved paths on this machine.</p>
@@ -222,12 +222,12 @@ SECTION_BUILDERS.connectors = async function(el){
         <button class="btn ghost sm" id="g-browser" ${d.client_configured?'':'disabled'}>Browser sign-in</button>${d.connected?'<button class="btn ghost sm" id="g-disc">Disconnect</button>':''}</div>
       <div id="g-out" class="note" style="margin-top:10px;display:none"></div>
       <p class="sub" style="margin:10px 0 0;font-size:12.4px">Device code only sees files Lineage itself created: fine for uploading outputs, not for reading an existing folder. Browser sign-in can read the folder.</p></div>
-    <div class="card author"><h3>GitHub</h3><p class="sub">Used for: the book repo.</p>
+    <div class="card author"><h3>GitHub</h3><p class="sub">Used for: the lineage's repo.</p>
       <div class="row" style="margin-bottom:8px"><span class="pill ${c.gh.logged_in?'ok':(c.gh.installed?'warn':'')}">${c.gh.installed?(c.gh.logged_in?'gh CLI · '+esc(c.gh.account||'signed in'):'gh CLI found, not signed in'):'gh CLI not found'}</span>
       <span class="pill ${c.keys.github?'ok':''}" id="pill-github">${c.keys.github?'token · '+esc(c.keys.github):'no token'}</span></div>
       <input type="password" id="in-github" placeholder="a fine-grained token (optional if gh is signed in)">
       <div class="row" style="margin-top:10px"><button class="btn sm" data-connect="github">${c.keys.github?'Replace':'Save token'}</button>${c.keys.github?'<button class="btn ghost sm" data-disconnect="github">Disconnect</button>':''}
-        <button class="btn ghost sm" id="gh-push">Push the book repo</button></div>
+        <button class="btn ghost sm" id="gh-push">Push the lineage repo</button></div>
       <p class="sub" style="margin:10px 0 0;font-size:12.4px">Push runs <code>git push origin HEAD</code> in the project with your existing git credentials.</p></div>
     ${keyCard('anthropic')}${keyCard('openai')}${keyCard('elevenlabs')}
     <div class="card author" style="grid-column:span 2"><h3>Detected on this machine</h3><p class="sub">Agent CLIs on PATH. The one you pick runs in the terminal drawer.</p>
@@ -243,7 +243,7 @@ SECTION_BUILDERS.connectors = async function(el){
   $('#g-device').onclick=googleDevice;
   $('#g-browser').onclick=async()=>{ const r=await api('/api/google/browser-url'); if(r.ok) location.href=r.url; else alertNote(r.detail); };
   const gd=$('#g-disc'); if(gd) gd.onclick=async()=>{ await api('/api/google/disconnect',{method:'POST'}); SECTION_BUILDERS.connectors(el); };
-  $('#gh-push').onclick=async()=>{ $('#gh-push').textContent='pushing…'; const r=await api('/api/repo/push',{method:'POST'}); $('#gh-push').textContent='Push the book repo'; alertNote(r.detail); };
+  $('#gh-push').onclick=async()=>{ $('#gh-push').textContent='pushing…'; const r=await api('/api/repo/push',{method:'POST'}); $('#gh-push').textContent='Push the lineage repo'; alertNote(r.detail); };
 };
 async function connectKey(provider){
   const input=$('#in-'+provider), pill=$('#pill-'+provider); pill.className='pill'; pill.textContent='checking…';
@@ -265,7 +265,7 @@ async function googleDevice(){
    Contributors are people who add material. The family is what the book is about. */
 SECTION_BUILDERS.contributors = async function(el){
   el.innerHTML='';
-  head(el,{kicker:'Contributors', title:'Who can add to the book', lede:"Contributors add recordings, photos and notes without ever seeing this dashboard. You're the only owner; nothing a contributor sends reaches the book until you've reviewed it."});
+  head(el,{kicker:'Contributors', title:'Who adds to the record', lede:"Contributors add recordings, photos and notes without ever seeing this dashboard. You're the only owner; nothing a contributor sends reaches the book until you've reviewed it."});
   el.insertAdjacentHTML('beforeend', `<div class="note" style="margin-bottom:16px">Invite links only work once the project is hosted. Until then a link is for testing on this computer: the server checks it, and it expires and can be revoked.</div>
     <div class="card"><h3>Add someone</h3><div class="grid four" style="margin-top:10px">
       <div><label>Name</label><input type="text" id="fm-name" placeholder="Aunt May"></div>
@@ -292,7 +292,7 @@ function drawFamily(d){
       <td><select data-role="${m.id}" style="padding:4px 8px;font-size:12.5px">${d.roles.map(r=>`<option ${m.role===r?'selected':''}>${r}</option>`).join('')}</select></td>
       <td><select data-status="${m.id}" style="padding:4px 8px;font-size:12.5px">${['invited','active','paused'].map(s=>`<option ${m.status===s?'selected':''}>${s}</option>`).join('')}</select></td>
       <td style="white-space:nowrap">${esc(m.added.slice(0,10))}</td><td class="num">${m.contributions}</td>
-      <td class="links">${m.invite?`<button data-copy="${esc(m.invite.url)}">copy link</button>${m.email?`<a href="mailto:${esc(m.email)}?subject=${encodeURIComponent('Help with the family book')}&body=${encodeURIComponent('Add what you have here: '+m.invite.url)}">email</a>`:''}<button data-revoke="${m.id}">revoke</button><br><span style="font-size:11.5px;color:var(--ink-3)">expires ${esc(m.invite.expires.slice(0,10))}</span>`:`<button data-invite="${m.id}">make invite link</button>`}</td></tr>`).join('')}
+      <td class="links">${m.invite?`<button data-copy="${esc(m.invite.url)}">copy link</button>${m.email?`<a href="mailto:${esc(m.email)}?subject=${encodeURIComponent('Help with the family record')}&body=${encodeURIComponent('Add what you have here: '+m.invite.url)}">email</a>`:''}<button data-revoke="${m.id}">revoke</button><br><span style="font-size:11.5px;color:var(--ink-3)">expires ${esc(m.invite.expires.slice(0,10))}</span>`:`<button data-invite="${m.id}">make invite link</button>`}</td></tr>`).join('')}
     </tbody></table>` : '<p class="empty">No contributors yet. Add someone above: a relative, a family friend, anyone with material.</p>';
   $('#fm-queue').innerHTML = d.review_queue.length ? '' : '<p class="empty">Nothing waiting. Contributions appear here once contributors can add material (when the project is hosted).</p>';
   $$('[data-invite]').forEach(b=>b.onclick=async()=>drawFamily(await api('/api/family/invite',{method:'POST',body:{member:b.dataset.invite}})));

@@ -9,9 +9,13 @@
 #                                    (warning only), build output/book-draft.pdf + back index
 #   make final PROJECT=...           final build: stops on any misquote or unapproved #bridge,
 #                                    then runs preflight
+#   make chapter PROJECT=... CHAPTER=chapters/NN-x.typ [FINAL=1] [PAGES=1]
+#                                    one story as a preview PDF (PAGES=1: one image per page)
 #   make screenshots                 rebuild the invented demo lineage and capture the dashboard
 #                                    into docs/images/ (needs: pip install playwright, and Chrome)
 #   make demo                        the dashboard on the demo lineage (a scratch copy)
+#   make site                        the public website in site/public/ (landing, tour, docs, sample
+#                                    PDF, read-only demo snapshot); deploy: docs/DEPLOY.md
 #   make clean                       remove generated files from the examples
 #
 # Everything runs inside the project folder; nothing here edits your recordings.
@@ -27,7 +31,7 @@ export LINEAGE := $(BA)
 # zsh passes PROJECT=~/x through unexpanded; expand a leading ~ here.
 override PROJECT := $(patsubst ~/%,$(HOME)/%,$(PROJECT))
 
-.PHONY: install install-transcribe sample new status draft final clean check-project screenshots demo
+.PHONY: install install-transcribe sample new status draft final clean check-project screenshots demo chapter site
 
 install:
 	@command -v python3 >/dev/null || { echo "python3 is required"; exit 1; }
@@ -91,6 +95,10 @@ final: draft
 	    --printer $$($(PY) -c "import yaml;print(yaml.safe_load(open('book.yaml'))['print'].get('printer','kdp'))") \
 	    --color $$($(PY) -c "import yaml;print(yaml.safe_load(open('book.yaml'))['print'].get('color','bw'))")
 
+chapter: check-project
+	@test -n "$(CHAPTER)" || { echo "usage: make chapter PROJECT=path CHAPTER=chapters/NN-x.typ [FINAL=1] [PAGES=1]"; exit 1; }
+	@cd "$(PROJECT)" && $(PY) $(SKILLS)/book-generator/scripts/build_book.py chapter "$(CHAPTER)" $(if $(FINAL),--final) $(if $(PAGES),--pages)
+
 screenshots: sample
 	@$(PY) -c "import playwright" 2>/dev/null || $(PY) -m pip install -q playwright
 	@$(PY) $(BA)/plugins/lineage/scripts/screenshots.py
@@ -100,6 +108,10 @@ demo: sample
 	@rm -rf /tmp/lineage-demo && cp -R $(BA)/examples/demo-lineage /tmp/lineage-demo
 	@echo "demo lineage copied to /tmp/lineage-demo (the fixture stays clean)"
 	@$(BA)/app/lineage /tmp/lineage-demo
+
+site: sample
+	@$(PY) -c "import markdown" 2>/dev/null || $(PY) -m pip install -q markdown
+	@$(PY) $(BA)/site/build_site.py $(SITEFLAGS)
 
 clean:
 	@rm -rf $(SAMPLE)/output $(SAMPLE)/chapters $(SAMPLE)/book/main.typ $(SAMPLE)/book/template.typ \

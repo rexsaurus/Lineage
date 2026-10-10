@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install · Lineage</title>
+<meta name="description" content="Install Lineage and run the demo locally.">
+<link rel="icon" href="../assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="site-top"><div class="wrap">
+  <a class="brand" href="../"><img src="../assets/logo.svg" alt="" width="26" height="26"><span>Lineage</span></a>
+  <nav class="site-nav" aria-label="Site"><a href="../">Home</a><a href="../tour/">Tour</a><a href="../demo/">Live demo</a><a href="../docs/">Docs</a><a href="./" aria-current=page>Install</a><a href="https://github.com/rexsaurus/Lineage" class="gh">GitHub</a></nav>
+</div></header>
+<main>
+<article class="doc"><h1>Install</h1><h2 id="try-it-in-60-seconds">Try it in 60 seconds</h2>
+<p>No recordings, no models and no accounts needed.</p>
+<pre><code class="language-bash">git clone https://github.com/rexsaurus/Lineage.git
+cd Lineage
+make install         # Python tools; needs typst (brew install typst)
+make demo            # the dashboard, on a scratch copy of the demo lineage
+</code></pre>
+<p><code>make demo</code> opens the dashboard on the Calders on your own machine. Everything in the
+tour above is clickable. <code>make sample</code> builds the sample book PDF from the same invented
+family (see below).</p>
+<p>To start your own lineage:</p>
+<pre><code class="language-bash">make new PROJECT=&quot;$HOME/lineages/our-family&quot;   # its own folder and its own (private) repo
+cd &quot;$HOME/lineages/our-family&quot; &amp;&amp; make dashboard
+</code></pre>
+<hr />
+<h2 id="what-you-need-for-a-real-lineage">What you need for a real lineage</h2>
+<ul>
+<li>Whatever the family has: recordings in any common audio or video format, scans,
+  photographs, letters, documents.</li>
+<li>A Mac or Linux machine with ffmpeg, Typst and Python. Transcription runs locally on CPU,
+  faster on an NVIDIA GPU (<code>make install-transcribe</code>).</li>
+<li>A free Hugging Face token, only to download the speaker-labelling model, which then runs on
+  your machine.</li>
+<li>A Claude subscription for Claude Code, which does the research and the writing.</li>
+</ul>
+<h2 id="honest-limits">Honest limits</h2>
+<ul>
+<li>The machine can't check a fact that isn't in a recording or a document you give it.</li>
+<li>Your files stay on your computer, but <strong>text goes to a cloud model</strong> while Claude reads and
+  writes. See <a href="../docs/privacy/">PRIVACY.md</a>.</li>
+<li>Contributors are invited and their additions listed today; the hosted view where a cousin
+  adds a letter from their own phone is still to come (see <a href="https://github.com/rexsaurus/Lineage/blob/main/app/ROADMAP.md">app/ROADMAP.md</a>).</li>
+<li>Research needs a person who cares. The tools find the records; deciding what they mean is
+  yours.</li>
+<li>Keep your own lineage's repo private.</li>
+</ul>
+<h2 id="as-claude-code-plugins">As Claude Code plugins</h2>
+<pre><code>/plugin marketplace add rexsaurus/Lineage
+/plugin install lineage@lineage     # the family record platform
+/plugin install factory@lineage     # the generator
+</code></pre>
+<p>The full setup, step by step, is in <a href="../docs/howto/#1-set-up-a-lineage">the how-to guide</a>.</p></article>
+</main>
+<footer class="site-foot"><div class="wrap">
+  <p>Lineage is open source under the MIT license. <a href="https://github.com/rexsaurus/Lineage">github.com/rexsaurus/Lineage</a></p>
+  <p class="muted">Every family in the screenshots and the demo is invented. Your recordings, transcripts and photographs stay yours: the license does not cover them.</p>
+</div></footer>
+</body>
+</html>

@@ -8,14 +8,14 @@ Specs received, in the order they will be built. Each lands as its own commit.
 | 2 | Eight tabs, no wizard anywhere | done, superseded by 18 |
 | 3 | "Stories" vocabulary in the UI (one labels module), story states: draft · in the book · kept aside | done |
 | 4 | Source intake: ingest + SHA-256 dedupe, extract/OCR, understand, index, Drive copy, thumbnails, edit drawer, re-ingest, trash/restore/delete permanently, bulk actions | done |
-| 5 | Source annotation, gallery and lightbox, people tagging with evidence; never identify by resemblance | queued |
+| 5 | Source annotation, gallery and lightbox, people tagging with evidence; never identify by resemblance | done: gallery and lightbox with notes and subject tagging (evidence-only suggestions, never faces); illustrations marked and never a person's picture |
 | 6 | Familypedia: articles, wiki links, backlinks, search, A–Z, random, stubs, notes, event pages | done, extended by 20 |
 | 7 | Public records: paste links and scan, typed catalogue, by-archive view, citations into THE RECORDS | queued |
 | 8 | Single-story generation and preview (rendered pages, citations panel, real photos first, marked illustrations) | Generate hands off to the Genealogist; preview done; citations panel queued |
 | 9 | Stories: chronological, era bands, narration (ElevenLabs), per-story voice, stale audio, mini player, Narrate all with a count | done |
 | 10 | Propagation: impact pass after intake, "update everything this affects" with a review diff, history with revert | queued (Needs you already surfaces stale stories) |
 | 11 | Contributors: people, roles, invites (local until hosted), review queue, requests outstanding | management side done; contributor view waits for hosting |
-| 12 | Stories hyperlinked (people/places/citation chips), images editable in place with provenance | queued |
+| 12 | Stories hyperlinked (people/places/citation chips), images editable in place with provenance | done: citation chips per paragraph, people and places linked, image provenance and a toolbar (open, tag, copy reference); replacing an image stays a change to the units, not the story file |
 | 13 | Family details: identity (family name, title, subtitle, summary with draft, subject, covers), stale marks | done |
 | 14 | No demo content by default (`--demo` with a banner); pipeline buttons hand real work to the Genealogist | done |
 | 15 | Timeline tab: spine, bands, rail, cards, stars, conflicts, gaps → questions, undated, exports | done |

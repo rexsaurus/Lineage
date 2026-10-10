@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tour · Lineage</title>
+<meta name="description" content="A tour of the Lineage dashboard, with real screenshots.">
+<link rel="icon" href="../assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="site-top"><div class="wrap">
+  <a class="brand" href="../"><img src="../assets/logo.svg" alt="" width="26" height="26"><span>Lineage</span></a>
+  <nav class="site-nav" aria-label="Site"><a href="../">Home</a><a href="./" aria-current=page>Tour</a><a href="../demo/">Live demo</a><a href="../docs/">Docs</a><a href="../install/">Install</a><a href="https://github.com/rexsaurus/Lineage" class="gh">GitHub</a></nav>
+</div></header>
+<main>
+<article class="doc">
+<p class="note">Every picture here is the real dashboard on an invented family. <a href="../demo/">Open the same dashboard, read-only</a>, and click around.</p>
+<h2 id="a-tour-of-the-dashboard">A tour of the dashboard</h2>
+<p>Every picture below is the real dashboard, captured by <code>make screenshots</code> against
+<a href="../demo/">the demo lineage</a>: an invented family, invented recordings (spoken
+by the computer) and invented records on <code>example.org</code>. No real family appears.</p>
+<h3 id="sources-everything-the-family-has-in-one-place">Sources: everything the family has, in one place</h3>
+<p><img loading="lazy" src="../images/sources.png" alt="The Sources tab"></p>
+<p>Recordings, scans, letters and documents, each scanned, named, summarized and indexed as it
+lands, with who added it and when. Recordings get transcripts with speaker labels and
+timestamps, so every sentence later can point back at the tape.</p>
+<p><img loading="lazy" src="../images/sources-gallery.png" alt="The Sources gallery"></p>
+<p>The same sources as a gallery: scans, letters and photographs at a glance, with who added
+each one. Select several and tag them all to a person, a place or a ship at once.</p>
+<p><img loading="lazy" src="../images/source-lightbox.png" alt="A source in the lightbox"></p>
+<p>Click one to see it full size, step through the rest with the arrow keys, and read or edit
+its summary, people, places, provenance and notes beside it.</p>
+<p><img loading="lazy" src="../images/source-drawer.png" alt="A source open in the drawer, with its subjects"></p>
+<p>Open a source and everything about it is editable, and everything derived is marked as
+derived. <strong>Subjects</strong> tags it to any article (a person, a place, a ship, a regiment, an
+object). Suggestions come only from names written in the item, with the words that name them,
+and nothing is tagged until someone accepts it. No faces are recognized and no names guessed.</p>
+<h3 id="familypedia-an-article-for-everything-the-material-names">Familypedia: an article for everything the material names</h3>
+<p><img loading="lazy" src="../images/familypedia-person.png" alt="A person's Familypedia article"></p>
+<p>A person's article. The lead is written from the material. The infobox comes from the
+records. Below it, what was witnessed, what was told, what is family lore, and what the
+records show, each line with its citation. Here the family says Anders crossed at sixteen and
+the manifest says seventeen, and the article keeps both.</p>
+<p><img loading="lazy" src="../images/familypedia-vessel.png" alt="A vessel's Familypedia article"></p>
+<p>A ship gets the same treatment: type, tonnage, builder, owner, master, registry and fate from
+the records; its voyages, its ports (each an article of its own) and the people aboard; the
+records that document it and the sources that mention it. People, places, events,
+organizations and units, objects, publications, occupations and themes all work this way.</p>
+<p><img loading="lazy" src="../images/familypedia-map.png" alt="The map of places and routes"></p>
+<p>The map is drawn from the coordinates the records give, with the same evidence coding as a
+book's maps: recorded positions solid, the track between them dashed, and any leg no record
+covers labelled <em>not recorded</em> rather than drawn.</p>
+<h3 id="genealogy-built-from-evidence">Genealogy: built from evidence</h3>
+<p><img loading="lazy" src="../images/genealogy.png" alt="The genealogy tree"></p>
+<p>The tree is rebuilt from the sources, and every link points at the words or the record that
+establish it. A link without evidence isn't drawn; a person nobody can place stays
+unattached and is listed. Walt's surname is never said on the tape, so the tree doesn't give
+him one. It exports to GEDCOM and imports from it.</p>
+<h3 id="timeline-what-happened-and-how-sure-we-are">Timeline: what happened, and how sure we are</h3>
+<p><img loading="lazy" src="../images/timeline.png" alt="The timeline"></p>
+<p>Every dated event, oldest first, coloured by tier, with its citations, the people and places
+it touches, and a flag wherever the sources disagree. The gaps are part of the picture: each
+one can become a question for the next recording.</p>
+<h3 id="stories-an-export-of-the-record">Stories: an export of the record</h3>
+<p><img loading="lazy" src="../images/stories.png" alt="The stories index with the player"></p>
+<p>Stories are written from the record under strict rules (third person, quotes exact, every
+paragraph cited) and can be narrated. The player follows you around the dashboard.</p>
+<p><img loading="lazy" src="../images/story.png" alt="A story set as book pages"></p>
+<p>Read a story as the book's own pages, with what it rests on above them: every paragraph and
+its citation chips (click one to hear that moment of the recording, or open the record), and
+the people and places in it, each linked to their Familypedia article. A sentence the writer
+wanted to add that the material didn't give it is a <em>bridge</em>: highlighted in the draft, and
+the final build refuses to compile while one is unapproved.</p>
+<p><img loading="lazy" src="../images/story-images.png" alt="A story's images with provenance and a toolbar"></p>
+<p>Each image in a story carries its provenance (its date and the basis for it, who is in it and
+how we know, who holds it) and a toolbar to open it, tag it or find it among the
+photographs. An illustration says so, everywhere.</p>
+<h3 id="contributors-and-connectors">Contributors and connectors</h3>
+<p><img loading="lazy" src="../images/contributors.png" alt="Contributors"></p>
+<p>The people who add to the record: their role (contributor, reader, editor), what they've
+added, and invitations. Requests to relatives ("could you scan the other ten letters?") are
+drafted from what the record already flags as open.</p>
+<p><img loading="lazy" src="../images/connectors.png" alt="Connectors"></p>
+<p>Keys stay on your machine (<code>~/.lineage</code>, readable only by you), never in the record. Google
+Drive, GitHub, Anthropic, OpenAI, ElevenLabs, and the agent CLI the built-in terminal runs.</p>
+<hr />
+<h2 id="the-book-and-the-narration">The book, and the narration</h2>
+<p>When the record is ready, a book falls out of it. Story units are cut from the transcripts,
+arranged on a chapter map, written under the style rules, set in Typst with front matter, a
+timeline, a records appendix and an index, and checked for print (KDP, IngramSpark, Lulu,
+Blurb). The same stories can be narrated for listening.</p>
+<pre><code>record ─► story units ─► chapter map ─► stories ─► book (PDF) and narration
+           content/        data/        chapters/   output/
+                         ▲                         ▲
+                     approve the map          final sign-off
+</code></pre>
+<p><strong>Story units are the trick.</strong> The transcript is cut into one file per story, each carrying
+its source excerpt and its written version, and chapters are generated from units. Moving a
+story is a one-line change and a rebuild, and a coverage check proves no part of the
+recordings got quietly dropped. <strong>Bridges are the other trick</strong>: anything added that the
+material didn't give is held for a person's approval, and the final build stops until it is.</p>
+<p><strong>Research is kept per chapter.</strong> Each chapter has a dossier: the author's requests for it, a
+log of every search (blocked ones too), every source found or scraped, the evidence for and
+against the family's version, and lessons learned. Every chapter ends with THE RECORDS, all of
+its sources, generated from the dossier and checked. A polite fetcher handles the records a
+script may reach; a hand-off list covers the ones only a person can look up.</p>
+<p><strong>The defaults come from a working book:</strong> two justified columns, one epigraph per chapter,
+chapters of at least ten pages (thin ones are combined, never padded), no "general knowledge"
+sources, a service-record method for anyone who served, a small three-generation family tree,
+an eight-panel illustrated story in the subject's own words, and illustrations generated in a
+period style with a relative's likeness locked from real photographs, marked as renderings in
+the book. When the author asks, a <strong><a href="https://github.com/rexsaurus/Lineage/blob/main/docs/BOOK-SWARM.md">book swarm</a></strong> drafts the whole book
+in one pass (researchers, a writer, three editors and two judges per chapter) for them to read.</p>
+<hr />
+<h2 id="your-lineage-uses-lineage-it-doesnt-contain-it">Your lineage uses Lineage; it doesn't contain it</h2>
+<p>A lineage (made with <code>make new</code>) keeps only its own material: recordings, transcripts,
+sources, records, people, stories, photos. Everything else (skills, style, templates,
+scripts, the dashboard) stays here and reaches the lineage as a release. The lineage pins the
+release it runs in <code>lineage.lock</code>:</p>
+<pre><code class="language-bash">make lineage-version          # what this lineage runs
+make update-lineage           # what a newer release would change, and which of your files it touches
+make update-lineage APPLY=1   # install and pin it; stories it would alter are marked stale, never rewritten
+make dashboard                # the dashboard, on this lineage
+</code></pre>
+<p>Improvements found while working on one family's record come back here and reach every
+lineage as a release. Things only one family would want stay in its <code>local-overrides/</code>.</p>
+<h2 id="the-factory">The Factory</h2>
+<p>Lineage is one instance of a general pattern, and the repo ships the generator too: point it
+at a different kind of source material and it writes a new pipeline with the same
+guarantees (immutable sources, citations on every claim, evidence tiers, quarantined
+inventions, human gates, versioning). See <a href="../docs/factory/">docs/FACTORY.md</a>.</p>
+<pre><code>/plugin marketplace add rexsaurus/Lineage
+/plugin install lineage@lineage     # the family record platform
+/plugin install factory@lineage     # the generator
+</code></pre>
+<p><a class="btn" href="../demo/">Open the live demo</a> <a class="btn ghost" href="../install/">Install</a></p>
+</article>
+</main>
+<footer class="site-foot"><div class="wrap">
+  <p>Lineage is open source under the MIT license. <a href="https://github.com/rexsaurus/Lineage">github.com/rexsaurus/Lineage</a></p>
+  <p class="muted">Every family in the screenshots and the demo is invented. Your recordings, transcripts and photographs stay yours: the license does not cover them.</p>
+</div></footer>
+</body>
+</html>

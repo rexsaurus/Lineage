@@ -1,0 +1,7 @@
+seq,date,place,lat,lon,kind,aboard,leg,source,note
+1,1900-05-04,"Aalesund, Norway",62.47,6.15,port,subject,1,family account [S1 00:00:05],
+2,1900-05-07,"Bergen, Norway",60.39,5.32,port,subject,1,family account,"coastal steamer, not recorded"
+3,1900-05-09,"Hull, England",53.74,-0.33,port,subject,2,demo emigrant agent's ledger,North Sea crossing not recorded
+4,1900-05-10,"Liverpool, England",53.41,-2.99,port,subject,2,manifest R001 (port of departure),
+5,1900-05-21,"Quebec, Canada",46.81,-71.21,port,subject,2,manifest R001 (arrival),
+6,1900-06,"Duluth, Minnesota",46.78,-92.10,port,subject,3,family account [S1 00:00:21],route from Quebec not recorded

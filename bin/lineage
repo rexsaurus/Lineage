@@ -199,12 +199,15 @@ def cmd_update(a):
     print(changelog_between(repo, current, target) or "(no changelog entries)")
     files = git("diff", "--name-only", f"{current}..{target}" if current else target, cwd=repo).split() if current else \
         git("ls-tree", "-r", "--name-only", target, cwd=repo).split()
-    story_files = [f for f in files if f.startswith(STORY_PATHS) and not (current and description_only(repo, current, target, f))]
+    state, detail = skills_links(project)
+    uses_skills = state in ("linked", "per-skill links")
+    # A project with its own copies of the skills isn't affected by changes to Lineage's skills.
+    story_files = [f for f in files if f.startswith(STORY_PATHS) and not (current and description_only(repo, current, target, f))
+                   and (uses_skills or not f.startswith("plugins/lineage/skills/"))]
     print(f"\nLineage files changed: {len(files)}" + (f" ({len(story_files)} can alter generated stories)" if current else ""))
     for f in story_files[:40]:
         print(f"  ! {f}")
     stale = generated_stories(project) if (current and story_files) else []
-    state, detail = skills_links(project)
     print("\nFiles of yours it would touch\n" + "-" * 29)
     print("  lineage.lock                     the pinned release")
     if stale:

@@ -31,7 +31,9 @@ APP = ROOT / "app"
 # name, hash route, what to do before the picture, full page?
 SHOTS = [
     ("home", "#home", None, False),
-    ("sources", "#sources", None, False),
+    ("sources", "#sources?view=table", None, False),
+    ("sources-gallery", "#sources?view=gallery", None, False),
+    ("source-lightbox", "#sources?view=gallery", "open_lightbox", False),
     ("source-drawer", "#sources", "open_source", False),
     ("familypedia-person", "#familypedia/anders-calder", None, False),
     ("familypedia-vessel", "#familypedia/s-s-ottavia", None, False),
@@ -40,6 +42,7 @@ SHOTS = [
     ("timeline", "#timeline", None, False),
     ("stories", "#stories", "play_story", False),
     ("story", "#stories", "read_story", False),
+    ("story-images", "#stories", "read_story_images", False),
     ("connectors", "#/settings/connectors", None, False),
     ("contributors", "#/settings/contributors", None, False),
 ]
@@ -111,9 +114,20 @@ def main():
                 elif action == "play_story":
                     page.locator("[data-listen='2']").first.click()
                     page.wait_for_timeout(800)
+                elif action == "open_lightbox":
+                    page.locator(".gcard", has_text="passenger").first.click()
+                    page.wait_for_selector(".lightbox .fp-tag, .lightbox .empty", timeout=8000)
+                    page.wait_for_timeout(700)
+                elif action == "read_story_images":
+                    page.locator("[data-read='2']").first.click()
+                    page.wait_for_selector(".apparatus", timeout=20000)
+                    page.click(".apparatus [data-ap='images']")
+                    page.wait_for_selector("#rd-pages img", timeout=60000)
+                    page.wait_for_timeout(1000)
                 elif action == "read_story":
                     page.locator("[data-read='2']").first.click()
                     page.wait_for_selector("#rd-pages img", timeout=60000)
+                    page.wait_for_selector(".apparatus", timeout=20000)
                     page.wait_for_timeout(1200)
                 page.screenshot(path=str(OUT / f"{name}.png"), full_page=full)
                 print(f"docs/images/{name}.png")

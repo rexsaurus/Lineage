@@ -1,0 +1,882 @@
+{
+"[\"/api/bootstrap\",[]]": {
+"f": "03a24e01ff8c72d7.json",
+"t": "application/json"
+},
+"[\"/api/connectors\",[]]": {
+"f": "ed5ff17f5b83c0bf.json",
+"t": "application/json"
+},
+"[\"/api/crest\",[]]": {
+"f": "9d7d5b701d1a82af.json",
+"t": "application/json"
+},
+"[\"/api/engine/approvals\",[]]": {
+"f": "4188c96cafd3d0b7.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"aalesund-norway\"]]]": {
+"f": "97f9b49f032e7689.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"anders-and-henrik-on-the-payroll-of-the-duluth-ore-dock-company\"]]]": {
+"f": "cb92f83ca1f78fed.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"anders-calder\"]]]": {
+"f": "5412fc2ae2246251.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"anders-calder-born-near-aalesund-norway\"]]]": {
+"f": "77aa533ec038b6ec.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"anders-calder-crosses-from-liverpool-to-quebec-on-the-s-s-ottavia\"]]]": {
+"f": "285b38adbe89f114.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"anders-calder-dies-in-duluth\"]]]": {
+"f": "5bd8bc4beaf231c9.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"anders-s-sea-chest\"]]]": {
+"f": "82e566209c2de26b.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"anders-works-on-the-ore-boats-at-duluth-family-account\"]]]": {
+"f": "168996f7fe8d36a2.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"arrowhead-engineer-battalion\"]]]": {
+"f": "9e15110e5e2a9de2.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"bergen-norway\"]]]": {
+"f": "adbba951f8d73e1a.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"duluth-lakeside-courier\"]]]": {
+"f": "1aa6d66613823359.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"duluth-minnesota\"]]]": {
+"f": "6b13c1e1171b1bf8.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"duluth-ore-dock-company\"]]]": {
+"f": "c464d861d4344df0.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"france\"]]]": {
+"f": "320b8c95e85f0c5e.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"henrik-calder\"]]]": {
+"f": "52d52b68edc087c4.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"henrik-calder-born-in-duluth\"]]]": {
+"f": "d795d2ec7799be66.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"henrik-writes-to-ruth-from-france-with-the-arrowhead-engineer-battalion\"]]]": {
+"f": "34340606bc3f65d8.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"hull-england\"]]]": {
+"f": "1e640fea2552a37a.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"johan-brekke\"]]]": {
+"f": "3bb812de45183a1d.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"karl-lindgren\"]]]": {
+"f": "92283da8a93e8ceb.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"liverpool-england\"]]]": {
+"f": "d3a4f2545a2c4b2d.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"minneapolis-minnesota\"]]]": {
+"f": "f67805bcad029663.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"norway\"]]]": {
+"f": "f8c304152ccd9c4f.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"ottavia-liverpool-to-quebec-may-1900\"]]]": {
+"f": "b2b8ad3e6fa4d7b9.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"pete\"]]]": {
+"f": "015fb43c0981c046.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"pike-lake-minnesota\"]]]": {
+"f": "926ef3b6084959fa.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"quebec-canada\"]]]": {
+"f": "951c682e604b280f.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"r-mcallister\"]]]": {
+"f": "04ddd1533a6aa0ad.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"ruth-and-walt-build-the-cabin-on-pike-lake\"]]]": {
+"f": "2221872a2e670f21.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"ruth-calder\"]]]": {
+"f": "7c676068dfb89b59.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"ruth-calder-born-in-duluth\"]]]": {
+"f": "678996426d13a3f0.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"ruth-meets-walt-at-a-church-dance\"]]]": {
+"f": "40e0c8d6d4f23548.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"ruth-s-father\"]]]": {
+"f": "9f56d8bb961dd0bf.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"ruth-trains-as-a-nurse-in-minneapolis\"]]]": {
+"f": "c78d566268b48ef7.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"ruth-walks-her-father-s-lunch-to-the-ore-dock\"]]]": {
+"f": "47a806dcac08cc53.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"s-s-ottavia\"]]]": {
+"f": "c9105db07ee6637a.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"signe-calder\"]]]": {
+"f": "715c319942b7a471.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"the-big-snow-school-closed-for-a-week\"]]]": {
+"f": "3b741e371ce31416.json",
+"t": "application/json"
+},
+"[\"/api/engine/article\",[[\"slug\",\"walt\"]]]": {
+"f": "f4a8890191cc930d.json",
+"t": "application/json"
+},
+"[\"/api/engine/attention\",[]]": {
+"f": "ecbe8f7f399031d1.json",
+"t": "application/json"
+},
+"[\"/api/engine/episodes\",[]]": {
+"f": "f5ea061f1703763b.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia\",[]]": {
+"f": "beb2ec5bbf3743ad.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/catalogue\",[[\"what\",\"photos\"]]]": {
+"f": "01bce836db8126ae.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/catalogue\",[[\"what\",\"records\"]]]": {
+"f": "20cdc2cb977be662.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"aalesund-norway\"]]]": {
+"f": "5c6a13aac3ebfa1f.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"anders-and-henrik-on-the-payroll-of-the-duluth-ore-dock-company\"]]]": {
+"f": "4d7e8d233a8c0cc3.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"anders-calder\"]]]": {
+"f": "c65517aa0be4cafa.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"anders-calder-born-near-aalesund-norway\"]]]": {
+"f": "bf35b9203af6f4f4.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"anders-calder-crosses-from-liverpool-to-quebec-on-the-s-s-ottavia\"]]]": {
+"f": "94266ce1520f090e.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"anders-calder-dies-in-duluth\"]]]": {
+"f": "e34a540add7334fd.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"anders-s-sea-chest\"]]]": {
+"f": "c13edeb229571847.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"anders-works-on-the-ore-boats-at-duluth-family-account\"]]]": {
+"f": "10257932cf93da66.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"arrowhead-engineer-battalion\"]]]": {
+"f": "837a83e74fa4ede8.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"bergen-norway\"]]]": {
+"f": "af78f59761f9e441.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"duluth-lakeside-courier\"]]]": {
+"f": "c4b2e7c57cb01048.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"duluth-minnesota\"]]]": {
+"f": "0168fa8c935d6168.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"duluth-ore-dock-company\"]]]": {
+"f": "d826c205c57f27d7.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"france\"]]]": {
+"f": "c938fef9d1dee08e.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"henrik-calder\"]]]": {
+"f": "b2a8fafea0dd242b.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"henrik-calder-born-in-duluth\"]]]": {
+"f": "4939dfad8e447207.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"henrik-writes-to-ruth-from-france-with-the-arrowhead-engineer-battalion\"]]]": {
+"f": "3e70e4e676653afb.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"hull-england\"]]]": {
+"f": "6ce9f9f9472b0993.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"johan-brekke\"]]]": {
+"f": "7b0fea490017dd64.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"karl-lindgren\"]]]": {
+"f": "8a9b06a89eef5bc1.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"liverpool-england\"]]]": {
+"f": "cfde14955859ae58.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"minneapolis-minnesota\"]]]": {
+"f": "1e250270d6dafee6.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"norway\"]]]": {
+"f": "d566f73e140ada6f.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"ottavia-liverpool-to-quebec-may-1900\"]]]": {
+"f": "9a76ed228a76434a.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"pete\"]]]": {
+"f": "86c664ce474b1ccf.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"pike-lake-minnesota\"]]]": {
+"f": "a00eac000e2520b4.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"quebec-canada\"]]]": {
+"f": "396c311f9b257339.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"r-mcallister\"]]]": {
+"f": "6b0d2b489ff8bbf4.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"ruth-and-walt-build-the-cabin-on-pike-lake\"]]]": {
+"f": "71232d24da2f5190.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"ruth-calder\"]]]": {
+"f": "4d6a431cbd636e06.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"ruth-calder-born-in-duluth\"]]]": {
+"f": "0cf15235f40599bf.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"ruth-meets-walt-at-a-church-dance\"]]]": {
+"f": "9408acf50600eb6a.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"ruth-s-father\"]]]": {
+"f": "a1abe87ee369832e.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"ruth-trains-as-a-nurse-in-minneapolis\"]]]": {
+"f": "21a53e8e735fbeaa.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"ruth-walks-her-father-s-lunch-to-the-ore-dock\"]]]": {
+"f": "00c45ba8d4719e4e.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"s-s-ottavia\"]]]": {
+"f": "2cc0ea5758ce19bd.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"signe-calder\"]]]": {
+"f": "c80210bbce9c9c7e.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"the-big-snow-school-closed-for-a-week\"]]]": {
+"f": "99432c2e5e1db30e.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[[\"focus\",\"walt\"]]]": {
+"f": "24e031e2e5dca9b2.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/map\",[]]": {
+"f": "5209817582c23fec.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/meta\",[]]": {
+"f": "b93418ea242f24af.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/picker\",[[\"q\",\"\"]]]": {
+"f": "0eca095e21171ffe.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/story\",[[\"id\",\"1\"]]]": {
+"f": "d3ec4aae6cb67063.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/story\",[[\"id\",\"2\"]]]": {
+"f": "eb05e459b85fcea1.json",
+"t": "application/json"
+},
+"[\"/api/engine/familypedia/story\",[[\"id\",\"3\"]]]": {
+"f": "bc22d7d6167ebfe7.json",
+"t": "application/json"
+},
+"[\"/api/engine/gallery\",[]]": {
+"f": "e3257e93027081e2.json",
+"t": "application/json"
+},
+"[\"/api/engine/genealogy\",[]]": {
+"f": "fa2227d91ffd4b63.json",
+"t": "application/json"
+},
+"[\"/api/engine/genealogy.ged\",[]]": {
+"f": "15dfa3be51c35654.txt",
+"t": "text/plain"
+},
+"[\"/api/engine/genealogy/review\",[]]": {
+"f": "e623e6c1c4976c56.json",
+"t": "application/json"
+},
+"[\"/api/engine/home\",[[\"relative\",\"0\"],[\"story\",\"0\"]]]": {
+"f": "84231a5ccefae77a.json",
+"t": "application/json"
+},
+"[\"/api/engine/home\",[[\"relative\",\"0\"],[\"story\",\"1\"]]]": {
+"f": "dfd2e844698a4efa.json",
+"t": "application/json"
+},
+"[\"/api/engine/home\",[[\"relative\",\"0\"],[\"story\",\"2\"]]]": {
+"f": "1b1f558cd01ae8ec.json",
+"t": "application/json"
+},
+"[\"/api/engine/home\",[[\"relative\",\"1\"],[\"story\",\"0\"]]]": {
+"f": "0def8bef3b7ed740.json",
+"t": "application/json"
+},
+"[\"/api/engine/home\",[[\"relative\",\"1\"],[\"story\",\"1\"]]]": {
+"f": "4963237bb5b07f1e.json",
+"t": "application/json"
+},
+"[\"/api/engine/home\",[[\"relative\",\"1\"],[\"story\",\"2\"]]]": {
+"f": "16d155d19275740c.json",
+"t": "application/json"
+},
+"[\"/api/engine/requests\",[]]": {
+"f": "ed84b2901c36ff91.json",
+"t": "application/json"
+},
+"[\"/api/engine/source\",[[\"id\",\"audio/sample-session-1.m4a\"]]]": {
+"f": "1b82e062a4a24e3a.json",
+"t": "application/json"
+},
+"[\"/api/engine/source\",[[\"id\",\"audio/sample-session-2.m4a\"]]]": {
+"f": "6f6b8a9ff4dda8a1.json",
+"t": "application/json"
+},
+"[\"/api/engine/source\",[[\"id\",\"sources/1900-ottavia-passenger-list.png\"]]]": {
+"f": "207d58dc711e52e2.json",
+"t": "application/json"
+},
+"[\"/api/engine/source\",[[\"id\",\"sources/1938-ore-dock-payroll-ledger.png\"]]]": {
+"f": "951b46ab59d3dedb.json",
+"t": "application/json"
+},
+"[\"/api/engine/source\",[[\"id\",\"sources/1944-letter-henrik-to-ruth-transcription.txt\"]]]": {
+"f": "4e3757bf508c6df1.json",
+"t": "application/json"
+},
+"[\"/api/engine/source\",[[\"id\",\"sources/1944-letter-henrik-to-ruth.pdf\"]]]": {
+"f": "859fd844d355d7b2.json",
+"t": "application/json"
+},
+"[\"/api/engine/source\",[[\"id\",\"sources/1950-courier-the-big-snow.png\"]]]": {
+"f": "8f4acea24a5cc090.json",
+"t": "application/json"
+},
+"[\"/api/engine/source\",[[\"id\",\"sources/big-snow-1950-illustration.jpg\"]]]": {
+"f": "9ab2371f54b81350.json",
+"t": "application/json"
+},
+"[\"/api/engine/source\",[[\"id\",\"sources/ore-dock-1946-illustration.jpg\"]]]": {
+"f": "bf060dfee3ef4d32.json",
+"t": "application/json"
+},
+"[\"/api/engine/source\",[[\"id\",\"sources/pike-lake-cabin-illustration.jpg\"]]]": {
+"f": "3290fd77cab8423e.json",
+"t": "application/json"
+},
+"[\"/api/engine/source\",[[\"id\",\"sources/quebec-arrival-1900-illustration.jpg\"]]]": {
+"f": "d731aa224fb9c289.json",
+"t": "application/json"
+},
+"[\"/api/engine/source/meta\",[[\"rid\",\"0854e99f41f8\"]]]": {
+"f": "a3b8a84277c8ae4c.json",
+"t": "application/json"
+},
+"[\"/api/engine/source/meta\",[[\"rid\",\"2a04a67396a7\"]]]": {
+"f": "e692f8ea09bec40a.json",
+"t": "application/json"
+},
+"[\"/api/engine/source/meta\",[[\"rid\",\"50b3cd9019a5\"]]]": {
+"f": "adf80f7f477f57f7.json",
+"t": "application/json"
+},
+"[\"/api/engine/source/meta\",[[\"rid\",\"510bbfd8afa5\"]]]": {
+"f": "5081b7d292434648.json",
+"t": "application/json"
+},
+"[\"/api/engine/source/meta\",[[\"rid\",\"62f9d4550707\"]]]": {
+"f": "bbf57514fa6a4593.json",
+"t": "application/json"
+},
+"[\"/api/engine/source/meta\",[[\"rid\",\"ab911d885c5a\"]]]": {
+"f": "f2db56e36b840b2c.json",
+"t": "application/json"
+},
+"[\"/api/engine/source/meta\",[[\"rid\",\"ae866ab3f473\"]]]": {
+"f": "dbaf078c5b5d05fb.json",
+"t": "application/json"
+},
+"[\"/api/engine/source/meta\",[[\"rid\",\"dbd77bfc7186\"]]]": {
+"f": "bfb763207213a1c4.json",
+"t": "application/json"
+},
+"[\"/api/engine/source/meta\",[[\"rid\",\"e4a49a279a87\"]]]": {
+"f": "77ce32689032a1d7.json",
+"t": "application/json"
+},
+"[\"/api/engine/source/meta\",[[\"rid\",\"f1016dba4f09\"]]]": {
+"f": "93ea2587187f55f0.json",
+"t": "application/json"
+},
+"[\"/api/engine/source/meta\",[[\"rid\",\"ff21f38bde6e\"]]]": {
+"f": "e393b380c20f90e9.json",
+"t": "application/json"
+},
+"[\"/api/engine/sources\",[]]": {
+"f": "248d653aeafeb865.json",
+"t": "application/json"
+},
+"[\"/api/engine/status\",[]]": {
+"f": "edc5eef93b883d96.json",
+"t": "application/json"
+},
+"[\"/api/engine/stories\",[]]": {
+"f": "6b18e14a37cf511f.json",
+"t": "application/json"
+},
+"[\"/api/engine/story/apparatus\",[[\"id\",\"1\"]]]": {
+"f": "5db5119a745d2777.json",
+"t": "application/json"
+},
+"[\"/api/engine/story/apparatus\",[[\"id\",\"2\"]]]": {
+"f": "d2cc2ecf2083c2fc.json",
+"t": "application/json"
+},
+"[\"/api/engine/story/apparatus\",[[\"id\",\"3\"]]]": {
+"f": "f3871fc6833406cc.json",
+"t": "application/json"
+},
+"[\"/api/engine/story/script\",[[\"id\",\"1\"]]]": {
+"f": "2cc2d52259f4c2b8.json",
+"t": "application/json"
+},
+"[\"/api/engine/story/script\",[[\"id\",\"2\"]]]": {
+"f": "9231adc709159311.json",
+"t": "application/json"
+},
+"[\"/api/engine/story/script\",[[\"id\",\"3\"]]]": {
+"f": "745f6a087460385f.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:aalesund-norway\"]]]": {
+"f": "aef87401b6dcbde3.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:anders-and-henrik-on-the-payroll-of-the-duluth-ore-dock-company\"]]]": {
+"f": "e3d79f0c0a17756d.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:anders-calder\"]]]": {
+"f": "c2edffb0feaf3d65.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:anders-calder-born-near-aalesund-norway\"]]]": {
+"f": "1042077ada9589bc.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:anders-calder-crosses-from-liverpool-to-quebec-on-the-s-s-ottavia\"]]]": {
+"f": "3d797b23fcdc85fe.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:anders-calder-dies-in-duluth\"]]]": {
+"f": "38bf158f4e80f886.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:anders-s-sea-chest\"]]]": {
+"f": "5fa2b12ddd1799a8.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:anders-works-on-the-ore-boats-at-duluth-family-account\"]]]": {
+"f": "85b3ff4ffd06d308.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:arrowhead-engineer-battalion\"]]]": {
+"f": "7fbba44e2f70a082.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:bergen-norway\"]]]": {
+"f": "9e0288b450ebe2a2.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:duluth-lakeside-courier\"]]]": {
+"f": "45086d19fef1c03d.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:duluth-minnesota\"]]]": {
+"f": "65c18fc6774750ad.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:duluth-ore-dock-company\"]]]": {
+"f": "bbb304c6c3cf8ea7.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:france\"]]]": {
+"f": "ab40d6019e207e10.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:henrik-calder\"]]]": {
+"f": "7fe79bd055669cb3.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:henrik-calder-born-in-duluth\"]]]": {
+"f": "7ffce2dec1094fd5.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:henrik-writes-to-ruth-from-france-with-the-arrowhead-engineer-battalion\"]]]": {
+"f": "6a92cb171ac82246.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:hull-england\"]]]": {
+"f": "3b4cf05712a852b9.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:johan-brekke\"]]]": {
+"f": "736a85baa2f53cab.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:karl-lindgren\"]]]": {
+"f": "dc1b67e63e3d1dfb.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:liverpool-england\"]]]": {
+"f": "55a4fda62611ad15.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:minneapolis-minnesota\"]]]": {
+"f": "3dbd8cdddf05e4df.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:norway\"]]]": {
+"f": "b501894a4fea5016.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:ottavia-liverpool-to-quebec-may-1900\"]]]": {
+"f": "143e6b2f54dd0bdf.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:pete\"]]]": {
+"f": "3a125aea23d7e0fb.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:pike-lake-minnesota\"]]]": {
+"f": "41d2cba472f844d8.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:quebec-canada\"]]]": {
+"f": "6c29294ab77d3409.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:r-mcallister\"]]]": {
+"f": "4fdf303e0e344a18.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:ruth-and-walt-build-the-cabin-on-pike-lake\"]]]": {
+"f": "2d1f13e1e5b3551d.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:ruth-calder\"]]]": {
+"f": "e2c7ad30de0f9aa5.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:ruth-calder-born-in-duluth\"]]]": {
+"f": "796b9c6ac54abb6c.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:ruth-meets-walt-at-a-church-dance\"]]]": {
+"f": "2e20c5448d21e16e.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:ruth-s-father\"]]]": {
+"f": "c0704b990d7951b5.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:ruth-trains-as-a-nurse-in-minneapolis\"]]]": {
+"f": "0615693e3e79d705.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:ruth-walks-her-father-s-lunch-to-the-ore-dock\"]]]": {
+"f": "6409a54698912cb2.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:s-s-ottavia\"]]]": {
+"f": "7da8ef76b03e02c7.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:signe-calder\"]]]": {
+"f": "dba748e0871933b9.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:the-big-snow-school-closed-for-a-week\"]]]": {
+"f": "d2526bcb8e3ab04a.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"article:walt\"]]]": {
+"f": "6ecbfac5267a782d.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"photo:P001\"]]]": {
+"f": "0d18160bb770b1c2.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"photo:P002\"]]]": {
+"f": "4e64fa512d11a137.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"photo:P003\"]]]": {
+"f": "633a2bd4640327ed.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"photo:P004\"]]]": {
+"f": "5c9bc081d0ef69d3.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"photo:P005\"]]]": {
+"f": "f0387ac4e59f5893.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"photo:src:0854e99f41f8\"]]]": {
+"f": "d6f9883d2de5b2a1.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"photo:src:2a04a67396a7\"]]]": {
+"f": "e8227aa8449cf89f.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"photo:src:50b3cd9019a5\"]]]": {
+"f": "4058074466638d2c.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"photo:src:510bbfd8afa5\"]]]": {
+"f": "1118cc05857b50e8.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"photo:src:62f9d4550707\"]]]": {
+"f": "1ee3ca0704c57786.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"photo:src:ae866ab3f473\"]]]": {
+"f": "de4de54c96654497.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"photo:src:f1016dba4f09\"]]]": {
+"f": "cc38677e51e42d0a.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"record:R001\"]]]": {
+"f": "0fc3ed6a984f3b82.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"record:R002\"]]]": {
+"f": "3ef29b277da6e766.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"record:R003\"]]]": {
+"f": "7bfbfe67772775c8.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"record:R004\"]]]": {
+"f": "f5b881770e5a8012.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"record:R005\"]]]": {
+"f": "5e537c0cb426d80d.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"record:R006\"]]]": {
+"f": "0edb9d37889424c3.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"record:R007\"]]]": {
+"f": "663bea7c88a705dc.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"record:letter:henrik-1944-09-03\"]]]": {
+"f": "9761df6864431518.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"record:record:r001\"]]]": {
+"f": "d4dc4609cd72f3c0.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"record:record:r003\"]]]": {
+"f": "e7cf8a2f6f24d0fb.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"record:record:r005\"]]]": {
+"f": "4494463183045c5e.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"record:vessel:s-s-ottavia#entry\"]]]": {
+"f": "4c38927644fb040c.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"record:voyage:ottavia-1900#entry\"]]]": {
+"f": "9622eb578965df90.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"source:0854e99f41f8\"]]]": {
+"f": "acb6fead1be159d3.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"source:2a04a67396a7\"]]]": {
+"f": "5a08240936cc961c.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"source:50b3cd9019a5\"]]]": {
+"f": "ad26d4f97dd88675.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"source:510bbfd8afa5\"]]]": {
+"f": "324dcda15e5efd82.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"source:62f9d4550707\"]]]": {
+"f": "7d747bd4ae1dcd80.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"source:ab911d885c5a\"]]]": {
+"f": "0c115e4cb0ea1b4b.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"source:ae866ab3f473\"]]]": {
+"f": "fab51e5eda9112f9.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"source:dbd77bfc7186\"]]]": {
+"f": "7497ae0dfcf40800.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"source:e4a49a279a87\"]]]": {
+"f": "85a899926e114f5e.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"source:f1016dba4f09\"]]]": {
+"f": "f940c5b7c0a201ed.json",
+"t": "application/json"
+},
+"[\"/api/engine/tags\",[[\"target\",\"source:ff21f38bde6e\"]]]": {
+"f": "b85047730341034e.json",
+"t": "application/json"
+},
+"[\"/api/engine/timeline\",[]]": {
+"f": "5b194789ff621a14.json",
+"t": "application/json"
+},
+"[\"/api/engine/timeline.svg\",[]]": {
+"f": "4b038d1625c58202.svg",
+"t": "image/svg+xml"
+},
+"[\"/api/engine/trash\",[]]": {
+"f": "e8de244112cbda77.json",
+"t": "application/json"
+},
+"[\"/api/family\",[]]": {
+"f": "ae82ee50416d5869.json",
+"t": "application/json"
+},
+"[\"/api/identity\",[]]": {
+"f": "ae5bc8c2ebc9d983.json",
+"t": "application/json"
+},
+"[\"/api/job/demo-render-1\",[]]": {
+"f": "e1a7f774a9ce656d.json",
+"t": "application/json"
+},
+"[\"/api/job/demo-render-2\",[]]": {
+"f": "4df02164920b8b29.json",
+"t": "application/json"
+},
+"[\"/api/job/demo-render-3\",[]]": {
+"f": "dcda6efa987cb357.json",
+"t": "application/json"
+},
+"[\"/api/settings\",[]]": {
+"f": "5369a1742e236a51.json",
+"t": "application/json"
+},
+"[\"/api/voices\",[]]": {
+"f": "bf26cd162d8b6594.json",
+"t": "application/json"
+}
+}

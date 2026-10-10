@@ -142,7 +142,7 @@ def _inputs(project):
     for g in ("content/units/*.md", "facts/timeline.csv", "facts/people/*.md", "knowledge/graph.json",
               "knowledge/nodes.csv", "knowledge/edges.csv", "data/archives.csv", "facts/records/**/sources.csv",
               "facts/records/**/sources.json", "facts/**/*track*.csv", "facts/**/*route*.csv", "photos/photo_index.csv",
-              "facts/gaps.md", "facts/records/**/context_*.md", "transcript/clean/*.md", "chapters/*.typ", "chapters/*.md",
+              "facts/gaps.md", "data/family_members.csv", "data/portraits.csv", "facts/records/**/context_*.md", "transcript/clean/*.md", "chapters/*.typ", "chapters/*.md",
               "data/chapters.csv", "data/sources.json", "data/familypedia/*.json", "data/genealogy/*.json",
               "data/stale_stories.json"):
         for p in r.glob(g):
@@ -277,6 +277,107 @@ def _context_lines(project):
                 out.append({"file": p.relative_to(project.root).as_posix(), "text": line.strip(" -*|")})
     return out
 
+
+
+# ------------------------------------------------------------------------------- the book's sources
+def _records_block(text):
+    """The items of a chapter's `#records(` list (the sources printed at the chapter's end):
+    [{"text": plain citation, "url": first link}]. Typst markup is stripped; nothing is invented."""
+    i = text.find("#records(")
+    if i < 0:
+        return []
+    j, depth = i + len("#records("), 1
+    while j < len(text) and depth:
+        c = text[j]
+        if c == "\\":
+            j += 2; continue
+        depth += (c == "(") - (c == ")")
+        j += 1
+    out, buf, d = [], [], 0
+    for line in text[i + len("#records("):j - 1].splitlines():
+        t = line.strip()
+        if not t or t.startswith("//"):
+            continue
+        buf.append(t)
+        d += t.count("[") - t.count("]") - t.count("\\[") + t.count("\\]")
+        if d <= 0 and buf:
+            item = " ".join(buf).strip().rstrip(",")
+            buf, d = [], 0
+            urls = re.findall(r'#link\("([^"]+)"\)', item)
+            plain = re.sub(r'#link\("[^"]+"\)\[[^\]]*\]', "", item)
+            plain = re.sub(r"\\u\{3B\}", ";", plain)
+            plain = re.sub(r"\\(.)", r"\1", plain)
+            plain = re.sub(r"[*_]|^\[|\]$", "", plain).strip()
+            plain = re.sub(r"\s+", " ", plain).strip(" ,")
+            if plain:
+                out.append({"text": plain, "url": urls[0] if urls else "", "urls": urls})
+    return out
+
+
+def book_sources(project):
+    """story id -> {title, items}: every source each story lists at its end (cached by file time)."""
+    out = {}
+    for st in HOST.engine_stories(project):
+        f = project.root / st["file"] if st.get("file") else None
+        if f and f.is_file():
+            items = _records_block(f.read_text(encoding="utf-8", errors="ignore"))
+            if items:
+                out[st["id"]] = {"title": st["title"], "items": items}
+    return out
+
+
+def _family_names(project):
+    """Normalised names and aliases from data/family_members.csv (name, aliases separated by ';'), with
+    'Last, First' forms added, so museum-style index names match. Empty set = no filter."""
+    p = project.root / "data" / "family_members.csv"
+    if not p.exists():
+        return set()
+    out = set()
+    for r in _read_csv(p):
+        for n in [r.get("name", "")] + (r.get("aliases") or "").split(";"):
+            n = re.sub(r"\s*\([^)]*\)\s*$", "", n.strip())
+            if len(n) < 3:
+                continue
+            out.add(norm(n))
+            parts = n.split()
+            if len(parts) >= 2:
+                out.add(norm(parts[-1] + ", " + " ".join(parts[:-1])))
+    return out
+
+
+def _family_canon(project):
+    """norm(name | alias | 'Last, First' | 'First Last') -> the person's name in data/family_members.csv, so the
+    several articles one relative has (museum index forms, nicknames) can be shown as one person."""
+    p = project.root / "data" / "family_members.csv"
+    out, firstlast = {}, {}
+    if not p.exists():
+        return out
+    for r in _read_csv(p):
+        canon = (r.get("name") or "").strip()
+        for n in [canon] + (r.get("aliases") or "").split(";"):
+            n = re.sub(r"\s*\([^)]*\)\s*$", "", n.strip())
+            if len(n) < 2:
+                continue
+            out.setdefault(norm(n), canon)
+            parts = n.replace(".", "").split()
+            if len(parts) >= 2:
+                out.setdefault(norm(parts[-1] + ", " + " ".join(parts[:-1])), canon)
+                firstlast.setdefault((parts[0].lower(), parts[-1].lower()), set()).add(canon)
+    for k, v in firstlast.items():
+        if len(v) == 1:
+            out.setdefault("fl:" + k[0] + "|" + k[1], next(iter(v)))
+    return out
+
+
+def family_name_of(canon, title):
+    if not canon:
+        return None
+    t = norm(title)
+    if t in canon:
+        return canon[t]
+    m = re.match(r"\s*([^,]+),\s*(\S+)", title)                       # Burnham, Charles Lee
+    first, last = (m.group(2), m.group(1)) if m else ((title.split() or [""])[0], (title.split() or [""])[-1])
+    return canon.get("fl:" + first.replace(".", "").lower() + "|" + last.strip().lower())
 
 # ------------------------------------------------------------------------------- the index
 class Subject(dict):
@@ -540,8 +641,23 @@ def _build(project):
         eff = HOST.effective(row)
         text = " ".join([eff.get("summary") or "", " ".join(eff.get("people") or []), " ".join(eff.get("places") or [])])
         photos.append({"id": "src:" + row["id"], "caption": eff.get("accepted_name") or row["original_name"],
-                       "thumb": row.get("thumb") or "", "illustration": False, "provenance": "source: " + row["path"],
+                       "thumb": row.get("thumb") or "", "illustration": HOST.is_illustration(row), "provenance": "source: " + row["path"],
                        "date": eff.get("date_range") or "", "subjects": sorted(_hits(rx, keys, text)), "origin": "sources"})
+    # the project's chosen portraits (data/portraits.csv): first in the article, shown in the infobox even when generated
+    _pr = HOST.project_portraits(project)
+    _has_own = {norm(r["subject"]) for r in _pr if not r.get("story")}   # subjects with a dedicated (non-chapter) portrait
+    for r in _pr:
+        slug = by_norm.get(("person", norm(r["subject"]))) or next((s["slug"] for s in subs.values()
+                                                                   if norm(r["subject"]) in {norm(k) for k in _keys(s)}), None)
+        if not slug:
+            continue
+        pid = "portrait:" + slug + ":" + r["image"]
+        photos.append({"id": pid, "caption": r.get("caption") or r["subject"], "thumb": r["image"], "illustration": r["illustration"],
+                       "portrait": (not r.get("story")) or (norm(r["subject"]) not in _has_own and
+                                                            next((x for x in _pr if norm(x["subject"]) == norm(r["subject"])), None) is r),
+                       "chapter_cover": bool(r.get("story")),
+                       "provenance": ("Generated illustration, not a photograph" if r["illustration"] else "") + (" · " + r["note"] if r.get("note") else ""),
+                       "subjects": [slug], "origin": "data/portraits.csv"})
     ph_by_id = {p["id"]: p for p in photos}
     for target, tl in tags.items():
         if target.startswith("photo:"):
@@ -617,6 +733,27 @@ def _build(project):
             except (TypeError, ValueError):
                 pass
 
+    # family only (data/family_members.csv): person articles are kept only for members of the family
+    fam = _family_names(project)
+    if fam:
+        def is_family(s):
+            names = {norm(k) for k in _keys(s)} | {norm(s["title"])}
+            return bool(names & fam)
+        drop = {slug for slug, s in subs.items() if s["type"] == "person" and not is_family(s)}
+        for slug in drop:
+            subs.pop(slug, None)
+        for k in list(by_norm):
+            if by_norm[k] in drop:
+                del by_norm[k]
+        for k in list(keys):
+            keys[k] = {x for x in keys[k] if x not in drop}
+        for coll in (records, photos):
+            for r in coll:
+                r["subjects"] = [x for x in r.get("subjects", []) if x not in drop]
+        for k in list(kg_subject):
+            if kg_subject[k] in drop:
+                del kg_subject[k]
+
     # score and stubs
     for s in subs.values():
         s["degree"] = sum(1 for k in s["kg"] for _, o, _, _ in adj.get(k, []) if o in kg_subject or o in kg_nodes)
@@ -627,7 +764,7 @@ def _build(project):
             "timeline": {e["event_id"]: e for e in timeline}, "stories": {st["id"]: st for st in stories},
             "records": rec_by_id, "photos": ph_by_id, "kg_nodes": kg_nodes, "kg_subject": kg_subject, "adj": adj,
             "edits": edits, "merged": merged, "tags": tags, "tracks": tracks, "src_rows": src_rows,
-            "session_file": session_file, "story_text": story_text}
+            "session_file": session_file, "story_text": story_text, "book_sources": book_sources(project)}
 
 
 def _merge(into, other):
@@ -709,15 +846,29 @@ def summaries(project):
     """Every article, with the counts the browse views sort and filter by. Compatible with the
     older person/place/event list: slug, title, type, stub, units, events, mentions."""
     ix = index(project)
+    canon = _family_canon(project)
     out = []
     for s in ix["subs"].values():
         out.append({"slug": s["slug"], "title": s["title"], "type": s["type"], "kind": s["kind"],
                     "aliases": sorted(s["aliases"]), "stub": s["stub"], "score": s["score"],
                     "units": sorted(s["units"]), "events": sorted(s["events"]), "mentions": len(s["mention_paras"]),
                     "records": len(s["records"]), "photos": len(s["photos"]), "stories": len(s["stories"]),
-                    "sources": len(s["sources"]), "has_coords": bool(s["coords"]), "origins": sorted(s["origins"])})
+                    "sources": len(s["sources"]), "has_coords": bool(s["coords"]), "origins": sorted(s["origins"]),
+                    "portrait": _portrait_of(ix, s),
+                    "family_name": family_name_of(canon, s["title"]) if s["type"] == "person" else None})
     return sorted(out, key=lambda a: (TYPES.index(a["type"]), a["title"].lower()))
 
+
+
+def _portrait_of(ix, s):
+    """The image a list shows beside a person: the chosen portrait, else a real photograph, else a chapter cover."""
+    ph = [ix["photos"][p] for p in dict.fromkeys(s["photos"]) if p in ix["photos"] and ix["photos"][p].get("thumb")]
+    if s["type"] != "person":                       # places, events, ships…: their first photograph, else an illustration
+        pick = next((p for p in ph if not p.get("illustration")), None) or (ph[0] if ph else None)
+        return {"thumb": pick["thumb"], "illustration": bool(pick.get("illustration"))} if pick else None
+    # only an image chosen as this person's portrait (data/portraits.csv); a shared group photo is not a likeness
+    pick = next((p for p in ph if p.get("portrait")), None)
+    return {"thumb": pick["thumb"], "illustration": bool(pick.get("illustration"))} if pick else None
 
 def link_table(project):
     """Names the project knows -> article, longest first, for [[links]] and automatic links."""
@@ -787,6 +938,7 @@ def article(project, slug):
     units = [ix["units"][u] for u in sorted(s["units"]) if u in ix["units"]]
     records = [ix["records"][r] for r in dict.fromkeys(s["records"]) if r in ix["records"]]
     photos = [ix["photos"][p] for p in dict.fromkeys(s["photos"]) if p in ix["photos"]]
+    photos.sort(key=lambda p: (not p.get("portrait"), not p.get("chapter_cover")))   # chosen portrait first
     related = _related(ix, s)
     infobox = _infobox(ix, s, events, units, records, related, e)
 
@@ -856,11 +1008,22 @@ def article(project, slug):
     open_q = _open_questions(project, ix, s, events, infobox)
     beyond = {"items": e.get("beyond") or [], "suggestions": _beyond_suggestions(project, s)}
     lead = e.get("lead") or _derived_lead(s, infobox, events, units, records, photos, stories, related)
+    # a passage belongs on this page only if it names the subject
+    names = {w for k in [s["title"], *s["aliases"]] for w in [norm(k)] if len(w) >= 3}
+    tokens = {t for n in names for t in [n.split()[0], n.split()[-1]] if len(t) >= 3} if s["type"] == "person" else names
+    def _names_subject(m):
+        t = norm(m.get("text", ""))
+        return any(n in t for n in names) or any(re.search(r"\b" + re.escape(t2) + r"\b", t) for t2 in tokens)
+    passages = [m for m in passages if _names_subject(m)]
     out = {"slug": slug, "title": s["title"], "type": s["type"], "type_label": TYPE_SINGULAR[s["type"]], "kind": s["kind"],
            "aliases": sorted(s["aliases"]), "stub": s["stub"], "score": s["score"], "origins": sorted(s["origins"]),
            "lead": lead, "lead_by": "me" if e.get("lead") else "derived", "notes": e.get("notes", ""),
            "infobox": infobox, "tiers": tiers, "passages": passages, "mentions": passages,
            "sources": sources, "records": records, "photos": photos, "stories": stories,
+           # only the sources that name the subject
+           "book_sources": [g for g in ({"story": sid, "title": ix["book_sources"][sid]["title"],
+                                         "items": [it for it in ix["book_sources"][sid]["items"] if _names_subject({"text": it.get("text", "")})]}
+                                        for sid in sorted(s["stories"], key=lambda z: (len(z), z)) if sid in ix.get("book_sources", {})) if g["items"]],
            "units": [{"id": u["id"], "title": u["title"], "chapter": u["chapter"]} for u in units],
            "events": [{"id": ev["event_id"], "title": ev.get("event", "").rstrip("."), "date": ev.get("date_display", "")} for ev in events],
            "related": related, "backlinks": backlinks, "open_questions": open_q, "beyond": beyond,
@@ -869,7 +1032,30 @@ def article(project, slug):
            "history": e.get("history", [])[-12:]}
     if s["type"] == "event":
         out.update(_event_extra(project, s))
+    if s["type"] == "person":
+        out["wiki"], out["wiki_title"] = _wiki_html(project, s)
     return out
+
+
+def _wiki_html(project, s):
+    """The curated encyclopedia article (data/wiki/<family-name slug>.md) for this person, rendered; or None."""
+    import wiki
+    canon = _family_canon(project)
+    fam = family_name_of(canon, s["title"]) or s["title"]
+    art = wiki.load(project.root, fam)
+    if not art:
+        return None, None
+    best = {}
+    for a in summaries(project):
+        if a.get("family_name"):
+            cur = best.get(a["family_name"])
+            if not cur or (bool(a.get("portrait")), a.get("sources") or 0) > (bool(cur.get("portrait")), cur.get("sources") or 0):
+                best[a["family_name"]] = a
+    import server
+    titles = {st["title"]: st["id"] for st in server.engine_stories(project) if st.get("exists")}
+    person = lambda n: ("#familypedia/" + best[n]["slug"]) if n in best else ("#genealogy?focus=" + wiki.slug(n))
+    chapter = lambda t: ("#stories?read=" + titles[t]) if t in titles else None
+    return wiki.render(art, person, chapter, file_url=lambda p: "lineage-file:" + p), art["short"]
 
 
 def _genealogy_id(project, s):
@@ -1073,7 +1259,10 @@ def _infobox(ix, s, events, units, records, related, e):
         put("When it appears", span, "timeline")
         people = [i for items in rel.values() for i in items if i["type"] == "person"]
         put("Who it touches", links(people[:20]), "", many=True)
-    for label, v in (e.get("infobox") or {}).items():
+    box = e.get("infobox") or {}
+    if not isinstance(box, dict):            # older projects store [label, value] pairs
+        box = {r[0]: r[1] for r in box if isinstance(r, (list, tuple)) and len(r) >= 2}
+    for label, v in box.items():
         if v not in (None, ""):
             rows[label] = {"label": label, "values": [{"text": str(v)}], "by": "me", "basis": "stated by me"}
     schema = INFOBOX[t]
@@ -1286,7 +1475,22 @@ def catalogue(project, what):
         rows = sorted(ix["records"].values(), key=lambda r: (r["type"], r.get("date") or "", r["title"]))
         return [{**r, "subjects": [x for x in map(name, r["subjects"]) if x]} for r in rows]
     rows = sorted(ix["photos"].values(), key=lambda p: (p.get("id") or ""))
-    return [{**p, "subjects": [x for x in map(name, p["subjects"]) if x]} for p in rows]
+    # each picture is an original, an illustration or a digital restoration
+    restored = set()
+    rj = project.root / "data" / "image_restorations.json"
+    if rj.exists():
+        try:
+            restored = {k.lstrip("/") for k in json.loads(rj.read_text())}
+        except Exception:
+            pass
+    def kind(p):
+        th = (p.get("thumb") or "").lstrip("/")
+        if p.get("illustration"):
+            return "illustration"
+        if th in restored or th.replace("work/lineage-assets/", "", 1) in restored or "-restored" in th:
+            return "digital restoration"
+        return "original"
+    return [{**p, "kind": kind(p), "subjects": [x for x in map(name, p["subjects"]) if x]} for p in rows]
 
 
 def story_subjects(project, story_id):

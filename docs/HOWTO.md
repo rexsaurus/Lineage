@@ -375,6 +375,7 @@ few surnames and unusual place names, and fix every other misspelling afterwards
 After every run, search the output for your prompt text. If an echo slips through, cut it at
 render time in `transcript/corrections.json`:
 - `drop_segments.patterns` drops a whole raw segment that is nothing but echo;
+- `drop_word_runs.runs` removes an echoed phrase word by word from inside a real segment;
 - `scrub_inline.patterns` strips an echo embedded inside a real paragraph.
 
 #### Long recordings: chunked diarization
@@ -531,9 +532,29 @@ records first**, because archives often hold the person.
   HathiTrust for period books, Chronicling America for newspapers, free census indexes,
   museum catalogues. Note any paywalled source as such, and give the free route if there is
   one.
-- **Fetch politely.** Respect robots.txt and site terms, make at most one request every
-  couple of seconds per site, and use no logins or CAPTCHA tricks. **Never put anyone's
-  name, email or credentials in a request.**
+- **Fetch politely.** Automated fetching respects robots.txt and site terms, waits at least
+  2 seconds between requests to a site, and uses no logins or CAPTCHA tricks. **Never put
+  anyone's name, email or credentials in a request**; the User-Agent names the project only
+  (`research.user_agent` in `book.yaml`). `fetch_records.py` does this for a short list of
+  record URLs and logs each one in the chapter's dossier:
+
+  ```sh
+  python $LINEAGE/scripts/fetch_records.py anders-calder https://example.org/roster/page-214
+  ```
+- **What only a person can reach.** A page behind a login, a bot check, or a robots.txt that
+  bars automated crawlers goes on `research/MANUAL-LOOKUPS.md` (the template is in
+  `$LINEAGE/templates/research/`): what to find, where, the search terms, why it matters.
+  You do those lookups yourself, in your own browser and your own accounts, one record at a
+  time; if you choose, a browser assistant can do them inside your own logged-in session at
+  your direction. Never CAPTCHA solving, bot-check workarounds, anyone else's credentials, or
+  bulk downloading. Results go in `research/manual-lookups-results.csv`, transcribed exactly.
+  Letters and forms to archives are logged in `research/REQUESTS.md` with their replies.
+- **A dossier per chapter.** Each chapter with research keeps `dossiers/<slug>/`: your
+  requests for that chapter, a log of every search (blocked ones too), **every** source found
+  or scraped (`SOURCES.csv`), the evidence and whether it confirms or contradicts the family,
+  and lessons learned. `dossier.py new <slug>` makes one; `dossier.py records <slug>` writes
+  the chapter's THE RECORDS from it; `dossier.py check <slug> <chapter>` proves nothing is
+  missing (the chapter-dossier skill).
 - **Fact sheets before prose.** For an episode worth building out (a voyage, a regiment, a
   mill town), the research goes first into `facts/records/<person>/context_<topic>.md`, one
   fact per bullet with URL, page and a confidence note. Anything written later is written
@@ -828,6 +849,13 @@ not from the order things were said. It writes the map to `data/chapters.csv`.
 - **The life part**: the subject's own life, **chronological**, one stage or place per
   chapter. A theme that spans decades can be its own chapter, placed where it peaks.
 
+**Chapters are at least ten pages** by default (`chapters.min_pages` in `book.yaml`, measured
+by building; `make chapter` tells you when one is short). A chapter gets there with real
+material: the subject's full stories in their own words, the records, built-out sourced
+context. Never with padding. Where the material is thin, **chapters are combined** (a relative
+with one story joins "Others in the Family"; two thin stages of life become one) rather than
+printed thin. Every chapter ends with **THE RECORDS**, listing every source found and used.
+
 **Sizing.** Aim for roughly 1,000–2,500 words of the subject's speech per life chapter.
 Under about 600, merge with a neighbour; over about 3,000, split at a natural turn. A
 relative's chapter can be a single page.
@@ -839,8 +867,8 @@ relative's chapter can be a single page.
 | `chapter`, `file`, `title`, `part` | order, file name, title, part name | `2`, `chapters/02-the-ore-dock.typ`, `The Ore Dock`, `Her Life` |
 | `setting`, `dates` | the place-and-years line under the title | `Duluth, Minnesota`, `1938–1950` |
 | `summary_line` | a short line in the old-book manner, never a list | `On Tin Pails and Tunnels` |
-| `epigraph`, `epigraph_source` | optional, public-domain, verified (section 6.4) | |
-| `columns` | `1` for narrative chapters, `2` for research-dense ones | `1` |
+| `epigraph`, `epigraph_source` | the chapter's one epigraph: public-domain, verified (section 6.4) | |
+| `columns` | `2` (two justified columns) by default; `1` for a chapter in one measure | `2` |
 | `summary` | 2–4 neutral sentences, for you and the introduction | |
 | `status` | `proposed` → `approved` → `drafted` → `reviewed` → `final` | `approved` |
 
@@ -915,8 +943,8 @@ every other writing skill defers to it. Here are the rules that matter most.
 
 **Context about the world** (what Duluth was like then, what a nurse earned) is welcome, but:
 it describes the world, never the subject. It stays local to the chapter's place and years.
-Every fact is sourced on a `// context:` line and listed in the chapter's THE RECORDS, and it
-takes up no more than about a quarter of a chapter. Juxtaposition is allowed and causation is
+Every fact is sourced on a `// context:` line (a real source, never "general knowledge") and
+listed in the chapter's THE RECORDS, and it takes up no more than about a quarter of a chapter. Juxtaposition is allowed and causation is
 not: "That spring the mill cut its hours" is fine, but "so she left" is not unless she said
 so. For a real example, see section 7 of [EXAMPLE-CHAPTER.md](EXAMPLE-CHAPTER.md):
 
@@ -925,8 +953,8 @@ so. For a real example, see section 7 of [EXAMPLE-CHAPTER.md](EXAMPLE-CHAPTER.md
 // p. 240 (about 20¢ a day vs about 90¢ for unskilled labor ashore)
 ```
 
-**Epigraphs** are optional: at most one per chapter (two for a family-history chapter),
-from public-domain literature only, never quoted from memory, and checked with
+**Epigraphs**: each chapter opens with one (two allowed in a family-history chapter; none if
+you ask), from a writer of the chapter's place and time, public-domain literature only, never quoted from memory, and checked with
 `verify_quotes.py` against a saved copy of the text listed in `facts/sources/works.csv`.
 
 #### Before and after: one story, three ways
@@ -1082,6 +1110,31 @@ confirmed, and unconfirmed links are marked. From the sample:
 )
 ```
 
+#### A small family tree
+
+When you'd like a picture of the family around an ancestor rather than a single line, the
+chapter can carry a three-generation tree at the foot of its first page instead of (or beside)
+the line of descent: parents, the ancestor and spouse, their children, and the line continued
+under the right child. Same rules: documents and confirmed names only.
+
+```typst
+#family-tree(title: "The Family of Anders Calder",
+  couple: ([Anders Calder (c.1875–?)], none),
+  children: ([Ruth's father], [a sister (name not recorded)]), line: 0, descent: [and so to Ruth])
+```
+
+#### Anyone who served
+
+For an ancestor who served in a war, the official service record comes first and is the
+spine, and the chapter is built out around it in time order: the town they grew up in and the
+country then; how the war drew their countrymen in, and those soldiers' reputation; how a
+young soldier enlisted, was examined, trained and shipped; what their unit met when they got
+there (its battles, weapons, generals); being sent home; and what veterans came home to.
+First-hand accounts from soldiers in or near the unit (diaries, letters, memoirs, unit
+histories) are quoted briefly and exactly, and saved so the quote check can verify them. A
+sensitive entry in a record (a punishment, a court case) stays out of the prose until you
+decide. Details: family-history-chapters skill, §6a.
+
 #### THE RECORDS
 
 Every family-history chapter, and any chapter with `// context:` lines, ends with a
@@ -1164,7 +1217,7 @@ Caption conventions:
 | a scene | a short title in the text's own words: `The cabin on Pike Lake` |
 | date and place confirmed | `Ruth and Walt at Pike Lake, 1966`. Add a date or place **only** if confirmed. |
 | identification uncertain | `Probably Pete, about 1950` or `Believed to be the Duluth ore dock`, or no caption until you ask |
-| an illustration | `The tunnel to the street, as the family told it (illustration)` |
+| an illustration | short like any other: `The tunnel to the street`. It is marked as an illustration in the photo index, the chapter note and the copyright page (below) |
 | a map | `Positions from the logbook; lines between them are approximate.` |
 
 If you supply a caption, it's used word for word, and any mismatch with the text gets a
@@ -1175,18 +1228,22 @@ chapter.
 
 Often no photograph of an ancestor exists. A rendering is allowed **only if all four hold**:
 
-- **(a)** **The caption itself marks it**, with "as the family told it" or an explicit
-  "illustration", so a reader in fifty years cannot mistake it for a photograph.
-- **(b)** **A note in the chapter** says the illustrations are renderings and what likeness or
-  source each was based on. This can go in the photographs page note or a closing line.
+- **(a)** **It is recorded as an illustration**: `kind: illustration` in
+  `photos/photo_index.csv`, with what it was based on. Its caption stays short; yours is used
+  word for word.
+- **(b)** **The book says so in print**: the copyright page carries "The illustrations in this
+  book are artist's renderings, not photographs." (written automatically whenever a placed
+  image is an illustration; change the words with `front.illustrations_note` in `book.yaml`),
+  and a note in the chapter says what likeness or source they were based on.
 - **(c)** **It depicts a scene described in the material**, never an invented event, and
   matches its details: season, place, clothing.
-- **(d)** **The distinction survives in the printed book**, not just in drafts or the index.
+- **(d)** **The distinction survives outside the book**: pages shared as images say the
+  illustrations are renderings, and the dashboard never shows one as a person's picture.
 
 Also: nothing that poses as an archival document, no caricature, nothing graphic. A real
 photograph may serve as the likeness reference (say so under (b)), but the photograph itself
-is never altered. The worked example admits that some of its illustration captions break
-rule (a); see section 10 of [EXAMPLE-CHAPTER.md](EXAMPLE-CHAPTER.md).
+is never altered. To make illustrations in a consistent period style, with a relative's
+likeness locked from their real photographs, see "Generating illustrations" below.
 
 #### Maps: drawn from data, never generated
 
@@ -1214,7 +1271,8 @@ lists the label and extent options.
 At the end of each family-history chapter, after THE RECORDS, the **photographs page**
 (`#photo-addendum`) lists real photographs held by archives: catalogue number, date,
 description, link, and a note on what permission printing them would need. **Thumbnails
-print only once the holder has given permission** (`show-images: true`).
+print in drafts, and in the final book only once the holder has given permission**
+(`show-images: true`).
 
 ```typst
 #photo-addendum(note: [Held by <the archive>; reproduction needs its written permission.],
@@ -1226,6 +1284,36 @@ The first item in each row is a thumbnail path, or `none` until permission arriv
 
 Family photographs need permission too: ask whoever holds the original before it prints, and
 record it in the index (`print_permission`).
+
+#### Generating illustrations
+
+Plan every illustration in `photos/images-plan.yaml` (example in
+`$LINEAGE/templates/images/`): a period **style preset** (how photographs of that time looked),
+the scene's citation, the prompt, and optionally a **likeness** set: real photographs of a
+relative in `photos/reference/<name>/`, used as references so the person looks like themselves
+across a set. Then:
+
+```sh
+python $LINEAGE/scripts/generate_images.py --dry-run     # read every prompt first
+python $LINEAGE/scripts/generate_images.py               # photos/generated/<id>.png + grayscale print copy
+```
+
+The key comes from `OPENAI_API_KEY` for the one command or from `~/.openai_api_key` (chmod 600,
+outside every repo), and is never written into the project. Index each result as
+`kind: illustration` before placing it.
+
+#### An illustrated story
+
+For one scene the subject told in vivid detail, the chapter can carry an eight-panel sequence
+over two facing pages, each panel captioned with the subject's exact words:
+
+```typst
+#story-page(title: "The Night of the Storm",
+  story-panel("/photos/generated/print/IMG-03-1.jpg", 1)[“The wind took the barn roof clean off.”],
+  …)
+// src: panel 1 [S2 00:14:05]; …
+#story-page(note: [Illustrations after Ruth's account; artist's renderings, not photographs.], …)
+```
 
 ### 6.7 Assembling and building
 
@@ -1274,6 +1362,10 @@ Drafts show bridges highlighted, editor notes in red and image IDs. Afterwards, 
 at the title page, the contents, a part page, two chapter openers, a spread with a plate, and
 the index. Fix anything wrong at its source (a unit, `chapters.csv`, `book.yaml`), never in a
 generated file.
+
+To look at one chapter without building the whole book, run `build_book.py chapter
+chapters/NN-x.typ` (→ `output/preview-NN-x.pdf`); add `--final --pages` for one image per page
+in `output/pages/` to share outside the PDF.
 
 #### Front matter
 
@@ -1352,6 +1444,20 @@ leftover draft markers. A clean result ends with `No blocking problems found.`
 Before you call it final: every bridge decided, every `// REVIEW:` read
 (`grep -rn "REVIEW" content chapters`), every question in `facts/gaps.md` answered or
 consciously left open. Then you, the author, sign off.
+
+#### Where work stops, and the full first pass
+
+By default work stops for you at three gates (speakers, the chapter map, the final build);
+between them it runs straight through and saves its questions for the next gate. You choose
+where it stops: add gates in `book.yaml` (`workflow.gates`) or in your project's CLAUDE.md
+("one chapter at a time"), and the stricter rule wins.
+
+When you'd rather see the whole book at once, ask for **a full first pass**. Claude runs the
+**book swarm** ([BOOK-SWARM.md](BOOK-SWARM.md)): for every chapter, two researchers, a writer,
+three editors (fidelity, your taste, layout), two independent judges with revisions, and a
+100% sources pass; then front matter, an images plan, the index, the assembled draft and a
+whole-book continuity review. It works on a branch of your project, and nothing is final until
+you've read it.
 
 ### 6.8 Reviewing with the subject across a distance
 

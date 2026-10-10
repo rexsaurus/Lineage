@@ -1,0 +1,6 @@
+# Only the built site is uploaded to Vercel (see docs/DEPLOY.md).
+/*
+!/vercel.json
+!/site
+/site/*
+!/site/public

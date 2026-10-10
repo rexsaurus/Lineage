@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Lineage — a local dashboard for turning recorded interviews into a family book.
+"""Lineage — a local dashboard for a family's own record: sources, research, genealogy, timeline,
+Familypedia, and stories and a book as exports.
 
     python3 server.py                                   # http://127.0.0.1:8777
     python3 server.py --port 9000 --project ~/books/grandma
@@ -292,7 +293,8 @@ def engine_sources(project):
                 "doc_kind": (eff or {}).get("doc_kind"), "content_date": (eff or {}).get("date_range") or "",
                 "people": (eff or {}).get("people") or [], "added_by": (ir or {}).get("added_by", "me"),
                 "transcription": (ir or {}).get("transcription"), "in_drive": bool((ir or {}).get("drive_id")),
-                "notes": (ir or {}).get("notes", ""),
+                "notes": (ir or {}).get("notes", ""), "illustration": bool(ir and is_illustration(ir)),
+                "places": (eff or {}).get("places") or [], "provenance": ((ir or {}).get("fields") or {}).get("provenance", ""),
                 "id": rel, "name": f.name, "kind": kind, "bytes": st.st_size,
                 "added": datetime.fromtimestamp(st.st_mtime, timezone.utc).isoformat(timespec="seconds"),
                 "duration": media_duration(f) if kind in ("audio", "video") else None,
@@ -389,7 +391,19 @@ def engine_make_page(project, source_id):
 INTAKE_LOCK = threading.Lock()
 INTAKE_STAGES = ("ingest", "extract", "understand", "index", "drive")
 STRUCTURED = ("what", "who", "about", "provenance")
-DOC_KINDS = ("letter", "photo", "certificate", "record", "transcript", "recording", "notes", "other")
+DOC_KINDS = ("letter", "photo", "illustration", "certificate", "record", "transcript", "recording", "notes", "other")
+ILLUSTRATION = re.compile(r"\b(illustration|generated|artist'?s rendering|ai[- ]made|reconstruction)\b", re.I)
+
+
+def is_illustration(row):
+    """A generated or drawn picture, never a photograph of the real thing. It may illustrate a story; it is
+    never anyone's portrait, and never counted as a photograph of them."""
+    e = effective(row)
+    if e.get("doc_kind") == "illustration":
+        return True
+    text = " ".join(str(x or "") for x in (e.get("summary"), e.get("accepted_name"), row.get("original_name"),
+                                           (row.get("fields") or {}).get("what"), (row.get("fields") or {}).get("provenance")))
+    return bool(ILLUSTRATION.search(text))
 INTAKE_MODEL = "claude-haiku-4-5-20251001"
 
 
@@ -1121,8 +1135,65 @@ def engine_stories(project):
     for r in rows:
         r.update(story_audio_info(project, r) if r["exists"] else {"has_audio": False})
         r["voice_override"] = voices.get(r["id"])
+        r["photo"] = _lead_photo(project, r) if r.get("exists") else None   # the chapter's chosen image (data/portraits.csv)
         r["narration_chars"] = None
     return rows
+
+
+CITE_TOKEN = re.compile(r"\[S\d+ \d\d:\d\d:\d\d\]|\bR\d{3,}\b|https?://\S+")
+PLATE = re.compile(r'#(?:plate|photo|plate-pair)\(\s*"([^"]+)"(.*?)\)\s*$')
+
+
+def story_apparatus(project, story_id):
+    """What a story rests on: each cited paragraph with its citation chips, and each image with its
+    caption, provenance and whether it is an illustration. Read from the generated story file."""
+    st = _story_by_id(project, story_id)
+    if not st:
+        raise KeyError("no such story")
+    f = project.root / st["file"]
+    if not f.is_file():
+        raise KeyError("this story has no draft yet")
+    photos = {r.get("id"): r for r in csv.DictReader(open(project.root / "photos" / "photo_index.csv", encoding="utf-8"))} \
+        if (project.root / "photos" / "photo_index.csv").exists() else {}
+    paras, images, buf = [], [], []
+    for line in f.read_text(encoding="utf-8", errors="ignore").splitlines():
+        t = line.strip()
+        if t.startswith("// src:"):
+            src = t[len("// src:"):].strip()
+            text = re.sub(r"#\w[\w.-]*\(\s*\"[^\"]*\"\s*\)", "", " ".join(buf)).replace("][", " ")
+            text = re.sub(r"#\w+\[|[\[\]]|#\w+", "", text)
+            chips = CITE_TOKEN.findall(src)
+            rest = CITE_TOKEN.sub("", src).strip(" ;,-")
+            # layout code is not prose: drop key: value arguments, quoted file paths and stray brackets
+            text = re.sub(r"\b[\w-]+:\s*(?:\"[^\"]*\"|\d+(?:\.\d+)?(?:in|pt|em|%)?|true|false|none)", "", text)
+            text = re.sub(r"\"/[^\"]+\"|[(){}\"*_]|\\u\{[0-9A-Fa-f]+\}", " ", text)
+            text = re.sub(r"\s*,\s*(?=,|$)", "", re.sub(r"\s+", " ", text)).strip(" ,;")
+            if len(re.findall(r"[A-Za-z]{3,}", text)) < 6 or re.search(r"\b(?:setting|epigraph|summary|width|caption)\b", text):
+                text = ""
+            paras.append({"excerpt": re.sub(r"\s+", " ", text).strip()[:220], "cites": chips, "note": rest})
+            buf = []
+            continue
+        m = PLATE.match(t)
+        if m:
+            path, args = m.group(1).lstrip("/"), m.group(2)
+            cap = re.search(r'caption:\s*"([^"]*)"', args)
+            pid = re.search(r'id:\s*"([^"]*)"', args)
+            row = photos.get(pid.group(1) if pid else "", {})
+            caption = cap.group(1) if cap else row.get("subject", "")
+            illus = bool(ILLUSTRATION.search(" ".join([caption, row.get("subject", ""), row.get("kind", ""), row.get("needs_attention", "")])))
+            images.append({"path": path, "id": pid.group(1) if pid else "", "caption": caption, "illustration": illus,
+                           "exists": (project.root / path).is_file(), "people": row.get("people", ""),
+                           "people_basis": row.get("people_basis", ""), "date": row.get("date", ""),
+                           "date_basis": row.get("date_basis", ""), "location": row.get("location", ""),
+                           "holder": row.get("holder", ""), "source_file": row.get("source_file", ""),
+                           "placeholder": "placeholder" in (caption + row.get("kind", "")).lower()})
+            buf = []
+            continue
+        if t.startswith("//") or t.startswith("#show") or t.startswith("#import"):
+            continue
+        if t:
+            buf.append(t)
+    return {"id": st["id"], "title": st["title"], "paragraphs": paras, "images": images}
 
 
 def engine_set_story_state(project, story_id, state):
@@ -1439,9 +1510,36 @@ def _ghistory(project, event, detail=None):
     _gsave(project, "history", h)
 
 
+def _tree_from_csv(project):
+    """data/family_tree.csv (name, father, mother, spouse, dates, living, how_sure, evidence): the project's own
+    family tree. When present it replaces the tree derived from the recordings, which names one person many ways."""
+    p = project.root / "data" / "family_tree.csv"
+    rows = list(csv.DictReader(open(p, encoding="utf-8"))) if p.exists() else []
+    people, links = {}, []
+    for r in rows:
+        pid = _pid(r["name"])
+        people[pid] = {"id": pid, "name": r["name"], "aliases": [], "dates": r.get("dates", ""),
+                       "living": (r.get("living") or "").lower() == "yes",
+                       "evidence": [{"quote": "", "cite": r.get("evidence", "")}]}
+    seen = set()
+    for r in rows:
+        pid, tier = _pid(r["name"]), (r.get("how_sure") or "told")
+        ev = [{"quote": "", "cite": r.get("evidence", "")}]
+        for k in ("father", "mother"):
+            if r.get(k):
+                links.append({"id": f"{_pid(r[k])}>{pid}", "a": _pid(r[k]), "b": pid, "rel": "parent", "tier": tier, "evidence": ev})
+        if r.get("spouse"):
+            key = tuple(sorted([pid, _pid(r["spouse"])]))
+            if key not in seen:
+                seen.add(key)
+                links.append({"id": f"{key[0]}={key[1]}", "a": key[0], "b": key[1], "rel": "spouse", "tier": tier, "evidence": ev})
+    return {"people": people, "links": links, "conflicts": []} if rows else None
+
+
 def genealogy_graph(project):
     """The tree as shown: derived, with my corrections laid over it (they always win)."""
-    d = _gload(project, "derived", {"people": {}, "links": [], "conflicts": []})
+    csv_tree = _tree_from_csv(project)
+    d = csv_tree or _gload(project, "derived", {"people": {}, "links": [], "conflicts": []})
     mine = _gload(project, "mine", {"people": {}, "links": {}, "merges": [], "notes": {}})
     people = {k: dict(v, by="derived") for k, v in d["people"].items()}
     for pid, p in mine.get("people", {}).items():
@@ -1465,21 +1563,46 @@ def genealogy_graph(project):
     for r in intake_load(project).values():
         if not r.get("trashed"):
             for nm in effective(r).get("people") or []:
-                sources_by_person.setdefault(_pid(nm), []).append(r.get("thumb") if r.get("kind") == "image" else None)
+                # a person's picture is a real photograph or scan, never an illustration
+                sources_by_person.setdefault(_pid(nm), []).append(r.get("thumb") if r.get("kind") == "image" and not is_illustration(r) else None)
     stories = engine_stories(project)
+    portraits = project_portraits(project)
+    if csv_tree:                                   # the article for each relative, and only chosen portraits
+        by_family = {}
+        for a in engine_familypedia(project):
+            if a.get("type") == "person" and a.get("family_name"):
+                by_family.setdefault(a["family_name"], []).append(a)
+        sources_by_person = {}
     for pid, p in people.items():
         p["note"] = mine.get("notes", {}).get(pid, "")
         p["article"] = pid if pid in slugs else None
+        if csv_tree:
+            arts = sorted(by_family.get(p["name"], []), key=lambda a: (not a.get("portrait"), -(a.get("sources") or 0)))
+            p["article"] = arts[0]["slug"] if arts else None
+            pic = next((a["portrait"] for a in arts if a.get("portrait")), None)
+            p["photo"] = pic["thumb"] if pic else None
+            p["photo_illustration"] = bool(pic and pic.get("illustration"))
+            p["n_sources"] = sum(a.get("sources") or 0 for a in arts)
+            p["has_story"] = any(a.get("stories") for a in arts) if arts else False
+            continue
         thumbs = [t for t in sources_by_person.get(pid, []) if t]
         p["photo"] = thumbs[0] if thumbs else None
+        if not p["photo"]:                          # the project's chosen portrait (data/portraits.csv)
+            names = {_pid(x) for x in [p.get("name") or ""] + list(p.get("aliases") or [])}
+            hit = next((r for r in portraits if not r.get("story") and _pid(r["subject"]) in names), None) \
+                or next((r for r in portraits if _pid(r["subject"]) in names), None)
+            if hit:
+                p["photo"], p["photo_illustration"] = hit["image"], hit["illustration"]
         p["n_sources"] = len(sources_by_person.get(pid, []))
         p["has_story"] = any(p["name"].split()[0] in (project.root / st["file"]).read_text(encoding="utf-8", errors="ignore")
                              for st in stories if st["exists"]) if p.get("name") else False
     subject = project.read().get("subject") or ""
+    if csv_tree and csv_tree["people"]:
+        subject = next(iter(csv_tree["people"]))       # the family tree file starts with the book's subject
     return {"people": list(people.values()), "links": list(links.values()), "conflicts": d.get("conflicts", []),
             "subject": _pid(subject) if subject else None, "note": d.get("note", ""), "applied": d.get("applied"),
             "pending": genealogy_diff(project).get("pending", False), "history": _gload(project, "history", [])[-30:],
-            "merges": mine.get("merges", [])}
+            "merges": mine.get("merges", []), "from_file": "data/family_tree.csv" if csv_tree else None}
 
 
 def genealogy_edit(project, op, data):
@@ -1602,7 +1725,24 @@ def _daily(seq, salt, reroll=0):
     return seq[(base + reroll) % len(seq)]           # stable all day; each reroll steps to the next
 
 
+def project_portraits(project):
+    """data/portraits.csv (the project's own choice of image per person and per story):
+    subject, story, image, illustration, caption, note. Rows whose image file is missing are ignored."""
+    p = project.root / "data" / "portraits.csv"
+    if not p.exists():
+        return []
+    out = []
+    for r in csv.DictReader(open(p, encoding="utf-8")):
+        img = (r.get("image") or "").strip().lstrip("/")
+        if img and (project.root / img).is_file():
+            out.append({**r, "image": img, "illustration": (r.get("illustration") or "").strip().lower() in ("yes", "true", "1")})
+    return out
+
+
 def _lead_photo(project, st):
+    for r in project_portraits(project):          # the chapter's chosen image comes first
+        if (r.get("story") or "").strip().lstrip("/") == st.get("file"):
+            return r["image"]
     raw = (project.root / st["file"]).read_text(encoding="utf-8", errors="ignore")
     for m in re.finditer(r'#(?:plate|photo|plate-pair)\(\s*"([^"]+)"', raw):
         rel = m.group(1).lstrip("/")
@@ -1614,7 +1754,13 @@ def _lead_photo(project, st):
 def _opening(project, st, n=3):
     raw = (project.root / st["file"]).read_text(encoding="utf-8", errors="ignore")
     text = _plain_story(st, raw, drop_bridges=True)
-    body = next((para for para in text.split("\n\n") if len(para.split()) > 12), text)
+    def prose(para):                                  # skip typeset layout code (#block, = headings, {…}, width: …)
+        q = para.strip()
+        return len(q.split()) > 12 and not re.search(r"[{}#\\]|^[=/\[(]|\b(width|height|stroke|inset|fill|align)\s*:|\)\s*\[", q)
+    paras = [re.sub(r"(?<!\w)[_*]([^_*]+)[_*](?!\w)", r"\1", x) for x in text.split("\n\n")]
+    body = next((para for para in paras if prose(para)), "")
+    if not body:
+        return ""
     body = re.sub(r"\s+", " ", body)
     sentences = re.findall(r"[^.!?]+[.!?]+[”\"’']?", body)
     out = sentences[:n]
@@ -1622,6 +1768,68 @@ def _opening(project, st, n=3):
         out = out[:-1]                                # never stop inside a quotation
     return " ".join(x.strip() for x in out) or body[:400]
 
+
+
+def engine_gallery(project):
+    """Original photographs only, each once:
+    no illustrations, no digital restorations (anything with an unretouched original), no document scans, no crops
+    or halves of the same picture — near-duplicates are found by a perceptual hash and the largest copy is kept."""
+    import familypedia as _fp
+    root = project.root
+    restored = set()
+    rj = root / "data" / "image_restorations.json"
+    if rj.exists():
+        try:
+            restored = {k.lstrip("/") for k in json.loads(rj.read_text())}
+        except Exception:
+            pass
+    DOC = re.compile(r"clipping|newspaper|directory|deed|record|register|census|certificate|yearbook|catalog|patent|court|letter|"
+                     r"page|card|form|ledger|roll|report|notice|obituary|article|advert|index|drawing|diagram|map|scan|transcript|"
+                     r"minutes|program|journal|argus|gold bug|red book|microcosm|blue and white|staff box|\bp\. ?\d|nominal|"
+                     r"embarkation|licen[cs]e|births|penitentiary|digest|schedule|\bhalf\b|\bthe same\b|crop|close\b|styled as|stylised|stylized|engraving|aged-print|rendering|generated|illustration|\bthe ally\b|ally\d|blue-and-white|/cover\.", re.I)
+    items, cat = [], _fp.catalogue(project, "photos")
+    # an image is out if ANY catalogue entry for it is an illustration or a document (one file can have several rows)
+    banned = {(it.get("thumb") or "").lstrip("/") for it in cat
+              if it.get("illustration") or DOC.search(it.get("caption") or "") or DOC.search(it.get("thumb") or "")}
+    seen = set()
+    for it in cat:
+        th = (it.get("thumb") or "").lstrip("/")
+        if not th or th in banned or th in seen or th in restored or "-restored" in th or "/_orig/" in th:
+            continue
+        seen.add(th)
+        f = root / th
+        if not f.is_file():
+            continue
+        items.append((it, f))
+    try:
+        from PIL import Image
+    except Exception:
+        Image = None
+    def dhash(f):
+        with Image.open(f) as im:
+            g = im.convert("L").resize((9, 8))
+            px = list(g.getdata())
+            w, h = im.size
+        bits = 0
+        for r in range(8):
+            for c in range(8):
+                bits = (bits << 1) | (px[r * 9 + c] > px[r * 9 + c + 1])
+        return bits, w * h
+    kept = []   # (hash, area, item)
+    for it, f in items:
+        if Image is None:
+            kept.append((None, 0, it)); continue
+        try:
+            hsh, area = dhash(f)
+        except Exception:
+            continue
+        dup = next((k for k in kept if k[0] is not None and bin(k[0] ^ hsh).count("1") <= 10), None)
+        if dup:
+            if area > dup[1]:
+                kept[kept.index(dup)] = (hsh, area, it)
+            continue
+        kept.append((hsh, area, it))
+    return {"items": [k[2] for k in kept]}
 
 def home_story(project, reroll=0):
     drafts = [st for st in engine_stories(project) if st["exists"]]
@@ -1672,6 +1880,24 @@ def _relationship(graph, subject, pid):
     return "relative (" + " → ".join({"u": "parent", "d": "child", "s": "spouse", "b": "sibling"}[c] for c in path) + ")"
 
 
+def _infobox_get(art, key, default=""):
+    """An article's infobox value. Infoboxes are a {field: value} dict in Lineage's own articles and a
+    list of [field, value] pairs (or {"k":..., "v":...} rows) in articles imported from older projects."""
+    box = (art or {}).get("infobox") or {}
+    if isinstance(box, dict):
+        return box.get(key, default)
+    for row in box:
+        if isinstance(row, dict):
+            k, v = row.get("k") or row.get("key") or row.get("label"), row.get("v") or row.get("value")
+        elif isinstance(row, (list, tuple)) and len(row) >= 2:
+            k, v = row[0], row[1]
+        else:
+            continue
+        if str(k).strip().lower() == key.lower():
+            return v
+    return default
+
+
 def home_relative(project, reroll=0):
     graph = genealogy_graph(project)
     people = graph["people"] or [{"id": _pid(a["title"]), "name": a["title"], "dates": "", "article": a["slug"], "photo": None,
@@ -1688,8 +1914,8 @@ def home_relative(project, reroll=0):
         except KeyError:
             art = None
     photos = sum(1 for r in intake_load(project).values() if not r.get("trashed") and r.get("kind") == "image"
-                 and p.get("name") in (effective(r).get("people") or []))
-    return {"id": p["id"], "name": p.get("name"), "dates": p.get("dates") or (art or {}).get("infobox", {}).get("dates", ""),
+                 and not is_illustration(r) and p.get("name") in (effective(r).get("people") or []))
+    return {"id": p["id"], "name": p.get("name"), "dates": p.get("dates") or _infobox_get(art, "dates"),
             "photo": p.get("photo"), "relationship": _relationship(graph, graph.get("subject"), p["id"]),
             "line": (art or {}).get("lead", ""), "article": p.get("article"),
             "counts": {"sources": p.get("n_sources", 0), "mentions": len((art or {}).get("mentions", [])), "photographs": photos},
@@ -2308,7 +2534,7 @@ PROVIDERS = {
                "check": ("https://api.openai.com/v1/models", lambda k: {"Authorization": f"Bearer {k}"})},
     "elevenlabs": {"label": "ElevenLabs", "use": "Podcast voice", "prefix": "",
                    "check": ("https://api.elevenlabs.io/v1/voices", lambda k: {"xi-api-key": k})},
-    "github": {"label": "GitHub", "use": "Push the book repo", "prefix": "",
+    "github": {"label": "GitHub", "use": "Push the lineage repo", "prefix": "",
                "check": ("https://api.github.com/user",
                          lambda k: {"Authorization": f"Bearer {k}", "Accept": "application/vnd.github+json",
                                     "User-Agent": "Lineage"})},
@@ -3057,6 +3283,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def h_requests(self, q):
         return self.send_json(_requests(self.project))
 
+    def e_gallery(self, q):
+        return self.send_json(engine_gallery(self.project))
+
     def g_graph(self, q):
         return self.send_json(genealogy_graph(self.project))
 
@@ -3151,6 +3380,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def e_fp_map(self, q):
         return self.send_json(familypedia.map_data(self.project, (q.get("focus") or [None])[0]))
+
+    def e_story_apparatus(self, q):
+        try:
+            return self.send_json(story_apparatus(self.project, (q.get("id") or [""])[0]))
+        except (KeyError, StopIteration) as e:
+            return self.send_json({"error": str(e) or "no such story"}, 404)
 
     def e_fp_story(self, q):
         return self.send_json({"subjects": familypedia.story_subjects(self.project, (q.get("id") or [""])[0])})
@@ -3763,9 +3998,11 @@ ROUTES = {
     ("GET", "/api/engine/familypedia/catalogue"): Handler.e_fp_catalogue,
     ("GET", "/api/engine/familypedia/map"): Handler.e_fp_map,
     ("GET", "/api/engine/familypedia/story"): Handler.e_fp_story,
+    ("GET", "/api/engine/story/apparatus"): Handler.e_story_apparatus,
     ("GET", "/api/engine/tags"): Handler.e_tags,
     ("POST", "/api/engine/tags"): Handler.e_tags_set,
     ("GET", "/api/engine/home"): Handler.h_home,
+    ("GET", "/api/engine/gallery"): Handler.e_gallery,
     ("GET", "/api/engine/attention"): Handler.h_attention,
     ("GET", "/api/engine/requests"): Handler.h_requests,
     ("POST", "/api/engine/request/draft"): Handler.h_request_draft,

@@ -56,6 +56,16 @@ Recordings, scans, letters and documents, each scanned, named, summarized and in
 lands, with who added it and when. Recordings get transcripts with speaker labels and
 timestamps, so every sentence later can point back at the tape.
 
+<img src="docs/images/sources-gallery.png" alt="The Sources gallery">
+
+The same sources as a gallery: scans, letters and photographs at a glance, with who added
+each one. Select several and tag them all to a person, a place or a ship at once.
+
+<img src="docs/images/source-lightbox.png" alt="A source in the lightbox">
+
+Click one to see it full size, step through the rest with the arrow keys, and read or edit
+its summary, people, places, provenance and notes beside it.
+
 <img src="docs/images/source-drawer.png" alt="A source open in the drawer, with its subjects">
 
 Open a source and everything about it is editable, and everything derived is marked as
@@ -111,9 +121,17 @@ paragraph cited) and can be narrated. The player follows you around the dashboar
 
 <img src="docs/images/story.png" alt="A story set as book pages">
 
-Read a story as the book's own pages. A sentence the writer wanted to add that the material
-didn't give it is a *bridge*: highlighted in the draft, and the final build refuses to
-compile while one is unapproved.
+Read a story as the book's own pages, with what it rests on above them: every paragraph and
+its citation chips (click one to hear that moment of the recording, or open the record), and
+the people and places in it, each linked to their Familypedia article. A sentence the writer
+wanted to add that the material didn't give it is a *bridge*: highlighted in the draft, and
+the final build refuses to compile while one is unapproved.
+
+<img src="docs/images/story-images.png" alt="A story's images with provenance and a toolbar">
+
+Each image in a story carries its provenance (its date and the basis for it, who is in it and
+how we know, who holds it) and a toolbar to open it, tag it or find it among the
+photographs. An illustration says so, everywhere.
 
 ### Contributors and connectors
 
@@ -173,6 +191,20 @@ its source excerpt and its written version, and chapters are generated from unit
 story is a one-line change and a rebuild, and a coverage check proves no part of the
 recordings got quietly dropped. **Bridges are the other trick**: anything added that the
 material didn't give is held for a person's approval, and the final build stops until it is.
+
+**Research is kept per chapter.** Each chapter has a dossier: the author's requests for it, a
+log of every search (blocked ones too), every source found or scraped, the evidence for and
+against the family's version, and lessons learned. Every chapter ends with THE RECORDS, all of
+its sources, generated from the dossier and checked. A polite fetcher handles the records a
+script may reach; a hand-off list covers the ones only a person can look up.
+
+**The defaults come from a working book:** two justified columns, one epigraph per chapter,
+chapters of at least ten pages (thin ones are combined, never padded), no "general knowledge"
+sources, a service-record method for anyone who served, a small three-generation family tree,
+an eight-panel illustrated story in the subject's own words, and illustrations generated in a
+period style with a relative's likeness locked from real photographs, marked as renderings in
+the book. When the author asks, a **[book swarm](docs/BOOK-SWARM.md)** drafts the whole book
+in one pass (researchers, a writer, three editors and two judges per chapter) for them to read.
 
 ### One chapter, start to finish
 
@@ -260,8 +292,10 @@ inventions, human gates, versioning). See [docs/FACTORY.md](docs/FACTORY.md).
   research records, build the genealogy and Familypedia, then stories and a book.
 - **[app/README.md](app/README.md)**: the dashboard, and exactly what it reads and writes.
 - **[docs/EXAMPLE-CHAPTER.md](docs/EXAMPLE-CHAPTER.md)**: the chapter above, annotated.
+- **[docs/BOOK-SWARM.md](docs/BOOK-SWARM.md)**: a full first pass of the whole book, chapter by chapter.
 - **[docs/FACTORY.md](docs/FACTORY.md)**: the pattern, and how to aim it at something else.
 - **[CHANGELOG.md](CHANGELOG.md)**: releases.
+- **[docs/DEPLOY.md](docs/DEPLOY.md)**: the public website (`make site`): landing page, docs and a read-only demo.
 
 ## License
 

@@ -10,7 +10,8 @@ Inputs
   transcript/raw/<S>.json        WhisperX output -- read only, never edited
   transcript/sessions.csv        session list + file/recorded/duration
   transcript/corrections.json    speaker_map, spelling, drop_segments,
-                                 scrub_inline (see corrections.example.json)
+                                 drop_word_runs, scrub_inline
+                                 (see corrections.example.json)
   book.yaml                      narrator/interviewer names and labels
 Outputs
   transcript/verbatim/<S>.md     every word, low-confidence words as [?word?]
@@ -22,8 +23,12 @@ JSON, so a re-render is reproducible and no timestamp that the book cites
 ever shifts. Order of application:
   1. drop_segments: a raw segment whose text matches any pattern is dropped
      whole (Whisper echoing the initial prompt as if it were speech).
-  2. paragraphs are built from the word arrays (whisperx_to_md.py).
-  3. scrub_inline then spelling are applied to each paragraph's text (an echo
+  2. drop_word_runs: an exact run of words (case and edge punctuation ignored)
+     is removed from each segment's word array, wherever it occurs (an echo
+     inside an otherwise real segment; paragraphs are rebuilt from the words,
+     so a text-level fix alone would not remove it).
+  3. paragraphs are built from the word arrays (whisperx_to_md.py).
+  4. scrub_inline then spelling are applied to each paragraph's text (an echo
      embedded inside a real paragraph; approved spelling fixes).
 
 The paragraph builder is the interview-transcriber skill's whisperx_to_md.py,
@@ -72,6 +77,10 @@ def load_corrections():
     return json.loads(CORRECTIONS.read_text(encoding="utf-8"))
 
 
+def norm_word(w):
+    return re.sub(r"^\W+|\W+$", "", str(w).strip().lower())
+
+
 class Fixer:
     def __init__(self, corr):
         def rules(items):
@@ -79,6 +88,9 @@ class Fixer:
         self.spell = rules(corr.get("spelling"))
         self.scrub = rules((corr.get("scrub_inline") or {}).get("patterns"))
         self.drop = [re.compile(p) for p in (corr.get("drop_segments") or {}).get("patterns", [])]
+        # each run is a phrase ("Calder, Tannacreek") or a list of words
+        self.runs = [r for r in ([norm_word(w) for w in (x.split() if isinstance(x, str) else x)]
+                                 for x in (corr.get("drop_word_runs") or {}).get("runs", [])) if r]
         # speaker_map is either one map for every session {"SPEAKER_00": "Grandma", ...}
         # or per session {"S1": {"SPEAKER_00": "Grandma", ...}, "S2": {...}}: diarization
         # clusters are numbered per file, so SPEAKER_00 can be a different person in each.
@@ -90,6 +102,19 @@ class Fixer:
     def for_session(self, sid):
         self.smap = self.per_session.get(sid, self.default_map)
         return self.smap
+
+    def drop_runs(self, words):
+        """Remove every occurrence of each run from a word array; returns (words, n removed)."""
+        words, n = list(words), 0
+        for run in self.runs:
+            toks, i = [norm_word(w.get("word", "")) for w in words], 0
+            while i <= len(toks) - len(run):
+                if toks[i:i + len(run)] == run:
+                    del words[i:i + len(run)], toks[i:i + len(run)]
+                    n += len(run)
+                else:
+                    i += 1
+        return words, n
 
     def text(self, t):
         for pat, rep in self.scrub:
@@ -117,13 +142,20 @@ def yaml_str(s):
 def render_session(W, row, fx, narrator, interviewer):
     sid = row["session"]
     data = json.loads(Path(f"transcript/raw/{sid}.json").read_text(encoding="utf-8"))
-    segs, dropped = [], []
+    segs, dropped, run_words = [], [], 0
     for s in data.get("segments", []):
         t = s.get("text", "")
         if any(p.search(t) for p in fx.drop):
             dropped.append((s.get("start", 0), t.strip()))
-        else:
-            segs.append(s)
+            continue
+        if fx.runs and s.get("words"):
+            ws, n = fx.drop_runs(s["words"])
+            run_words += n
+            if n and not any(w.get("word", "").strip() for w in ws):
+                dropped.append((s.get("start", 0), t.strip()))  # the segment was only the echo
+                continue
+            s = {**s, "words": ws}
+        segs.append(s)
     fx.for_session(sid)
     paras = [[spk, st, fx.text(t)] for spk, st, t in W.build(segs, sid, fx.smap)]
     # a paragraph that was nothing but a scrubbed echo leaves only punctuation
@@ -149,6 +181,7 @@ def render_session(W, row, fx, narrator, interviewer):
            f"duration: {dur}",
            "words: {" + ", ".join(f"{k}: {v}" for k, v in sorted(words.items())) + "}",
            f"prompt_echo_segments_removed: {len(dropped)}",
+           f"prompt_echo_words_removed: {run_words}",
            "---", "", "## Topics"]
     for st, txt in topics(paras, narrator):
         hdr.append(f"- {W.ts(st)} " + " ".join(W.clean_text(txt).split()[:11]).rstrip(".,"))
@@ -160,7 +193,7 @@ def render_session(W, row, fx, narrator, interviewer):
         p.write_text(head + W.render(paras, sid, clean), encoding="utf-8")
 
     summary = "  ".join(f"{k} {v:>6}w" for k, v in sorted(words.items()))
-    print(f"{sid}: {summary}  flags {flags:>4}  echo-cut {len(dropped)}  "
+    print(f"{sid}: {summary}  flags {flags:>4}  echo-cut {len(dropped)}  word-runs {run_words}  "
           f"unmapped {unmapped or 'none'}")
     for st, t in dropped:
         print(f"     cut [{sid} {W.ts(st)}] {t[:78]}")

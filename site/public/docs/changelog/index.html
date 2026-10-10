@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Changelog · Lineage</title>
+<meta name="description" content="Lineage: Changelog.">
+<link rel="icon" href="../../assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<header class="site-top"><div class="wrap">
+  <a class="brand" href="../../"><img src="../../assets/logo.svg" alt="" width="26" height="26"><span>Lineage</span></a>
+  <nav class="site-nav" aria-label="Site"><a href="../../">Home</a><a href="../../tour/">Tour</a><a href="../../demo/">Live demo</a><a href="../" aria-current=page>Docs</a><a href="../../install/">Install</a><a href="https://github.com/rexsaurus/Lineage" class="gh">GitHub</a></nav>
+</div></header>
+<main>
+<article class="doc"><p class="muted"><a href="../">Docs</a> · <a href="https://github.com/rexsaurus/Lineage/blob/main/CHANGELOG.md">view on GitHub</a></p><h1 id="changelog">Changelog</h1>
+<p>Each release is a git tag (<code>vX.Y.Z</code>). Projects record the version they run in <code>lineage.lock</code>.
+Every entry says whether it changes anything that would alter already-generated stories
+(templates, the book template, style guides, skills); when it does, a project updating to it
+marks those stories stale rather than regenerating them.</p>
+<h2 id="070-2026-10-08">0.7.0 — 2026-10-08</h2>
+<p><strong>Alters generated stories: no.</strong> New tools, template helpers and a publishing path; the book
+template's existing functions render as before (<code>records</code> gains an internal flag only).</p>
+<p>From a working family book's assembly and publication, in generic form (no names, places or
+material from that project):</p>
+<ul>
+<li><strong>Whole-book index without marks.</strong> <code>#show: auto-index.with((heading: (spellings…), …))</code> in the
+  book's master file marks every occurrence of the listed names as the book is set, longest name
+  first, so chapter files stay untouched; <code>make-index</code> merges these with any hand-placed <code>#idx</code>.
+  Names inside a <code>#records</code> list are skipped (<code>records</code> now sets an <code>in-records</code> state).</li>
+<li><strong>Exhibits.</strong> <code>#exhibit(title:, note:, (path, [caption]), …)</code> reproduces a document's scanned pages
+  after a chapter, two to a row, numbered and captioned (a court file, a service record, a deed).</li>
+<li><strong>Readable editions of records.</strong> <code>templates/records/readable-edition.typ</code>: cover, plain-English
+  summary and timeline, every original page beside its full transcription (typed text and
+  handwriting distinguished), editor's notes.</li>
+<li><strong>Image manager</strong> (<code>plugins/lineage/scripts/image_manager.py</code>, skill <code>image-manager</code>): one catalogue
+  of every image (<code>data/image_catalog.csv</code>: SHA-256, size, chapters, captions, origin, prompt hash,
+  source URL, Drive id); <code>check --id/--prompt/--url/--file</code> before generating or fetching anything;
+  <code>missing</code> (broken references, stand-ins, PLATE-TODO anchors), <code>unused</code>, and <code>drive-sync</code> (uploads new
+  or changed images, record PDFs and the book to Google Drive with the <code>drive.file</code> scope; ids written
+  back). <code>generate_images.py</code> now runs the guard before every generation and records each prompt in
+  <code>data/image_prompts.json</code>.</li>
+<li><strong>Research tools.</strong> <code>archive_fts.py</code>: full-text search of the Internet Archive with the matching
+  passages (yearbooks, gazettes, town reports, newspapers). <code>patent_index_scan.py</code>: every patent
+  granted to a named person, from the Patent Office's annual indexes 1872–1969, with extracts and
+  sources; confirm numbers on Google Patents' patent pages.</li>
+<li><strong>Publish a real family's dashboard</strong> (<code>site/build_instance.py</code>): the same read-only static
+  snapshot as the public demo, for any project, with its book PDF. Refuses without
+  <code>--allow-real-names</code>; always fails on local paths, emails, keys and localhost links; scrubs home
+  and temp paths from published files; writes a <code>vercel.json</code>. <code>--hide sources,settings</code> removes those
+  areas (tabs, addresses, data and files) from a public snapshot. See docs/DEPLOY.md.</li>
+</ul>
+<p>Fixed:
+- The dashboard's home page crashed when a person's article stored its infobox as a list of
+  <code>[field, value]</code> pairs (projects imported from older layouts); infobox reads now accept both forms.</p>
+<h2 id="060-2026-10-05">0.6.0 — 2026-10-05</h2>
+<p><strong>Alters generated stories: yes</strong>, for projects that use Lineage's skills: the book template,
+the writing rules and several skills changed (two columns by default, an epigraph per chapter,
+THE RECORDS on every chapter, a page minimum). Projects that carry their own copies of the
+skills are not affected (<code>lineage update</code> knows the difference). <code>lineage update</code> marks
+generated stories stale; it never regenerates them.</p>
+<p>The innovations of a working family book's full first pass, brought up in generic form (no
+names, places or material from that project). Where the working book's rules and Lineage's
+disagreed, the working book's rules became Lineage's defaults:</p>
+<p>Conflicts resolved (the working book's rule is now the default):
+- <strong>C1 Illustrations.</strong> Captions stay short (a name, or a scene title in the text's words; the
+  author's caption word for word). An illustration is marked by <code>kind: illustration</code> in
+  <code>photo_index.csv</code>, the chapter's note, and a copyright-page line ("The illustrations in this
+  book are artist's renderings, not photographs."), which <code>build_book.py front</code> now writes
+  whenever a placed image is an illustration (<code>book.yaml</code> → <code>front.illustrations_note</code>). The
+  old rule that each caption must say "illustration" is retired.
+- <strong>C2 Epigraphs.</strong> One per chapter by default (<code>chapters.epigraphs</code>); two allowed in a
+  family-history chapter; none if the author asks. A writer of the chapter's place and time.
+- <strong>C3 THE RECORDS on every chapter</strong>, listing 100% of the sources found and used (not only
+  family-history chapters or chapters with context).
+- <strong>C4 No "general knowledge" sources.</strong> Every context fact cites a real source.
+- <strong>C5 Two columns by default.</strong> <code>chapter.with(columns: 2)</code> is the template default and
+  <code>assemble.py</code> writes 2 when <code>data/chapters.csv</code> leaves <code>columns</code> blank; 1 stays available per
+  chapter. Rows that already say 1 are unchanged.
+- <strong>C6 Archive thumbnails in drafts.</strong> <code>#photo-addendum</code>'s <code>show-images</code> defaults to the draft
+  flag: thumbnails print in drafts, and in the final book only once the holder's permission is
+  recorded (<code>show-images: true</code>).
+- <strong>C7 Gates.</strong> Work stops at the author's chosen gates (three by default, <code>workflow.gates</code>;
+  the project's CLAUDE.md may be stricter and wins), and a full first pass of the whole book
+  runs when the author asks for it (the book swarm, below).</p>
+<p>New:
+- <strong>Chapter dossiers</strong> (<code>chapter-dossier</code> skill, <code>scripts/dossier.py</code>, <code>templates/dossier/</code>):
+  per chapter, the author's dated requests, a log of every search (blocked ones too), 100% of
+  sources in <code>SOURCES.csv</code>, the evidence for and against the family's version, and lessons.
+  <code>dossier.py records</code> generates THE RECORDS from it; <code>dossier.py check</code> fails when a URL in
+  the chapter isn't logged or a cited source isn't listed.
+- <strong>Polite record fetching</strong> (<code>scripts/fetch_records.py</code>): targeted lookups (at most 50 URLs a
+  run), robots.txt obeyed, at least 2 s per site, a project-only User-Agent
+  (<code>research.user_agent</code>; an email address is refused), no logins or bot-check workarounds;
+  raw copies with sha256 metadata; logged in the dossier; anything blocked goes on the
+  manual-lookups list.
+- <strong>Research access rules</strong> (records-archives): automated fetching vs targeted lookups by a
+  person in their own browser and accounts (or a browser assistant in the author's own
+  session, at their direction); never CAPTCHA solving, bot-check tools, others' credentials or
+  bulk harvesting. Hand-off templates: <code>templates/research/MANUAL-LOOKUPS.md</code>,
+  <code>manual-lookups-results.csv</code>, and <code>REQUESTS.md</code> (archive requests and replies);
+  <code>make new</code> copies them into <code>research/</code>.
+- <strong>The service-record method</strong> (family-history-chapters §6a): for anyone who served, the
+  official record first as the spine; then the hometown and country, how the war drew them in
+  and their reputation, enlistment, training and shipping, the unit's battles, weapons and
+  generals, being sent home, and what veterans came home to; first-hand accounts from soldiers
+  in or near the unit, quoted exactly and verified.
+- <strong>Sensitive record entries</strong> (memoir-style-guide §2): kept out of the prose until the author
+  decides; then told plainly from the record, without moralising.
+- <strong>Page minimum and combining</strong> (style guide §6, chapter-index-builder): chapters of at least
+  <code>chapters.min_pages</code> (default 10) in the layout, reached with real material; sparse chapters
+  are combined, never padded. <code>build_book.py chapter</code> (<code>make chapter</code>) prints a note when a
+  chapter is short.
+- <strong>Template:</strong> <code>#family-tree(...)</code>, a three-generation tree (parents → couple → children, the
+  line of descent continued under one child) that stands in for or beside <code>#descent</code>;
+  <code>#story-panel</code> and <code>#story-page</code>, an eight-panel illustrated story over two facing pages, each
+  panel captioned with the subject's exact words.
+- <strong>Illustration generator</strong> (<code>scripts/generate_images.py</code>, <code>templates/images/</code>): plans in
+  <code>photos/images-plan.yaml</code> with period style presets, a one-line lock on every prompt, a
+  required scene citation, and an optional likeness lock (real photographs as references
+  through the edit endpoint); writes the original and a grayscale print copy; <code>--dry-run</code>
+  prints every prompt. The key comes from <code>OPENAI_API_KEY</code> or <code>~/.openai_api_key</code> (chmod 600,
+  outside every repo) and is never printed or written.
+- <strong>The book swarm</strong> (<code>docs/BOOK-SWARM.md</code>, <code>templates/swarm/book-swarm.js</code>): a parameterized
+  Workflow script for a full first pass: per chapter two researchers → writer → fidelity,
+  taste and layout editors → two judges with revisions to a pass score → a 100% sources pass;
+  then front matter, images plan, index, assembly and a whole-book continuity review.
+- <code>book.yaml</code> template: <code>front.illustrations_note</code>, <code>chapters.min_pages</code>, <code>chapters.epigraphs</code>,
+  <code>research.user_agent</code>, <code>workflow.gates</code>. Project <code>.gitignore</code>: <code>photos/generated/</code>,
+  <code>photos/reference/</code>, <code>research/manual-lookups/</code>. Project CLAUDE.md: gates, dossiers, research.
+- Docs: HOWTO (research access, dossiers, family tree, anyone who served, generating
+  illustrations, the illustrated story, page minimum, gates and the full first pass), README,
+  scripts/README, EXAMPLE-CHAPTER notes; the dashboard's standing rule on generated images.
+- Typst gotchas documented: a <code>;</code> after an embedded call in markup is swallowed (write
+  <code>\u{3B}</code>); a full-page float sized to the text block.</p>
+<p>Also in this release (made on <code>development</code> after 0.5.0):</p>
+<p>Dashboard:
+- Sources: a gallery and a lightbox (arrow keys, summary, people and places linked, provenance,
+  notes, subject tagging). Roadmap #5.
+- Stories: what each story rests on, above its pages: every paragraph's citation chips, and every
+  image's provenance with a toolbar (open, tag, copy reference). Roadmap #12.
+- An illustration is never a person's picture (tree, featured relative, person articles);
+  "illustration" is a kind of source.
+- Wording: the dashboard speaks of the family's record; "the book" only where the export is meant.</p>
+<p>Skills and scripts (generic improvements brought up from a working project):
+- Writing rules: locked passages (<code>voice/verbatim.md</code>) go in <code>#verbatim</code> word for word; never
+  silently correct the subject; public-domain status checked per edition for epigraphs; an
+  author's introduction to a part is a <code>#bridge</code> until approved; when the subject told a story
+  two ways, keep both, attributed; contents lines are short plain nouns; propose an album
+  section when a chapter has more good photographs than text.
+- Photo intake and archive workflow (<code>photos/inbox/</code> → <code>photos/archive/originals/…</code>); dating cues;
+  relative dates chained to the event they hang on.
+- <code>make chapter PROJECT=… CHAPTER=…</code> builds one story as a preview; <code>PAGES=1</code> exports each page
+  as an image for sharing. build_book.py falls back to the <code>typst</code> Python package without the CLI.
+- <code>transcript/corrections.json</code> → <code>drop_word_runs</code>: remove phrases the speech model echoed from
+  its prompt, word by word.
+- <code>lineage update</code>: skill changes don't mark stories stale in projects with their own skills.</p>
+<h2 id="050-2026-10-01">0.5.0 — 2026-10-01</h2>
+<p><strong>Alters generated stories: no.</strong> Eight skills' <code>description:</code> lines changed (what triggers
+them, not what they tell the writer); <code>lineage update</code> now recognizes a description-only change
+and doesn't mark stories stale for it.</p>
+<p>Lineage is described as what it is: a cooperative family documentation and research platform
+whose outputs include stories, a book and narration.
+- README rewritten around the platform, with a tour of the real dashboard; docs/HOWTO.md
+  restructured (set up a lineage, contributors, sources, records, genealogy and Familypedia,
+  then stories and a book); docs/FACTORY.md, the plugin, marketplace and skill descriptions
+  reframed.
+- <code>examples/demo-lineage/</code>: an invented family (the Calders) with recordings, scanned records,
+  a ship, a route, a genealogy, contributors and a narrated story, built by
+  <code>scripts/demo_lineage.py</code>. <code>make demo</code> opens the dashboard on it.
+- <code>make screenshots</code> (<code>scripts/screenshots.py</code>, Playwright) captures the dashboard against the
+  demo lineage into <code>docs/images/</code>, with an empty HOME so no keys or accounts appear.
+- Timeline and Familypedia tiers: a record citation (R001), manifest or ledger now counts as
+  "what the records show" (the check was case-sensitive after lower-casing).</p>
+<h2 id="040-2026-10-01">0.4.0 — 2026-10-01</h2>
+<p><strong>Alters generated stories: no.</strong> Nothing under <code>plugins/lineage/book/</code>, <code>fonts/</code> or <code>skills/</code>.</p>
+<p>Projects are consumers of Lineage:
+- <code>bin/lineage version | update | dashboard</code>. <code>update</code> fetches the releases, prints the
+  changelog between the pinned release and the target and the files of the project it would
+  touch; with <code>--apply</code> it installs the release read-only under <code>~/.lineage/releases/&lt;tag&gt;</code>,
+  pins it in <code>lineage.lock</code>, re-points <code>.claude/skills</code> when it links to a release, and marks
+  stale (never regenerates) the stories a release would alter. Material is never touched.
+- The project template gains a <code>Makefile</code> (<code>make dashboard</code>, <code>make lineage-version</code>,
+  <code>make update-lineage [APPLY=1] [TO=vX.Y.Z]</code>), <code>lineage.lock</code>, <code>local-overrides/</code>, the
+  dashboard's runtime files in <code>.gitignore</code>, and the arrangement at the top of its CLAUDE.md.
+- <code>CLAUDE.md</code> for this repo: platform changes are made here and flow down; content stays in
+  the project; one-off things go in the project's <code>local-overrides/</code>.
+- Familypedia: empty Sources, Records and Photographs sections are hidden; a lone word that
+  only names a stub person (a surname off a roster) is no longer linked automatically.</p>
+<h2 id="032-2026-10-01">0.3.2 — 2026-10-01</h2>
+<p><strong>Alters generated stories: no.</strong> Dashboard engine only (<code>app/familypedia.py</code>).</p>
+<ul>
+<li>A place on a route now links back to the ships and voyages whose route it is ("On the
+  route of"), so a vessel, its ports and its voyage are reachable from each other.</li>
+</ul>
+<h2 id="031-2026-10-01">0.3.1 — 2026-10-01</h2>
+<p><strong>Alters generated stories: no.</strong> Dashboard engine only (<code>app/familypedia.py</code>).</p>
+<p>Familypedia fixes found while building a real project's articles:
+- After two articles are folded together ("same as"), the names of the folded one now find
+  the surviving article, so its coordinates, routes, events and relations carry over.
+- The person article's link into the genealogy tree reads the tree's people as a mapping
+  (as the Genealogy tab writes it), not a list. Articles no longer fail on that.
+- <code>Also called:</code> in a person profile keeps the names (and names in quotation marks) and drops
+  commentary written on the same line.</p>
+<h2 id="030-2026-10-01">0.3.0 — 2026-10-01</h2>
+<p><strong>Alters generated stories: no.</strong> Nothing under <code>templates/</code>, <code>book/</code>, <code>plugins/lineage/book/</code>,
+<code>plugins/lineage/templates/</code> or <code>plugins/lineage/skills/</code> changed since 0.2.0.</p>
+<p>The dashboard (<code>app/</code>), new since 0.2.0:
+- Home, a settings gear (Family details · Connectors · Contributors · Project settings) and a
+  terminal drawer; Sources, Familypedia, Genealogy, Stories and Timeline tabs.
+- Source intake end to end: SHA-256 dedupe, extraction and OCR, summaries, thumbnails, edits
+  kept apart from derived values, trash and restore. No demo content unless <code>--demo</code>.
+- Stories with states, rendering to book pages, narration; Timeline with tiers, conflicts and
+  gaps; Genealogy rebuilt from the material with evidence, review, edits and GEDCOM.
+- <strong>Familypedia article types</strong>: person · place · event · vessel · organization/unit · object ·
+  publication · occupation · theme, with typed infoboxes, tier sections, passages, sources,
+  typed records, photographs and marked illustrations, related articles, backlinks, open
+  questions and "Beyond the family"; tagging of sources, records, photographs and events to
+  any type (picker, suggestions with evidence, bulk); browse, search, <code>[[links]]</code>, and a map
+  drawn from the records' own coordinates. Inputs and outputs: <code>app/README.md</code>.
+- Example chapter: the Hannibal route and voyage details.</p>
+<h2 id="020">0.2.0</h2>
+<p>The project renamed to Lineage; a Claude Code plugin marketplace with two plugins (<code>lineage</code>,
+<code>factory</code>).</p></article>
+</main>
+<footer class="site-foot"><div class="wrap">
+  <p>Lineage is open source under the MIT license. <a href="https://github.com/rexsaurus/Lineage">github.com/rexsaurus/Lineage</a></p>
+  <p class="muted">Every family in the screenshots and the demo is invented. Your recordings, transcripts and photographs stay yours: the license does not cover them.</p>
+</div></footer>
+</body>
+</html>

@@ -17,3 +17,4 @@ examples/erasthus-burnham/*.pdf
 .env*
 *token*.json
 client_secret_*.json
+.vercel

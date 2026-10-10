@@ -1,0 +1,42 @@
+# photos/images-plan.yaml: the illustrations this project plans to generate.
+# Copy to photos/images-plan.yaml, then:
+#   python $LINEAGE/scripts/generate_images.py --dry-run     # read every full prompt first
+#   python $LINEAGE/scripts/generate_images.py               # make the missing ones
+# Every result is an illustration: index it as kind: illustration (photo-processor §4).
+# Examples are the invented Calder family.
+
+model: gpt-image-1
+quality: high
+
+# The one-line lock from photos/IMAGE-STYLE.md, appended to every prompt.
+lock: "No text, no caption, no watermark, no colour, no named real person presented as a photograph."
+
+styles:   # period presets: the look of the photographs of that time, never the people
+  fifties-winter: >-
+    Photorealistic 1950s newspaper photograph, black-and-white, coarse grain, flat winter
+    light; NOT illustration, NOT CGI.
+  sixties-snapshot: >-
+    Photorealistic 1960s family snapshot, black-and-white print with a white deckle-free
+    border, soft focus at the edges, mild contrast loss; NOT illustration, NOT CGI.
+
+likeness:   # optional: the family's real photographs, used only as likeness references
+  ruth:
+    refs: photos/reference/ruth/*.png
+    describe: "keep her face as in the reference photographs, aged to her late twenties"
+
+images:
+  - id: IMG-02-1
+    size: 1536x1024
+    style: fifties-winter
+    scene: "[S1 00:00:48]"          # where the material describes this scene (required)
+    prompt: >-
+      About 1950, Duluth, Minnesota: a street buried in snow, a tunnel dug from a front porch
+      to the road, two children in snowsuits at its mouth, seen from across the street.
+  - id: IMG-03-1
+    size: 1536x1024
+    style: sixties-snapshot
+    likeness: ruth
+    scene: "[S2 00:00:36]"
+    prompt: >-
+      Mid-1960s, a half-built log cabin by a lake in the north woods: a woman on the roof
+      nailing down boards, a man on the ground below holding the ladder and looking away.

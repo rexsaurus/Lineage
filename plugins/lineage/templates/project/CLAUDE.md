@@ -34,6 +34,13 @@ Standing rules (details in the skills):
 - Chapters are generated from story units. Edit `content/units/`, then reassemble.
 - Third person about the subject; no interview format; quotes exact; every paragraph cites
   its timestamps with `// src:`; interpretation goes in `#bridge[...]` for the author.
-- Three gates where you stop and wait for the author: speaker confirmation, chapter-map
-  approval, final sign-off.
-- Never send the author's personal details (email, phone) to any outside service.
+- Gates where you stop and wait for the author: speaker confirmation, chapter-map approval,
+  final sign-off, plus any the author adds (`book.yaml` → `workflow.gates`, or here). A full
+  first pass of the whole book (the book swarm) runs only when the author asks for it.
+- Each chapter's research lives in `dossiers/<slug>/` (chapter-dossier skill): read it first;
+  log every search and every source; every chapter ends with THE RECORDS listing them all.
+- Research: automated fetching obeys robots.txt, 2 s per site, a project-only User-Agent, no
+  logins or bot-check workarounds, no bulk harvesting. What only a person can reach goes on
+  `research/MANUAL-LOOKUPS.md` for the author to look up in their own browser.
+- Never send the author's personal details (email, phone) to any outside service. API keys
+  (an OpenAI key for illustrations) live outside the project and are never written into it.

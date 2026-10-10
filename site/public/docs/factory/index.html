@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Factory · Lineage</title>
+<meta name="description" content="Lineage: The Factory.">
+<link rel="icon" href="../../assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<header class="site-top"><div class="wrap">
+  <a class="brand" href="../../"><img src="../../assets/logo.svg" alt="" width="26" height="26"><span>Lineage</span></a>
+  <nav class="site-nav" aria-label="Site"><a href="../../">Home</a><a href="../../tour/">Tour</a><a href="../../demo/">Live demo</a><a href="../" aria-current=page>Docs</a><a href="../../install/">Install</a><a href="https://github.com/rexsaurus/Lineage" class="gh">GitHub</a></nav>
+</div></header>
+<main>
+<article class="doc"><p class="muted"><a href="../">Docs</a> · <a href="https://github.com/rexsaurus/Lineage/blob/main/docs/FACTORY.md">view on GitHub</a></p><h1 id="the-factory">The factory</h1>
+<p>The factory generates trustworthy source-to-output pipelines: raw material goes in and is
+frozen, every claim made from it cites back to the exact lines it came from, and a person
+decides at named points. Give it five answers and it writes a new pipeline, with skills, a
+runtime, a fixture and a HOWTO, for a different kind of source material.</p>
+<p>Lineage is one instance. Its sources are a family's recordings, photographs, documents and
+public records; what it builds from them is a family record (a genealogy, a timeline and an
+encyclopedia of the people, places, events, vessels, organizations and objects in the
+material), and one of that record's outputs is a printed book. The pattern is the same
+whether the output is a book, an encyclopedia, a report or a page.</p>
+<pre><code>/plugin marketplace add rexsaurus/Lineage
+/plugin install factory@lineage
+</code></pre>
+<p>Then ask Claude for "a pipeline like Lineage for <your domain>". Or run the generator
+directly:</p>
+<pre><code class="language-bash">python plugins/factory/skills/factory/scripts/scaffold.py \
+  plugins/factory/skills/factory/examples/incident-review.yaml --out /tmp/postmortem
+cd /tmp/postmortem &amp;&amp; make fixture
+</code></pre>
+<h2 id="the-pattern">The pattern</h2>
+<pre><code>sources ──► units ──► map ──► generated output
+ (fixed)   (cited)   (order)  (never hand-edited)
+     ▲          ▲                    ▲
+   gate       gate              final sign-off
+</code></pre>
+<p>Raw material comes in and is frozen. It is cut into small units that each cite the lines they
+came from. The output is generated from the units in an order a person approves. Humans decide
+at named points. Everything the model adds that the sources don't support is quarantined until
+someone accepts it.</p>
+<h2 id="the-five-variables">The five variables</h2>
+<p>Only these change from domain to domain:</p>
+<ol>
+<li><strong>The source, and what a citation looks like.</strong> Interview audio cited by timestamp; a chat
+   export cited by line; a paper cited by page. The citation format is how every later claim
+   points home.</li>
+<li><strong>The unit.</strong> The smallest piece that stands alone and can be moved without rewriting
+   anything: a story, a decision, a timeline event, a finding. Get this right and reordering
+   the output is a one-line change.</li>
+<li><strong>The evidence tiers.</strong> How well a claim is supported: witnessed / told / lore;
+   logged / stated / reconstructed; documented / asserted / disputed. Every unit declares one.</li>
+<li><strong>The output, and what builds it.</strong> A printed book via Typst, a browsable encyclopedia,
+   an HTML page, Markdown, or anything a shell command can produce. One record can have
+   several outputs; Lineage's include a Familypedia, a timeline, a genealogy and a book.</li>
+<li><strong>The gates.</strong> The points where a human decides: are these the right sources, is this the
+   right structure, may this go out. Each has one question.</li>
+</ol>
+<h2 id="the-invariants-and-why-each-exists">The invariants, and why each exists</h2>
+<p>These are generated for every domain and never vary, because they are what make the output
+trustworthy.</p>
+<ul>
+<li><strong>Sources are immutable and checksummed.</strong> If the source can change, every citation into it
+  can silently start pointing at something else. Corrections are new files, never edits.</li>
+<li><strong>Every claim cites back, into its own unit's lines.</strong> A citation that can point anywhere
+  proves nothing. Tying it to the unit's span means a reader, or a check, can verify each
+  sentence against the few lines it came from.</li>
+<li><strong>Units sit between source and output, with a coverage check.</strong> Writing straight from source
+  to output makes reordering a rewrite and makes omissions invisible. Units make the structure
+  movable, and coverage proves nothing was quietly dropped (or says why it was).</li>
+<li><strong>One policy skill, which the others defer to.</strong> Rules scattered across skills drift apart.
+  One master means one place to change a rule and no contradictions to resolve mid-task.</li>
+<li><strong>Outputs are generated, never hand-edited.</strong> A hand fix to the output is lost on the next
+  build and breaks the chain from claim to source. The GENERATED header says so; the runtime
+  detects edits.</li>
+<li><strong>Anything the model adds is a bridge, and the final build fails while one is unapproved.</strong>
+  This is the single most important line of code. Models fill gaps fluently. Quarantining
+  every addition, visibly, and refusing to finalize until a human accepts each one is what
+  stops plausible invention from reaching a reader.</li>
+<li><strong>Named gates, with batched questions.</strong> Asking one question at a time trains people to
+  click yes. Stopping at a few named points with one batch of questions gets real decisions,
+  and they are recorded with who and when.</li>
+<li><strong>Versioning that pins each output to its exact inputs.</strong> "Which text produced the copy we
+  sent?" must have an answer: a tag, an input commit, and every source's checksum in a
+  manifest.</li>
+<li><strong>An orchestrator with a status command.</strong> Long jobs span sessions. <code>status</code> says what's done,
+  which gate is open, and what to run next, so nobody re-derives the state.</li>
+<li><strong>A fixture and a HOWTO.</strong> A pipeline nobody can run on a tiny example can't be trusted on a
+  large one. CI builds the fixture on every push.</li>
+</ul>
+<h2 id="how-to-point-the-factory-at-a-new-domain">How to point the factory at a new domain</h2>
+<ol>
+<li>Answer the five questions. Write them down as a spec. <code>examples/toy-minutes.yaml</code> is
+   complete, with a fixture; <code>examples/incident-review.yaml</code> shows a non-book domain;
+   <code>examples/lineage.yaml</code> is Lineage itself as five answers.</li>
+<li>Run <code>scaffold.py &lt;spec&gt; --out &lt;dir&gt;</code> and then <code>make fixture</code> in that folder. It must pass.</li>
+<li>Write the domain's own rules into <code>&lt;name&gt;-policy</code> §7. These are the mistakes this domain
+   punishes.</li>
+<li>Replace the generic fixture with a small real one: two sources, three units, one bridge.</li>
+<li>Extend only where the domain needs it, for example audio transcription or page layout,
+   adding scripts beside <code>pl.py</code>. Keep the invariants, and keep <code>make fixture</code> green.</li>
+</ol>
+<h2 id="what-the-generic-runtime-does-not-do">What the generic runtime does not do</h2>
+<p>It cites lines of plain-text sources. Timestamps, page numbers in PDFs, and audio need a
+domain extension, as Lineage adds. It doesn't judge whether a unit's text is faithful
+to its lines. It proves that every claim points at the right lines, and leaves the reading to
+the human at the gate.</p></article>
+</main>
+<footer class="site-foot"><div class="wrap">
+  <p>Lineage is open source under the MIT license. <a href="https://github.com/rexsaurus/Lineage">github.com/rexsaurus/Lineage</a></p>
+  <p class="muted">Every family in the screenshots and the demo is invented. Your recordings, transcripts and photographs stay yours: the license does not cover them.</p>
+</div></footer>
+</body>
+</html>

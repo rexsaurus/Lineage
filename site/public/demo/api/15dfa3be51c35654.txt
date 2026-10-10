@@ -1,0 +1,41 @@
+0 HEAD
+1 SOUR LINEAGE
+1 GEDC
+2 VERS 5.5.1
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME Anders Calder
+1 NOTE dates as the evidence supports: about 1883–1951
+1 NAME Grandpa Anders
+0 @I2@ INDI
+1 NAME Signe Calder
+1 NOTE dates as the evidence supports: in the 1910 census
+0 @I3@ INDI
+1 NAME Henrik Calder
+1 NOTE dates as the evidence supports: born 1910
+0 @I4@ INDI
+1 NAME Living /Person/
+0 @I5@ INDI
+1 NAME Pete
+0 @I6@ INDI
+1 NAME Living /Person/
+0 @I7@ INDI
+1 NAME Walt
+0 @I8@ INDI
+1 NAME Living /Person/
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 CHIL @I3@
+1 NOTE spouse link, tier documented: R002
+1 NOTE parent link, tier documented: R002
+1 NOTE parent link, tier documented: R002
+0 @F2@ FAM
+1 HUSB @I4@
+1 WIFE @I7@
+1 NOTE spouse link, tier told: [S2 00:00:19]
+0 @F3@ FAM
+1 HUSB @I3@
+1 CHIL @I4@
+1 NOTE parent link, tier told: [S1 00:00:29]
+0 TRLR
