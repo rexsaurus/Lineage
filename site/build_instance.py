@@ -199,9 +199,24 @@ def hide_areas(out: Path, areas):
                 f.unlink()
             del man[key]; gone += 1
     man_p.write_text(json.dumps(man, ensure_ascii=False, sort_keys=True, indent=0))
+    # remove the hidden areas' files, but never an image another page still shows (photo index, story plates,
+    # Familypedia portraits): those stay, everything else in the folder (notes, transcripts, PDFs, research) goes
+    still_used = set()
+    for f in (out / "api").glob("*"):
+        if f.is_file():
+            still_used.update(re.findall(r'"((?:work|facts|content|dossiers|transcript|audio)/[^"]+\.(?:jpe?g|png|gif|webp))"',
+                                         f.read_text(encoding="utf-8", errors="ignore"), re.I))
     for area in areas:
         for d in HIDE_FILES.get(area, []):
-            shutil.rmtree(out / "files" / d, ignore_errors=True)
+            root = out / "files" / d
+            if not root.exists():
+                continue
+            for f in sorted(root.rglob("*"), reverse=True):
+                rel = f.relative_to(out / "files").as_posix()
+                if f.is_file() and rel not in still_used:
+                    f.unlink()
+                elif f.is_dir() and not any(f.iterdir()):
+                    f.rmdir()
     aj = out / "demo" / "after.js"
     aj.write_text(aj.read_text(encoding="utf-8") + HIDE_JS.replace("__HIDE__", json.dumps(areas)), encoding="utf-8")
     return gone

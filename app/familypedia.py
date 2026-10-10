@@ -590,14 +590,18 @@ def _build(project):
                        "thumb": row.get("thumb") or "", "illustration": HOST.is_illustration(row), "provenance": "source: " + row["path"],
                        "date": eff.get("date_range") or "", "subjects": sorted(_hits(rx, keys, text)), "origin": "sources"})
     # the project's chosen portraits (data/portraits.csv): first in the article, shown in the infobox even when generated
-    for r in HOST.project_portraits(project):
+    _pr = HOST.project_portraits(project)
+    _has_own = {norm(r["subject"]) for r in _pr if not r.get("story")}   # subjects with a dedicated (non-chapter) portrait
+    for r in _pr:
         slug = by_norm.get(("person", norm(r["subject"]))) or next((s["slug"] for s in subs.values()
                                                                    if norm(r["subject"]) in {norm(k) for k in _keys(s)}), None)
         if not slug:
             continue
         pid = "portrait:" + slug + ":" + r["image"]
         photos.append({"id": pid, "caption": r.get("caption") or r["subject"], "thumb": r["image"], "illustration": r["illustration"],
-                       "portrait": not r.get("story"), "chapter_cover": bool(r.get("story")),
+                       "portrait": (not r.get("story")) or (norm(r["subject"]) not in _has_own and
+                                                            next((x for x in _pr if norm(x["subject"]) == norm(r["subject"])), None) is r),
+                       "chapter_cover": bool(r.get("story")),
                        "provenance": ("Generated illustration, not a photograph" if r["illustration"] else "") + (" · " + r["note"] if r.get("note") else ""),
                        "subjects": [slug], "origin": "data/portraits.csv"})
     ph_by_id = {p["id"]: p for p in photos}
