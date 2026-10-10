@@ -185,6 +185,39 @@ HIDE_JS = """
 """
 
 
+
+R2_JS = """
+(function(){ const A = __A__, T = __T__, f0 = window.demoFileUrl;
+  // every image comes from Cloudflare R2: full size by path, thumbnails where the page shows it small
+  window.demoFileUrl = rel => { const k = String(rel || '').split('?')[0].replace(/^\\//, ''); return A[k] || f0(rel); };
+  const SMALL = '.fp-photo img, .story img, img.portrait, .ap-img img, .fp-src img, .hero img, .infobox img, .cast img, img.ph, .tl img';
+  const swap = i => { const s = i.getAttribute('src'); if (T[s] && i.matches(SMALL)) { i.dataset.full = s; i.loading = 'lazy'; i.src = T[s]; } };
+  new MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes) { if (n.nodeType !== 1) continue;
+      if (n.tagName === 'IMG') swap(n); else n.querySelectorAll && n.querySelectorAll('img').forEach(swap); } })
+    .observe(document.documentElement, { childList: true, subtree: true });
+})();
+"""
+
+
+def use_r2_assets(out: Path, manifest: Path):
+    """Point every image at its Cloudflare R2 copy (manifest from the project's scripts/r2_sync.py: path, url,
+    thumb_url) and drop those files from the static output. Returns (images mapped, files removed)."""
+    import csv as _csv
+    A, T = {}, {}
+    for r in _csv.DictReader(open(manifest, encoding="utf-8")):
+        if r.get("url"):
+            A[r["path"]] = r["url"]
+            if r.get("thumb_url"):
+                T[r["url"]] = r["thumb_url"]
+    shim = out / "demo" / "shim.js"
+    shim.write_text(shim.read_text(encoding="utf-8") + R2_JS.replace("__A__", json.dumps(A)).replace("__T__", json.dumps(T)), encoding="utf-8")
+    gone = 0
+    for rel in A:
+        f = out / "files" / rel
+        if f.is_file():
+            f.unlink(); gone += 1
+    return len(A), gone
+
 def hide_areas(out: Path, areas):
     """Leave whole areas out of a published snapshot: their API answers and files are deleted, the tabs
     removed, and their addresses sent home. Hidden in the page AND absent from the files served."""
@@ -235,6 +268,7 @@ def main():
     ap.add_argument("--hide", default="", help="comma-separated areas to leave out of a public snapshot: "
                     "sources (raw sources, transcripts, research files) and/or settings")
     ap.add_argument("--skip", action="append", default=[], help="another project-relative path to leave out")
+    ap.add_argument("--assets", type=Path, help="R2 manifest CSV (path,url,thumb_url): serve those images from R2, not the site")
     ap.add_argument("--allow-real-names", action="store_true",
                     help="required: this publishes a real family's material")
     ap.add_argument("--no-browser", action="store_true")
@@ -291,6 +325,9 @@ def main():
         if unknown:
             raise SystemExit(f"--hide: unknown area(s) {unknown}; choose from {list(HIDE_API)}")
         bs.log(f"  hidden: {', '.join(areas)} ({hide_areas(out, areas)} API answers and their files removed)")
+    if a.assets:
+        n, g = use_r2_assets(out, a.assets)
+        bs.log(f"  images from Cloudflare R2: {n} mapped, {g} local copies dropped from the snapshot")
     if a.pdf:
         (out / "book").mkdir(exist_ok=True)
         shutil.copy(a.pdf, out / "book" / f"{name}.pdf")
