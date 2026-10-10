@@ -155,7 +155,7 @@ td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .tree li:before{content:"";position:absolute;left:-6px;top:16px;width:10px;height:10px;border-radius:50%;background:var(--clay)}
 .tree li.told:before{background:#D7C49A} .tree li.witnessed:before{background:var(--green)}
 .tree .name{font-weight:600} .tree .meta{color:var(--ink-3);font-size:13px}
-@media (max-width:1000px){.work,.wiki{grid-template-columns:1fr}.chatmain,.side{height:auto}.termwrap{height:60vh}.grid.three,.grid.four,.grid.five{grid-template-columns:repeat(2,minmax(0,1fr))}.page{padding:22px 16px 80px}.infobox{float:none;width:auto;margin:0 0 14px}}
+@media (max-width:1000px){.work,.wiki{grid-template-columns:1fr}.wiki nav{position:static;max-height:none;overflow:visible}.chatmain,.side{height:auto}.termwrap{height:60vh}.grid.three,.grid.four,.grid.five{grid-template-columns:repeat(2,minmax(0,1fr))}.page{padding:22px 16px 80px}.infobox{float:none;width:auto;margin:0 0 14px}}
 
 /* ---------- header: tabs, terminal toggle, settings gear ---------- */
 .hbtn{all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;color:#E9E2D6;font-size:13.4px;padding:7px 11px;border-radius:8px;border:1px solid #3A352E;position:relative;white-space:nowrap}
