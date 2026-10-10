@@ -278,6 +278,53 @@ def _context_lines(project):
     return out
 
 
+
+# ------------------------------------------------------------------------------- the book's sources
+def _records_block(text):
+    """The items of a chapter's `#records(` list (the sources printed at the chapter's end):
+    [{"text": plain citation, "url": first link}]. Typst markup is stripped; nothing is invented."""
+    i = text.find("#records(")
+    if i < 0:
+        return []
+    j, depth = i + len("#records("), 1
+    while j < len(text) and depth:
+        c = text[j]
+        if c == "\\":
+            j += 2; continue
+        depth += (c == "(") - (c == ")")
+        j += 1
+    out, buf, d = [], [], 0
+    for line in text[i + len("#records("):j - 1].splitlines():
+        t = line.strip()
+        if not t or t.startswith("//"):
+            continue
+        buf.append(t)
+        d += t.count("[") - t.count("]") - t.count("\\[") + t.count("\\]")
+        if d <= 0 and buf:
+            item = " ".join(buf).strip().rstrip(",")
+            buf, d = [], 0
+            urls = re.findall(r'#link\("([^"]+)"\)', item)
+            plain = re.sub(r'#link\("[^"]+"\)\[[^\]]*\]', "", item)
+            plain = re.sub(r"\\u\{3B\}", ";", plain)
+            plain = re.sub(r"\\(.)", r"\1", plain)
+            plain = re.sub(r"[*_]|^\[|\]$", "", plain).strip()
+            plain = re.sub(r"\s+", " ", plain).strip(" ,")
+            if plain:
+                out.append({"text": plain, "url": urls[0] if urls else "", "urls": urls})
+    return out
+
+
+def book_sources(project):
+    """story id -> {title, items}: every source each story lists at its end (cached by file time)."""
+    out = {}
+    for st in HOST.engine_stories(project):
+        f = project.root / st["file"] if st.get("file") else None
+        if f and f.is_file():
+            items = _records_block(f.read_text(encoding="utf-8", errors="ignore"))
+            if items:
+                out[st["id"]] = {"title": st["title"], "items": items}
+    return out
+
 # ------------------------------------------------------------------------------- the index
 class Subject(dict):
     pass
@@ -542,6 +589,17 @@ def _build(project):
         photos.append({"id": "src:" + row["id"], "caption": eff.get("accepted_name") or row["original_name"],
                        "thumb": row.get("thumb") or "", "illustration": HOST.is_illustration(row), "provenance": "source: " + row["path"],
                        "date": eff.get("date_range") or "", "subjects": sorted(_hits(rx, keys, text)), "origin": "sources"})
+    # the project's chosen portraits (data/portraits.csv): first in the article, shown in the infobox even when generated
+    for r in HOST.project_portraits(project):
+        slug = by_norm.get(("person", norm(r["subject"]))) or next((s["slug"] for s in subs.values()
+                                                                   if norm(r["subject"]) in {norm(k) for k in _keys(s)}), None)
+        if not slug:
+            continue
+        pid = "portrait:" + slug + ":" + r["image"]
+        photos.append({"id": pid, "caption": r.get("caption") or r["subject"], "thumb": r["image"], "illustration": r["illustration"],
+                       "portrait": not r.get("story"), "chapter_cover": bool(r.get("story")),
+                       "provenance": ("Generated illustration, not a photograph" if r["illustration"] else "") + (" · " + r["note"] if r.get("note") else ""),
+                       "subjects": [slug], "origin": "data/portraits.csv"})
     ph_by_id = {p["id"]: p for p in photos}
     for target, tl in tags.items():
         if target.startswith("photo:"):
@@ -627,7 +685,7 @@ def _build(project):
             "timeline": {e["event_id"]: e for e in timeline}, "stories": {st["id"]: st for st in stories},
             "records": rec_by_id, "photos": ph_by_id, "kg_nodes": kg_nodes, "kg_subject": kg_subject, "adj": adj,
             "edits": edits, "merged": merged, "tags": tags, "tracks": tracks, "src_rows": src_rows,
-            "session_file": session_file, "story_text": story_text}
+            "session_file": session_file, "story_text": story_text, "book_sources": book_sources(project)}
 
 
 def _merge(into, other):
@@ -787,6 +845,7 @@ def article(project, slug):
     units = [ix["units"][u] for u in sorted(s["units"]) if u in ix["units"]]
     records = [ix["records"][r] for r in dict.fromkeys(s["records"]) if r in ix["records"]]
     photos = [ix["photos"][p] for p in dict.fromkeys(s["photos"]) if p in ix["photos"]]
+    photos.sort(key=lambda p: (not p.get("portrait"), not p.get("chapter_cover")))   # chosen portrait first
     related = _related(ix, s)
     infobox = _infobox(ix, s, events, units, records, related, e)
 
@@ -861,6 +920,8 @@ def article(project, slug):
            "lead": lead, "lead_by": "me" if e.get("lead") else "derived", "notes": e.get("notes", ""),
            "infobox": infobox, "tiers": tiers, "passages": passages, "mentions": passages,
            "sources": sources, "records": records, "photos": photos, "stories": stories,
+           "book_sources": [{"story": sid, "title": ix["book_sources"][sid]["title"], "items": ix["book_sources"][sid]["items"]}
+                            for sid in sorted(s["stories"], key=lambda z: (len(z), z)) if sid in ix.get("book_sources", {})],
            "units": [{"id": u["id"], "title": u["title"], "chapter": u["chapter"]} for u in units],
            "events": [{"id": ev["event_id"], "title": ev.get("event", "").rstrip("."), "date": ev.get("date_display", "")} for ev in events],
            "related": related, "backlinks": backlinks, "open_questions": open_q, "beyond": beyond,

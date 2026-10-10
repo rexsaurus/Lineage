@@ -1532,11 +1532,18 @@ def genealogy_graph(project):
                 # a person's picture is a real photograph or scan, never an illustration
                 sources_by_person.setdefault(_pid(nm), []).append(r.get("thumb") if r.get("kind") == "image" and not is_illustration(r) else None)
     stories = engine_stories(project)
+    portraits = project_portraits(project)
     for pid, p in people.items():
         p["note"] = mine.get("notes", {}).get(pid, "")
         p["article"] = pid if pid in slugs else None
         thumbs = [t for t in sources_by_person.get(pid, []) if t]
         p["photo"] = thumbs[0] if thumbs else None
+        if not p["photo"]:                          # the project's chosen portrait (data/portraits.csv)
+            names = {_pid(x) for x in [p.get("name") or ""] + list(p.get("aliases") or [])}
+            hit = next((r for r in portraits if not r.get("story") and _pid(r["subject"]) in names), None) \
+                or next((r for r in portraits if _pid(r["subject"]) in names), None)
+            if hit:
+                p["photo"], p["photo_illustration"] = hit["image"], hit["illustration"]
         p["n_sources"] = len(sources_by_person.get(pid, []))
         p["has_story"] = any(p["name"].split()[0] in (project.root / st["file"]).read_text(encoding="utf-8", errors="ignore")
                              for st in stories if st["exists"]) if p.get("name") else False
@@ -1667,7 +1674,24 @@ def _daily(seq, salt, reroll=0):
     return seq[(base + reroll) % len(seq)]           # stable all day; each reroll steps to the next
 
 
+def project_portraits(project):
+    """data/portraits.csv (the project's own choice of image per person and per story):
+    subject, story, image, illustration, caption, note. Rows whose image file is missing are ignored."""
+    p = project.root / "data" / "portraits.csv"
+    if not p.exists():
+        return []
+    out = []
+    for r in csv.DictReader(open(p, encoding="utf-8")):
+        img = (r.get("image") or "").strip().lstrip("/")
+        if img and (project.root / img).is_file():
+            out.append({**r, "image": img, "illustration": (r.get("illustration") or "").strip().lower() in ("yes", "true", "1")})
+    return out
+
+
 def _lead_photo(project, st):
+    for r in project_portraits(project):          # the chapter's chosen image comes first
+        if (r.get("story") or "").strip().lstrip("/") == st.get("file"):
+            return r["image"]
     raw = (project.root / st["file"]).read_text(encoding="utf-8", errors="ignore")
     for m in re.finditer(r'#(?:plate|photo|plate-pair)\(\s*"([^"]+)"', raw):
         rel = m.group(1).lstrip("/")

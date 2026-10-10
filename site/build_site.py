@@ -857,7 +857,7 @@ REAL_NAMES = re.compile(r"\bSt\.?\s?John\b|\bBurnham\b|\bKrug\b|\bHomer\b|\bPige
 # that would make the page call a local server (a mention of 127.0.0.1 in the docs is fine)
 LEAKS = re.compile(r"/Users/|/home/[a-z]|/private/|/var/folders|__LINEAGE_TOKEN__|"
                    r"[A-Za-z0-9._%+-]+@(?!example\.(?:org|com)\b)[A-Za-z][A-Za-z0-9-]*\.[A-Za-z]{2,}|"
-                   r"sk-[A-Za-z0-9_-]{10,}|hf_(?!x+\b)[A-Za-z0-9]{10,}|"
+                   r"(?<![A-Za-z0-9])sk-[A-Za-z0-9_-]{10,}|hf_(?!x+\b)[A-Za-z0-9]{10,}|"
                    r"(?:src|href|action)=[\"']?(?:https?:)?//(?:127\.0\.0\.1|localhost)|"
                    r"(?:fetch|EventSource|WebSocket)\(\s*[\"'`](?:https?|wss?)://(?:127\.0\.0\.1|localhost)")
 

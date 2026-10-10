@@ -79,6 +79,13 @@ class Instance(bs.Demo):
         import subprocess, urllib.request, time
         port = bs.free_port()
         env = dict(os.environ, HOME=str(self.home), LINEAGE_PORT=str(port))
+        # Typst finds downloaded packages (e.g. @preview/droplet) under the real user's cache; with the empty
+        # HOME it would try to download them and story rendering fails. The cache holds no keys or accounts.
+        real_cache = Path(os.path.expanduser("~")) / "Library" / "Caches" / "typst" / "packages"
+        if not real_cache.is_dir():
+            real_cache = Path(os.environ.get("XDG_CACHE_HOME", Path(os.path.expanduser("~")) / ".cache")) / "typst" / "packages"
+        if real_cache.is_dir():
+            env.setdefault("TYPST_PACKAGE_CACHE_PATH", str(real_cache))
         env.pop("ANTHROPIC_API_KEY", None)
         self.errlog = open(self.tmp / "server.log", "w")
         self.srv = subprocess.Popen([sys.executable, str(bs.APP / "server.py"), "--port", str(port), "--project", str(self.proj),
