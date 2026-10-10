@@ -146,7 +146,7 @@ function selectPerson(id, quiet){
       ${(l.evidence||[]).map(e=>`<p class="quote" style="font-size:13.4px;margin:5px 0">${e.quote?'“'+esc(e.quote)+'”':''} ${/^\[?S\d+ \d\d:/.test(e.cite||'')?`<a class="cite" data-cite="${esc(e.cite)}">${esc(e.cite)}</a>`:`<span class="derived">${esc(e.cite||'')}</span>`}</p>`).join('')||'<p class="derived">no evidence recorded</p>'}
       <span class="derived">${l.by==='me'?'my edit':'derived from the sources'}</span></div>`; };
   const merges=(d.merges||[]).filter(m=>m.keep===id);
-  $('#g-side').innerHTML = `<div class="row" style="align-items:flex-start;gap:12px">${p.photo?`<img class="portrait" style="width:64px;height:64px" src="${fileUrl(p.photo)}" alt="">`:`<div class="portrait" style="width:64px;height:64px;font-size:26px">${esc((p.name||'?')[0])}</div>`}
+  $('#g-side').innerHTML = `<div class="row" style="align-items:flex-start;gap:12px">${p.photo?`<img class="portrait" style="width:64px;height:64px" src="${fileUrl(p.photo)}" alt="">`:''}
       <div style="flex:1;min-width:0"><h3 style="font-family:var(--serif);font-size:20px">${esc(p.name||p.id)}</h3><div style="font-size:13px;color:var(--ink-3)">${esc(p.dates||'dates unknown')}${p.living?' · living':''}</div>
       ${(p.aliases||[]).length?`<div style="font-size:12.4px;color:var(--ink-3)">also ${p.aliases.map(esc).join(', ')}</div>`:''}<span class="derived">${p.by==='me'?'edited by me':'derived'}</span></div></div>
     <div class="row" style="gap:6px;margin:10px 0">${p.article?`<a class="chiplink" href="#familypedia/${encodeURIComponent(p.article)}">Familypedia</a>`:''}<button class="chiplink" id="gp-focus">Centre the tree here</button>
@@ -194,7 +194,7 @@ function drawCast(){
   const d=G.data, subj=d.subject;
   const people=d.people.slice().sort((a,b)=>(b.n_sources||0)-(a.n_sources||0) || (a.name||'').localeCompare(b.name||''));
   const nlinks=id=>d.links.filter(l=>l.a===id||l.b===id).length;
-  $('#g-body').innerHTML = `<div class="cast">${people.map(p=>`<div class="card"><div class="row" style="gap:10px">${p.photo?`<img class="portrait" style="width:52px;height:52px" src="${fileUrl(p.photo)}" alt="">`:`<div class="portrait" style="width:52px;height:52px;font-size:22px">${esc((p.name||'?')[0])}</div>`}
+  $('#g-body').innerHTML = `<div class="cast">${people.map(p=>`<div class="card"><div class="row" style="gap:10px">${p.photo?`<img class="portrait" style="width:52px;height:52px" src="${fileUrl(p.photo)}" alt="">`:''}
       <div style="min-width:0"><b style="font-family:var(--serif);font-size:16.5px">${esc(p.name||p.id)}</b><div style="font-size:12.6px;color:var(--ink-3)">${esc(p.dates||'dates unknown')}${p.id===subj?' · the subject':''}</div></div></div>
     <div class="row" style="gap:5px"><span class="pill">${p.n_sources||0} source${p.n_sources!==1?'s':''}</span><span class="pill ${nlinks(p.id)?'':'warn'}">${nlinks(p.id)?nlinks(p.id)+' link'+(nlinks(p.id)>1?'s':''):'unattached'}</span>${p.has_story?`<span class="pill ok">in a ${L.story}</span>`:''}</div>
     <div class="row" style="gap:6px">${p.article?`<a class="chiplink" href="#familypedia/${encodeURIComponent(p.article)}">Familypedia</a>`:''}<button class="chiplink" data-gtree="${esc(p.id)}">In the tree</button></div></div>`).join('')}</div>`;

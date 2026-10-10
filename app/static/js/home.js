@@ -34,7 +34,7 @@ function drawHomeStory(h){
   if(!s){ box.innerHTML = `<div class="kicker">Story of the day</div><p class="empty">No ${L.stories} drafted yet. ${L.Stories} come from transcribed recordings: add one in <a href="#sources">Sources</a>, then ask the Genealogist (Terminal) to propose the ${L.storyMap.toLowerCase()}.</p>`; return; }
   box.innerHTML = `<div class="row"><div class="kicker">Story of the day</div><span class="spacer"></span>
       ${s.of>1?`<button class="btn ghost sm" id="h-reroll" title="Another story">Another</button>`:''}</div>
-    <div class="hero">${s.photo?`<img src="${fileUrl(s.photo)}" alt="">`:`<div class="ph">${esc(s.title[0])}</div>`}
+    <div class="hero">${s.photo?`<img src="${fileUrl(s.photo)}" alt="">`:''}
       <div><h3>${esc(s.title)}</h3><div class="meta" style="color:var(--ink-3);font-size:13px">${esc(s.dates||'undated')} · ${s.reading_minutes} min read</div>
         <p class="open">${esc(s.opening)}</p>
         <div class="row"><a class="btn" href="#stories?read=${encodeURIComponent(s.id)}" style="text-decoration:none">Read</a>
