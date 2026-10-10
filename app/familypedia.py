@@ -142,7 +142,7 @@ def _inputs(project):
     for g in ("content/units/*.md", "facts/timeline.csv", "facts/people/*.md", "knowledge/graph.json",
               "knowledge/nodes.csv", "knowledge/edges.csv", "data/archives.csv", "facts/records/**/sources.csv",
               "facts/records/**/sources.json", "facts/**/*track*.csv", "facts/**/*route*.csv", "photos/photo_index.csv",
-              "facts/gaps.md", "facts/records/**/context_*.md", "transcript/clean/*.md", "chapters/*.typ", "chapters/*.md",
+              "facts/gaps.md", "data/family_members.csv", "data/portraits.csv", "facts/records/**/context_*.md", "transcript/clean/*.md", "chapters/*.typ", "chapters/*.md",
               "data/chapters.csv", "data/sources.json", "data/familypedia/*.json", "data/genealogy/*.json",
               "data/stale_stories.json"):
         for p in r.glob(g):
@@ -323,6 +323,25 @@ def book_sources(project):
             items = _records_block(f.read_text(encoding="utf-8", errors="ignore"))
             if items:
                 out[st["id"]] = {"title": st["title"], "items": items}
+    return out
+
+
+def _family_names(project):
+    """Normalised names and aliases from data/family_members.csv (name, aliases separated by ';'), with
+    'Last, First' forms added, so museum-style index names match. Empty set = no filter."""
+    p = project.root / "data" / "family_members.csv"
+    if not p.exists():
+        return set()
+    out = set()
+    for r in _read_csv(p):
+        for n in [r.get("name", "")] + (r.get("aliases") or "").split(";"):
+            n = re.sub(r"\s*\([^)]*\)\s*$", "", n.strip())
+            if len(n) < 3:
+                continue
+            out.add(norm(n))
+            parts = n.split()
+            if len(parts) >= 2:
+                out.add(norm(parts[-1] + ", " + " ".join(parts[:-1])))
     return out
 
 # ------------------------------------------------------------------------------- the index
@@ -678,6 +697,27 @@ def _build(project):
                                "basis": e["coords"].get("basis", "approximate"), "source": e["coords"].get("source", "stated by me"), "by": "me"}
             except (TypeError, ValueError):
                 pass
+
+    # family only (data/family_members.csv): person articles are kept only for members of the family
+    fam = _family_names(project)
+    if fam:
+        def is_family(s):
+            names = {norm(k) for k in _keys(s)} | {norm(s["title"])}
+            return bool(names & fam)
+        drop = {slug for slug, s in subs.items() if s["type"] == "person" and not is_family(s)}
+        for slug in drop:
+            subs.pop(slug, None)
+        for k in list(by_norm):
+            if by_norm[k] in drop:
+                del by_norm[k]
+        for k in list(keys):
+            keys[k] = {x for x in keys[k] if x not in drop}
+        for coll in (records, photos):
+            for r in coll:
+                r["subjects"] = [x for x in r.get("subjects", []) if x not in drop]
+        for k in list(kg_subject):
+            if kg_subject[k] in drop:
+                del kg_subject[k]
 
     # score and stubs
     for s in subs.values():

@@ -1135,6 +1135,7 @@ def engine_stories(project):
     for r in rows:
         r.update(story_audio_info(project, r) if r["exists"] else {"has_audio": False})
         r["voice_override"] = voices.get(r["id"])
+        r["photo"] = _lead_photo(project, r) if r.get("exists") else None   # the chapter's chosen image (data/portraits.csv)
         r["narration_chars"] = None
     return rows
 

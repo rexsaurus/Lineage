@@ -43,7 +43,7 @@ function drawStories(){
     const e = order==='chrono' ? eraOf(s.year) : null;
     if(e && e!==era){ html+=`<div class="era">${esc(e)}</div>`; era=e; }
     const audioPill = s.has_audio ? `<span class="pill ${s.audio_stale?'warn':'ok'}" title="${esc(s.audio_voice||'')} · ${esc((s.audio_made||'').slice(0,10))}">${s.audio_stale?'audio is stale':'audio · '+fmtDur(s.audio_duration)}</span>` : '';
-    html+=`<div class="story${S.playing===s.id?' playing':''}" data-id="${esc(s.id)}"><div class="mark">${esc((s.title||'?')[0])}</div>
+    html+=`<div class="story${S.playing===s.id?' playing':''}" data-id="${esc(s.id)}">${s.photo?`<img class="mark mark-photo" src="${fileUrl(s.photo)}" alt="" loading="lazy">`:''}
       <div><h4>${esc(s.title)}</h4><div class="meta">${esc(s.dates||'undated')}${s.summary?' · '+esc(s.summary):''}</div>
         <div class="chipsrow">${s.exists?`<span class="pill">${s.words.toLocaleString()} words</span><span class="pill">${s.reading_minutes} min read</span>`:'<span class="pill warn">no draft yet</span>'}
         ${s.stale?`<span class="pill bad" title="${esc(s.stale.reason)}">stale</span>`:''}${s.photos?`<span class="pill">${s.photos} photo${s.photos!==1?'s':''}</span>`:''}${s.bridges?`<span class="pill warn">${s.bridges} bridge${s.bridges!==1?'s':''} to approve</span>`:''}
