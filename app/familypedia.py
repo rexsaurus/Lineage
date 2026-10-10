@@ -1475,7 +1475,22 @@ def catalogue(project, what):
         rows = sorted(ix["records"].values(), key=lambda r: (r["type"], r.get("date") or "", r["title"]))
         return [{**r, "subjects": [x for x in map(name, r["subjects"]) if x]} for r in rows]
     rows = sorted(ix["photos"].values(), key=lambda p: (p.get("id") or ""))
-    return [{**p, "subjects": [x for x in map(name, p["subjects"]) if x]} for p in rows]
+    # each picture is an original, an illustration or a digital restoration (Rex, 2026-10-10: tag them all)
+    restored = set()
+    rj = project.root / "data" / "image_restorations.json"
+    if rj.exists():
+        try:
+            restored = {k.lstrip("/") for k in json.loads(rj.read_text())}
+        except Exception:
+            pass
+    def kind(p):
+        th = (p.get("thumb") or "").lstrip("/")
+        if p.get("illustration"):
+            return "illustration"
+        if th in restored or th.replace("work/lineage-assets/", "", 1) in restored or "-restored" in th:
+            return "digital restoration"
+        return "original"
+    return [{**p, "kind": kind(p), "subjects": [x for x in map(name, p["subjects"]) if x]} for p in rows]
 
 
 def story_subjects(project, story_id):

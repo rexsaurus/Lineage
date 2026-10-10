@@ -12,7 +12,7 @@ BUILDERS.familypedia = async function(el, rest, q={}){
   el.innerHTML='';
   head(el,{kicker:'Familypedia', title:'Everything the material names', lede:"People, places, events, ships, regiments, objects, papers, trades and themes. Built only from this project's own material: every sentence points at its source, and stubs show where the next recording or record should go."});
   el.insertAdjacentHTML('beforeend', `<div class="row fp-views" role="tablist" style="margin:0 0 14px">
-      ${[['articles','Articles'],['map','Map'],['records','Records'],['photos','Photographs']].map(([v,l])=>`<a class="chiplink" role="tab" data-view="${v}" href="#familypedia?view=${v}">${l}</a>`).join('')}
+      ${[['articles','Articles'],['people','People'],['events','Events'],['places','Places'],['map','Map'],['records','Records'],['photos','Photographs']].map(([v,l])=>`<a class="chiplink" role="tab" data-view="${v}" href="#familypedia?view=${v}">${l}</a>`).join('')}
       <span class="spacer"></span><button class="btn ghost sm" id="fp-new">New subject…</button></div>
     <div id="fp-body"><p class="empty">Loading…</p></div>`);
   $('#fp-new').onclick=()=>openPicker({title:'New subject', newOnly:true, onPick:s=>{ location.hash='familypedia/'+encodeURIComponent(s.slug); }});
@@ -28,6 +28,9 @@ async function loadFamilypedia(force=false){
 function setView(v){ FP.view=v; $$('.fp-views [data-view]').forEach(a=>a.setAttribute('aria-current', a.dataset.view===v?'page':'false')); }
 function showView(v, q={}){
   setView(v);
+  if(v==='people') return drawPeopleView();
+  if(v==='events') return drawTypeCards('event');
+  if(v==='places') return drawTypeCards('place');
   if(v==='map') return drawMapView(q.focus);
   if(v==='records') return drawCatalogue('records');
   if(v==='photos') return drawCatalogue('photos');
@@ -269,7 +272,7 @@ async function drawCatalogue(what){
       ? `<table class="fp-rec"><thead><tr><th></th><th>Type</th><th>Record</th><th>Archive</th><th>Number</th><th>Retrieved</th><th>About</th></tr></thead><tbody>${list.slice(0,600).map(i=>`<tr id="rec-${esc(i.id)}" class="${focus===i.id?'hl':''}"><td><input type="checkbox" data-csel="${esc(i.id)}" ${FP.sel.has(i.id)?'checked':''}></td><td>${esc(i.type)}</td>
           <td>${i.url?`<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title)}</a>`:esc(i.title)}</td><td>${esc(i.archive||'—')}</td><td class="mono">${esc(i.number||'')}</td><td>${esc(i.retrieved||'—')}</td><td style="font-size:12.8px">${subj(i)} <button class="btn ghost sm" data-ctag="${esc(i.id)}">tags</button></td></tr>`).join('')}</tbody></table>${list.length>600?`<p class="derived">Showing 600 of ${list.length}; filter to narrow.</p>`:''}`
       : `<div class="fp-photos">${list.map(p=>`<figure class="fp-photo sel"><label><input type="checkbox" data-csel="${esc(p.id)}" ${FP.sel.has(p.id)?'checked':''}> select</label>${p.thumb?`<img src="${fileUrl(p.thumb)}" alt="">`:''}
-          <figcaption>${esc(p.id)} · ${esc(p.caption)}${p.illustration?' <span class="pill warn">illustration</span>':''}<br><span class="derived">${esc(p.provenance||'')}</span><br>${subj(p)} <button class="btn ghost sm" data-ctag="${esc(p.id)}">tags</button></figcaption></figure>`).join('')||'<p class="empty">None yet.</p>'}</div>`;
+          <figcaption>${esc(p.id)} · ${esc(p.caption)} <span class="kindtag k-${(p.kind||'original').replace(/ /g,'-')}">(${esc(p.kind||(p.illustration?'illustration':'original'))})</span><br><span class="derived">${esc(p.provenance||'')}</span><br>${subj(p)} <button class="btn ghost sm" data-ctag="${esc(p.id)}">tags</button></figcaption></figure>`).join('')||'<p class="empty">None yet.</p>'}</div>`;
     $$('[data-csel]').forEach(c=>c.onchange=()=>{ c.checked?FP.sel.add(c.dataset.csel):FP.sel.delete(c.dataset.csel); bulk(); });
     $$('[data-ctag]').forEach(b=>b.onclick=()=>openTagPanel((what==='records'?'record:':'photo:')+b.dataset.ctag, ()=>drawCatalogue(what)));
     if(focus){ const row=document.getElementById('rec-'+focus); if(row) row.scrollIntoView({block:'center'}); }
@@ -366,7 +369,60 @@ function drawWikiArticle(a){
     ${photos.length?`<section class="tier" style="clear:both"><h4>Photographs and illustrations · ${photos.length}</h4><div class="fp-photos">${photos.map(p=>`<figure class="fp-photo"><img src="${fileUrl(p.thumb)}" alt="${esc(p.caption)}" loading="lazy"><figcaption>${esc(p.caption)}${p.illustration?' <span class="pill warn">illustration</span>':''}</figcaption></figure>`).join('')}</div></section>`:''}
     ${a.backlinks.length?`<section class="tier"><h4>What links here · ${a.backlinks.length}</h4>${a.backlinks.map(b=>artLink(b.slug,b.title,b.type)).join(' ')}</section>`:''}
   </article>`;
-  $$('#wk-article .wiki a[href^="#ref-"], #wk-article .wiki a[href^="#cite-"], #wk-article .wtoc a, #wk-article .wiki a[href="#references"]').forEach(x=>x.onclick=e=>{
+  $$('#wk-article .encyc a[href^="#ref-"], #wk-article .encyc a[href^="#cite-"], #wk-article .wtoc a, #wk-article .encyc a[href="#references"]').forEach(x=>x.onclick=e=>{
     e.preventDefault(); const t=document.getElementById(x.getAttribute('href').slice(1)); if(t) t.scrollIntoView({behavior:'smooth', block:'center'}); });
   window.scrollTo(0,0);
+}
+
+
+/* People: every member of the family, as portrait cards (Rex, 2026-10-10: add "People" to the Familypedia tabs).
+   From the project's family tree file when it has one; otherwise from the person articles. */
+async function drawPeopleView(){
+  await ensureFP();
+  const body=$('#fp-body'); body.innerHTML='<div class="card"><p class="empty">Loading…</p></div>';
+  const g=await api('/api/engine/genealogy');
+  let ppl;
+  if(g && g.from_file){
+    ppl=g.people.map(p=>({name:p.name, dates:p.dates||'', photo:p.photo||null, href:p.article?'#familypedia/'+encodeURIComponent(p.article):'#genealogy?focus='+encodeURIComponent(p.id)}));
+  } else {
+    ppl=FP.list.filter(a=>a.type==='person').map(a=>({name:a.title, dates:'', photo:a.portrait?a.portrait.thumb:null, href:'#familypedia/'+encodeURIComponent(a.slug)}));
+  }
+  const last=n=>{ const w=n.replace(/\s*\(.*\)$/,'').split(/\s+/); const i=w.findIndex(x=>/^(St\.?|De|Van|Von)$/i.test(x)); return (i>0?w.slice(i).join(' '):w[w.length-1]); };
+  ppl.sort((a,b)=>last(a.name).localeCompare(last(b.name))||a.name.localeCompare(b.name));
+  const card=p=>`<a class="fp-person" href="${p.href}">${p.photo?`<img src="${thumbSrc(p.photo)}" alt="" loading="lazy">`:`<span class="fp-initial">${esc((p.name.match(/[A-Z]/)||['·'])[0])}</span>`}<b>${esc(p.name)}</b>${p.dates?`<span>${esc(p.dates)}</span>`:''}</a>`;
+  const draw=q=>{
+    const list=ppl.filter(p=>!q||p.name.toLowerCase().includes(q));
+    const groups={}; list.forEach(p=>{ const k=(last(p.name)[0]||'#').toUpperCase(); (groups[k]=groups[k]||[]).push(p); });
+    $('#fp-people-list').innerHTML=Object.keys(groups).sort().map(k=>`<h4 class="fp-letter">${k}</h4><div class="fp-people">${groups[k].map(card).join('')}</div>`).join('')||'<p class="empty">No one matches.</p>';
+  };
+  body.innerHTML=`<div class="card"><div class="row"><h3 style="margin:0">People · ${ppl.length}</h3><span class="spacer"></span>
+    <input type="search" id="fp-people-q" placeholder="Find a person" style="max-width:260px"></div>
+    <p class="sub" style="margin-top:6px">Everyone in the family tree, by surname. Each card opens their article.</p><div id="fp-people-list"></div></div>`;
+  $('#fp-people-q').oninput=e=>draw(e.target.value.trim().toLowerCase());
+  draw('');
+}
+
+
+/* Events (by date) and Places (A–Z), as cards like People (Rex, 2026-10-10: "Add Events, Places also"). */
+async function drawTypeCards(type){
+  await ensureFP();
+  const body=$('#fp-body');
+  const items=FP.list.filter(a=>a.type===type).map(a=>{
+    const m=a.title.match(/^(\d{4}(?:-\d{2}(?:-\d{2})?)?)\s+(.*)$/);
+    return {slug:a.slug, title:m?m[2]:a.title, date:m?m[1]:'', sort:m?m[1]:'9999 '+a.title, photo:a.portrait?a.portrait.thumb:null, stub:a.stub};
+  });
+  if(type==='event') items.sort((a,b)=>a.sort.localeCompare(b.sort)); else items.sort((a,b)=>a.title.localeCompare(b.title));
+  const label=type==='event'?'Events':'Places';
+  const card=i=>`<a class="fp-person fp-thing" href="#familypedia/${encodeURIComponent(i.slug)}">${i.photo?`<img src="${thumbSrc(i.photo)}" alt="" loading="lazy">`:''}<b>${esc(i.title)}</b>${i.date?`<span>${esc(i.date)}</span>`:''}</a>`;
+  const key=i=>type==='event'?(i.date?i.date.slice(0,3)+'0s':'Undated'):((i.title.match(/[A-Za-z]/)||['#'])[0].toUpperCase());
+  const draw=q=>{
+    const list=items.filter(i=>!q||i.title.toLowerCase().includes(q));
+    const groups={}, order=[]; list.forEach(i=>{ const k=key(i); if(!groups[k]){groups[k]=[];order.push(k);} groups[k].push(i); });
+    $('#fp-type-list').innerHTML=order.map(k=>`<h4 class="fp-letter">${esc(k)}</h4><div class="fp-people">${groups[k].map(card).join('')}</div>`).join('')||'<p class="empty">Nothing matches.</p>';
+  };
+  body.innerHTML=`<div class="card"><div class="row"><h3 style="margin:0">${label} · ${items.length}</h3><span class="spacer"></span>
+    <input type="search" id="fp-type-q" placeholder="Find ${type==='event'?'an event':'a place'}" style="max-width:260px"></div>
+    <p class="sub" style="margin-top:6px">${type==='event'?'Every event in the material, in date order, by decade.':'Every place in the material, A–Z.'} Each card opens its article.</p><div id="fp-type-list"></div></div>`;
+  $('#fp-type-q').oninput=e=>draw(e.target.value.trim().toLowerCase());
+  draw('');
 }

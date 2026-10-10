@@ -145,11 +145,11 @@ def render(art, person_href, chapter_href, file_url=None, show_image=True):
     if order:
         refs = '<h2 id="references">References</h2><ol class="wrefs">' + "".join(
             f'<li id="ref-{i + 1}">{_link_urls(art["refs"].get(k, "(citation missing)"))}</li>' for i, k in enumerate(order)) + "</ol>"
-    return f'<div class="wiki">{infobox}{"".join(lead)}{contents}{"".join(rest)}{refs}</div>'
+    return f'<div class="encyc">{infobox}{"".join(lead)}{contents}{"".join(rest)}{refs}</div>'
 
 
-CSS = """.wiki{line-height:1.6}.wiki h2{font-size:1.35em;border-bottom:1px solid var(--line,#ddd);padding-bottom:.15em;margin:1.4em 0 .5em}
-.wiki h3{font-size:1.1em;margin:1.1em 0 .4em}.wiki p{margin:.55em 0}
+CSS = """.encyc{line-height:1.6}.encyc h2{font-size:1.35em;border-bottom:1px solid var(--line,#ddd);padding-bottom:.15em;margin:1.4em 0 .5em}
+.encyc h3{font-size:1.1em;margin:1.1em 0 .4em}.encyc p{margin:.55em 0}
 .winfobox{float:right;width:300px;max-width:100%;margin:0 0 14px 18px;border:1px solid var(--line,#ccc);background:var(--card,#F8F6F1);font-size:.86em;border-collapse:collapse}
 .winfobox caption{font-weight:700;font-size:1.12em;padding:8px 6px 4px;text-align:center}
 .winfobox th{text-align:left;vertical-align:top;padding:4px 8px;width:36%;font-weight:600}.winfobox td{vertical-align:top;padding:4px 8px}
@@ -157,5 +157,5 @@ CSS = """.wiki{line-height:1.6}.wiki h2{font-size:1.35em;border-bottom:1px solid
 .wtoc{display:inline-block;border:1px solid var(--line,#ccc);background:var(--card,#F8F6F1);padding:8px 16px;margin:10px 0;font-size:.9em}.wtoc ol{margin:.3em 0 0;padding-left:1.2em}
 sup.wref{font-size:.72em;line-height:0}sup.wref a{text-decoration:none}
 .wrefs{font-size:.86em}.wrefs li{margin:.3em 0;overflow-wrap:anywhere}
-.wiki blockquote{margin:.8em 0;padding:.2em 1em;border-left:3px solid var(--line,#ccc);font-style:italic}
+.encyc blockquote{margin:.8em 0;padding:.2em 1em;border-left:3px solid var(--line,#ccc);font-style:italic}
 @media (max-width:640px){.winfobox{float:none;width:100%;margin:0 0 14px}}"""

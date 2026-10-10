@@ -404,8 +404,8 @@ ul.fp-list.chips{list-style:none;padding:0}ul.fp-list.chips li{padding:3px 0}
 .pchip span:last-child{font-weight:500}
 
 /* curated encyclopedia articles (app/wiki.py) */
-.wiki{line-height:1.6}.wiki h2{font-size:1.35em;border-bottom:1px solid var(--line,#ddd);padding-bottom:.15em;margin:1.4em 0 .5em}
-.wiki h3{font-size:1.1em;margin:1.1em 0 .4em}.wiki p{margin:.55em 0}
+.encyc{line-height:1.6}.encyc h2{font-size:1.35em;border-bottom:1px solid var(--line,#ddd);padding-bottom:.15em;margin:1.4em 0 .5em}
+.encyc h3{font-size:1.1em;margin:1.1em 0 .4em}.encyc p{margin:.55em 0}
 .winfobox{float:right;width:300px;max-width:100%;margin:0 0 14px 18px;border:1px solid var(--line,#ccc);background:var(--card,#F8F6F1);font-size:.86em;border-collapse:collapse}
 .winfobox caption{font-weight:700;font-size:1.12em;padding:8px 6px 4px;text-align:center}
 .winfobox th{text-align:left;vertical-align:top;padding:4px 8px;width:36%;font-weight:600}.winfobox td{vertical-align:top;padding:4px 8px}
@@ -413,6 +413,29 @@ ul.fp-list.chips{list-style:none;padding:0}ul.fp-list.chips li{padding:3px 0}
 .wtoc{display:inline-block;border:1px solid var(--line,#ccc);background:var(--card,#F8F6F1);padding:8px 16px;margin:10px 0;font-size:.9em}.wtoc ol{margin:.3em 0 0;padding-left:1.2em}
 sup.wref{font-size:.72em;line-height:0}sup.wref a{text-decoration:none}
 .wrefs{font-size:.86em}.wrefs li{margin:.3em 0;overflow-wrap:anywhere}
-.wiki blockquote{margin:.8em 0;padding:.2em 1em;border-left:3px solid var(--line,#ccc);font-style:italic}
+.encyc blockquote{margin:.8em 0;padding:.2em 1em;border-left:3px solid var(--line,#ccc);font-style:italic}
 @media (max-width:640px){.winfobox{float:none;width:100%;margin:0 0 14px}}
 .wiki-article .wtitle{font-family:var(--serif);font-size:30px;margin:2px 0 4px}
+
+/* Familypedia: People */
+.fp-people{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:8px}
+.fp-person{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:12px 8px;border:1px solid var(--line);border-radius:12px;background:var(--card,#FFFDF8);color:var(--ink);text-decoration:none}
+.fp-person:hover{border-color:var(--ink-3);background:#F7F2E9}
+.fp-person img,.fp-person .fp-initial{width:84px;height:84px;border-radius:50%;object-fit:cover}
+.fp-person .fp-initial{display:grid;place-items:center;background:#F3EEE4;color:var(--ink-3);font:600 30px var(--serif)}
+.fp-person b{font-family:var(--serif);font-size:15.5px;line-height:1.25}.fp-person span{font-size:12px;color:var(--ink-3)}
+.fp-letter{margin:14px 0 6px;font-family:var(--serif);font-size:20px;color:var(--ink-3)}
+
+/* the article's Contents box scrolls with the text (Rex, 2026-10-10: not pinned) */
+.encyc nav.wtoc{position:static}
+.fp-thing{align-items:flex-start;text-align:left;padding:12px}.fp-thing img{width:100%;height:96px;border-radius:8px}.fp-thing b{font-size:14.5px}
+
+.encyc::after{content:"";display:block;clear:both}
+
+/* faces: when no face position is known, keep the top of a picture in a cropped frame */
+.pchip img,.fp-person img,.story .mark-photo,.hstory img,img.portrait,.hrel img,.hgal img,.fp-photo img{object-position:50% 28%}
+
+/* every picture says what it is: (original), (illustration), (digital restoration) */
+.kindtag{display:inline-block;font:500 11px/1.4 var(--sans);padding:1px 7px;border-radius:999px;background:#EFE9DD;color:#5A5348;white-space:nowrap}
+.kindtag.k-illustration{background:#FBEBD9;color:#8A4B12}.kindtag.k-digital-restoration{background:#E3EEF7;color:#24527A}
+.hgal a .kindtag{position:absolute;left:5px;bottom:5px;font-size:10px;background:rgba(255,253,248,.92)}

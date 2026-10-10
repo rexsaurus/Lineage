@@ -138,7 +138,7 @@ async function drawHomeGallery(){
   const r=await api('/api/engine/gallery'); const items=(r.items||[]).filter(p=>p.thumb);
   const day=Math.floor(Date.now()/864e5); const key=p=>{let x=0; for(const c of String(p.id)+day) x=(x*31+c.charCodeAt(0))|0; return x;};
   const pick=items.slice().sort((a,b)=>key(a)-key(b)).slice(0,24);
-  box.innerHTML = pick.map(p=>`<a href="${fileUrl(p.thumb)}" target="_blank" rel="noopener" title="${esc(p.caption||'')}"><img src="${fileUrl(p.thumb)}" alt="${esc(p.caption||'')}" loading="lazy"></a>`).join('') || '<p class="empty">No photographs yet.</p>';
+  box.innerHTML = pick.map(p=>`<a href="${fileUrl(p.thumb)}" target="_blank" rel="noopener" title="${esc(p.caption||'')}"><img src="${fileUrl(p.thumb)}" alt="${esc(p.caption||'')}" loading="lazy"><span class="kindtag k-${(p.kind||'original').replace(/ /g,'-')}">(${esc(p.kind||'original')})</span></a>`).join('') || '<p class="empty">No photographs yet.</p>';
 }
 async function drawHomeRelatives(){
   const box=$('#h-rels'); if(!box) return;

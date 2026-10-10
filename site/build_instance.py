@@ -195,7 +195,7 @@ HIDE_JS = """
 
 
 R2_JS = """
-(function(){ const A = __A__, T = __T__, f0 = window.demoFileUrl;
+(function(){ const A = __A__, T = __T__, F = __F__, f0 = window.demoFileUrl;
   // every image comes from Cloudflare R2: full size by path, thumbnails where the page shows it small
   window.thumbOf = u => T[u] || u;
   window.demoFileUrl = rel => { const k = String(rel || '').split('?')[0].replace(/^\\//, ''); return A[k] || f0(rel); };
@@ -204,6 +204,11 @@ R2_JS = """
   new MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes) { if (n.nodeType !== 1) continue;
       if (n.tagName === 'IMG') swap(n); else n.querySelectorAll && n.querySelectorAll('img').forEach(swap); } })
     .observe(document.documentElement, { childList: true, subtree: true });
+  // faces: centre every cropped picture on the face found in it (data/image_focus.json)
+  const focus = i => { const p = F[i.getAttribute('src')] || F[i.dataset.full]; if (p) i.style.objectPosition = p; };
+  new MutationObserver(ms => { for (const m of ms) { if (m.type === 'attributes') { if (m.target.tagName === 'IMG') focus(m.target); continue; }
+      for (const n of m.addedNodes) { if (n.nodeType !== 1) continue; if (n.tagName === 'IMG') focus(n); else n.querySelectorAll && n.querySelectorAll('img').forEach(focus); } } })
+    .observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
 })();
 """
 
@@ -212,14 +217,21 @@ def use_r2_assets(out: Path, manifest: Path):
     """Point every image at its Cloudflare R2 copy (manifest from the project's scripts/r2_sync.py: path, url,
     thumb_url) and drop those files from the static output. Returns (images mapped, files removed)."""
     import csv as _csv
-    A, T = {}, {}
+    A, T, F = {}, {}, {}
+    fj = manifest.parent / "image_focus.json"
+    focus = json.loads(fj.read_text()) if fj.exists() else {}
     for r in _csv.DictReader(open(manifest, encoding="utf-8")):
         if r.get("url"):
             A[r["path"]] = r["url"]
             if r.get("thumb_url"):
                 T[r["url"]] = r["thumb_url"]
+            fp = focus.get(r["path"]) or focus.get(r["path"].replace("work/lineage-assets/", "", 1))
+            if fp:
+                F[r["url"]] = fp
+                if r.get("thumb_url"):
+                    F[r["thumb_url"]] = fp
     shim = out / "demo" / "shim.js"
-    shim.write_text(shim.read_text(encoding="utf-8") + R2_JS.replace("__A__", json.dumps(A)).replace("__T__", json.dumps(T)), encoding="utf-8")
+    shim.write_text(shim.read_text(encoding="utf-8") + R2_JS.replace("__A__", json.dumps(A)).replace("__T__", json.dumps(T)).replace("__F__", json.dumps(F)), encoding="utf-8")
     gone = 0
     for rel in A:
         f = out / "files" / rel
