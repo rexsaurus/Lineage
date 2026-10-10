@@ -155,7 +155,7 @@ td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .tree li:before{content:"";position:absolute;left:-6px;top:16px;width:10px;height:10px;border-radius:50%;background:var(--clay)}
 .tree li.told:before{background:#D7C49A} .tree li.witnessed:before{background:var(--green)}
 .tree .name{font-weight:600} .tree .meta{color:var(--ink-3);font-size:13px}
-@media (max-width:1000px){.work,.wiki{grid-template-columns:1fr}.chatmain,.side{height:auto}.termwrap{height:60vh}.grid.three,.grid.four,.grid.five{grid-template-columns:repeat(2,minmax(0,1fr))}.page{padding:22px 16px 80px}.infobox{float:none;width:auto;margin:0 0 14px}}
+@media (max-width:1000px){.work,.wiki{grid-template-columns:1fr}.wiki nav{position:static;max-height:none;overflow:visible}.chatmain,.side{height:auto}.termwrap{height:60vh}.grid.three,.grid.four,.grid.five{grid-template-columns:repeat(2,minmax(0,1fr))}.page{padding:22px 16px 80px}.infobox{float:none;width:auto;margin:0 0 14px}}
 
 /* ---------- header: tabs, terminal toggle, settings gear ---------- */
 .hbtn{all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;color:#E9E2D6;font-size:13.4px;padding:7px 11px;border-radius:8px;border:1px solid #3A352E;position:relative;white-space:nowrap}
@@ -260,8 +260,8 @@ body.docked .page{padding-bottom:calc(var(--dockh,0px) + 90px)}
 .gnode.sel rect{fill:#FBF2EC}
 .gnode.unknown rect{fill:#F3EEE4;stroke-dasharray:4 3}
 .gnode.mine rect{stroke:var(--green)}
-.gnode text{font-family:var(--sans);font-size:12.5px;fill:var(--ink)}
-.gnode text.d{font-size:11px;fill:var(--ink-3)}
+.gnode text{font-family:var(--sans);font-size:14px;font-weight:600;fill:#1C1A17}
+.gnode text.d{font-size:12px;font-weight:500;fill:#4A453E}
 .gnode{cursor:pointer}
 .glink{fill:none;stroke-width:1.6}
 .glink.documented{stroke:#3D3A35} .glink.told{stroke:var(--clay)} .glink.lore{stroke:#B07BB0;stroke-dasharray:6 4}
@@ -367,3 +367,75 @@ body.docked .page{padding-bottom:calc(var(--dockh,0px) + 90px)}
 .ap-img img{width:120px;height:84px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
 .ap-img .ph{width:120px;height:84px;border-radius:6px;background:#EFE7DA;display:grid;place-items:center;color:var(--ink-3)}
 .ap-tools{gap:5px;margin-top:4px}
+
+.story .mark-photo{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);padding:0;background:var(--paper)}
+.story:not(:has(.mark)){grid-template-columns:1fr auto}
+
+/* home: stories, gallery, relatives */
+.hsec{margin-top:26px}.hsec h3{margin:0 0 10px;font-family:var(--serif)}
+.hstories{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.hstory{display:flex;gap:12px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card,#fff);color:var(--ink);text-decoration:none}
+.hstory:hover{border-color:var(--ink-3)}.hstory img{width:64px;height:64px;object-fit:cover;border-radius:8px;flex:none}
+.hstory b{display:block;font-family:var(--serif);font-size:16px}.hstory span{display:block;font-size:12.5px;color:var(--ink-3)}.hstory em{display:block;font-size:12.5px;color:var(--ink-2,#555)}
+.hgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.hgal a{position:relative;display:block;aspect-ratio:1;overflow:hidden;border-radius:8px;border:1px solid var(--line)}
+.hgal img{width:100%;height:100%;object-fit:cover;display:block}.hgal .pill{position:absolute;left:4px;bottom:4px;font-size:10px}
+.hrel-group{display:grid;grid-template-columns:28px 1fr;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.hrel-letter{font-family:var(--serif);font-size:20px;color:var(--ink-3)}
+.hrels{display:flex;flex-wrap:wrap;gap:8px}
+.hrel{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;border:1px solid var(--line);border-radius:999px;color:var(--ink);text-decoration:none;font-size:14px}
+.hrel img{width:30px;height:30px;border-radius:50%;object-fit:cover}
+.ts-chip{display:inline-block;font:11px/1.6 var(--mono,ui-monospace,monospace);color:var(--ink-3);background:#F3EEE4;border-radius:6px;padding:0 5px;vertical-align:1px;white-space:nowrap}
+
+/* the portrait chip: every entry in every list */
+.pchip{display:inline-flex;align-items:center;gap:8px;max-width:100%;padding:3px 11px 3px 3px;margin:2px 0;border:1px solid var(--line);border-radius:999px;background:var(--card,#FFFDF8);color:var(--ink);text-decoration:none;font-size:14px;line-height:1.25;vertical-align:middle;cursor:pointer}
+.pchip:hover{border-color:var(--ink-3);background:#F7F2E9}
+.pchip img{width:30px;height:30px;border-radius:50%;object-fit:cover;flex:none}
+.pchip.noimg{padding-left:11px}.pchip .pchip-i{width:22px;height:22px;margin-left:-6px;display:inline-grid;place-items:center;border-radius:50%;background:#F3EEE4;font-size:12px;flex:none}
+.pchip span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ul.fp-list.chips{list-style:none;padding:0}ul.fp-list.chips li{padding:3px 0}
+.fp-rel .pchip,.tier .pchip{margin:2px 2px}
+.gnode image{pointer-events:none}.gnode.linked{cursor:pointer}.gnode.linked:hover rect{stroke:var(--ink-3)}
+
+/* every remaining bubble takes the portrait-chip look */
+.chiplink{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;margin:2px 0;border:1px solid var(--line);border-radius:999px;background:var(--card,#FFFDF8);color:var(--ink);text-decoration:none;font-size:14px;line-height:1.25;font-weight:500;cursor:pointer;vertical-align:middle}
+.chiplink:hover{border-color:var(--ink-3);background:#F7F2E9}
+.chiplink[aria-current="page"],.chiplink[aria-selected="true"]{background:var(--ink);color:#FFFDF8;border-color:var(--ink)}
+.pchip span:last-child{font-weight:500}
+
+/* curated encyclopedia articles (app/wiki.py) */
+.encyc{line-height:1.6}.encyc h2{font-size:1.35em;border-bottom:1px solid var(--line,#ddd);padding-bottom:.15em;margin:1.4em 0 .5em}
+.encyc h3{font-size:1.1em;margin:1.1em 0 .4em}.encyc p{margin:.55em 0}
+.winfobox{float:right;width:300px;max-width:100%;margin:0 0 14px 18px;border:1px solid var(--line,#ccc);background:var(--card,#F8F6F1);font-size:.86em;border-collapse:collapse}
+.winfobox caption{font-weight:700;font-size:1.12em;padding:8px 6px 4px;text-align:center}
+.winfobox th{text-align:left;vertical-align:top;padding:4px 8px;width:36%;font-weight:600}.winfobox td{vertical-align:top;padding:4px 8px}
+.winfobox .wimg{text-align:center;padding:6px}.winfobox .wimg img{max-width:100%;height:auto;border-radius:3px}.wcap{font-size:.92em;color:var(--ink-3,#666);margin-top:4px}
+.wtoc{display:inline-block;border:1px solid var(--line,#ccc);background:var(--card,#F8F6F1);padding:8px 16px;margin:10px 0;font-size:.9em}.wtoc ol{margin:.3em 0 0;padding-left:1.2em}
+sup.wref{font-size:.72em;line-height:0}sup.wref a{text-decoration:none}
+.wrefs{font-size:.86em}.wrefs li{margin:.3em 0;overflow-wrap:anywhere}
+.encyc blockquote{margin:.8em 0;padding:.2em 1em;border-left:3px solid var(--line,#ccc);font-style:italic}
+@media (max-width:640px){.winfobox{float:none;width:100%;margin:0 0 14px}}
+.wiki-article .wtitle{font-family:var(--serif);font-size:30px;margin:2px 0 4px}
+
+/* Familypedia: People */
+.fp-people{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:8px}
+.fp-person{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:12px 8px;border:1px solid var(--line);border-radius:12px;background:var(--card,#FFFDF8);color:var(--ink);text-decoration:none}
+.fp-person:hover{border-color:var(--ink-3);background:#F7F2E9}
+.fp-person img,.fp-person .fp-initial{width:84px;height:84px;border-radius:50%;object-fit:cover}
+.fp-person .fp-initial{display:grid;place-items:center;background:#F3EEE4;color:var(--ink-3);font:600 30px var(--serif)}
+.fp-person b{font-family:var(--serif);font-size:15.5px;line-height:1.25}.fp-person span{font-size:12px;color:var(--ink-3)}
+.fp-letter{margin:14px 0 6px;font-family:var(--serif);font-size:20px;color:var(--ink-3)}
+
+/* the article's Contents box scrolls with the text */
+.encyc nav.wtoc{position:static}
+.fp-thing{align-items:flex-start;text-align:left;padding:12px}.fp-thing img{width:100%;height:96px;border-radius:8px}.fp-thing b{font-size:14.5px}
+
+.encyc::after{content:"";display:block;clear:both}
+
+/* faces: when no face position is known, keep the top of a picture in a cropped frame */
+.pchip img,.fp-person img,.story .mark-photo,.hstory img,img.portrait,.hrel img,.hgal img,.fp-photo img{object-position:50% 28%}
+
+/* every picture says what it is: (original), (illustration), (digital restoration) */
+.kindtag{display:inline-block;font:500 11px/1.4 var(--sans);padding:1px 7px;border-radius:999px;background:#EFE9DD;color:#5A5348;white-space:nowrap}
+.kindtag.k-illustration{background:#FBEBD9;color:#8A4B12}.kindtag.k-digital-restoration{background:#E3EEF7;color:#24527A}
+.hgal a .kindtag{position:absolute;left:5px;bottom:5px;font-size:10px;background:rgba(255,253,248,.92)}

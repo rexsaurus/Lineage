@@ -16,7 +16,7 @@ BUILDERS.home = async function(el){
         <a class="btn ghost" href="#/settings/connectors" style="text-decoration:none">Connect a model</a></div></div>`;
     return;
   }
-  // Home = Story of the day, Stories, Gallery, Relatives (Rex, 2026-10-10)
+  // Home = Story of the day, Stories, Gallery, Relatives
   el.innerHTML = `<div class="row" style="margin-bottom:16px"><div><div class="kicker">${esc(S.data.identity.family_name||'Home')}</div>
       <h2 style="margin:0">${esc(S.data.identity.display_title)}</h2></div><span class="spacer"></span>
       <span class="pill" title="${esc(h.updated||'')}">${h.updated?'Last updated '+esc(ago(h.updated)):'Nothing recorded yet'}</span></div>

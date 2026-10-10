@@ -43,7 +43,7 @@ function drawStories(){
     const e = order==='chrono' ? eraOf(s.year) : null;
     if(e && e!==era){ html+=`<div class="era">${esc(e)}</div>`; era=e; }
     const audioPill = s.has_audio ? `<span class="pill ${s.audio_stale?'warn':'ok'}" title="${esc(s.audio_voice||'')} · ${esc((s.audio_made||'').slice(0,10))}">${s.audio_stale?'audio is stale':'audio · '+fmtDur(s.audio_duration)}</span>` : '';
-    html+=`<div class="story${S.playing===s.id?' playing':''}" data-id="${esc(s.id)}"><div class="mark">${esc((s.title||'?')[0])}</div>
+    html+=`<div class="story${S.playing===s.id?' playing':''}" data-id="${esc(s.id)}">${s.photo?`<img class="mark mark-photo" src="${fileUrl(s.photo)}" alt="" loading="lazy">`:''}
       <div><h4>${esc(s.title)}</h4><div class="meta">${esc(s.dates||'undated')}${s.summary?' · '+esc(s.summary):''}</div>
         <div class="chipsrow">${s.exists?`<span class="pill">${s.words.toLocaleString()} words</span><span class="pill">${s.reading_minutes} min read</span>`:'<span class="pill warn">no draft yet</span>'}
         ${s.stale?`<span class="pill bad" title="${esc(s.stale.reason)}">stale</span>`:''}${s.photos?`<span class="pill">${s.photos} photo${s.photos!==1?'s':''}</span>`:''}${s.bridges?`<span class="pill warn">${s.bridges} bridge${s.bridges!==1?'s':''} to approve</span>`:''}
@@ -113,7 +113,7 @@ function storyApparatusHtml(ap){
   const n=ap.paragraphs.length, ni=ap.images.length;
   return `<div class="apparatus"><div class="row ap-tabs" role="tablist"><button class="btn ghost sm" data-ap="cites" aria-pressed="true">Citations · ${n}</button><button class="btn ghost sm" data-ap="images" aria-pressed="false">Images · ${ni}</button><span class="spacer"></span><span class="derived">every paragraph, and where it comes from</span></div>
     <div class="ap-pane" data-pane="cites">${ap.paragraphs.map((p,i)=>`<div class="ap-cite"><span class="ap-n">¶${i+1}</span><span class="ap-x">${esc(p.excerpt)||'<span class="derived">(no text)</span>'}</span><span class="ap-chips">${p.cites.map(citeChip).join('')}${p.note?`<span class="cite plain" title="cited as written">${esc(p.note)}</span>`:''}${!p.cites.length&&!p.note?'<span class="pill bad">no citation</span>':''}</span></div>`).join('')||'<p class="empty">No cited paragraphs.</p>'}</div>
-    <div class="ap-pane hidden" data-pane="images">${ap.images.map((m,i)=>`<div class="ap-img">${m.exists?`<img src="${fileUrl(m.path)}" alt="">`:'<div class="ph">?</div>'}
+    <div class="ap-pane hidden" data-pane="images">${ap.images.map((m,i)=>`<div class="ap-img">${m.exists?`<img src="${fileUrl(m.path)}" alt="">`:''}
       <div><b>${esc(m.caption)}</b> ${m.illustration?'<span class="pill warn" title="Generated or drawn: never presented as a photograph">illustration</span>':''}${m.placeholder?' <span class="pill">placeholder</span>':''}
         <div class="derived" style="margin:3px 0">${[m.id, m.date&&('date: '+m.date+(m.date_basis?' ('+m.date_basis+')':'')), m.people&&('people: '+m.people+(m.people_basis?' ('+m.people_basis+')':'')), m.location&&('place: '+m.location), m.holder&&('held by '+m.holder)].filter(Boolean).map(esc).join(' · ')||'no provenance recorded'}</div>
         <div class="row ap-tools" role="toolbar" aria-label="Image tools"><a class="btn ghost sm" href="${fileUrl(m.path)}" target="_blank" rel="noopener">Open</a>${m.id?`<button class="btn ghost sm" data-imgtag="${esc(m.id)}">Tag…</button>`:''}<button class="btn ghost sm" data-imgcopy="${esc(m.path)}">Copy reference</button>${m.id?`<a class="btn ghost sm" href="#familypedia?view=photos" onclick="closeOverlay()">In Photographs</a>`:''}</div></div></div>`).join('')||'<p class="empty">No images in this story.</p>'}</div></div>`;
@@ -139,8 +139,8 @@ async function readStory(id){
   $$('[data-nav]').forEach(b=>b.onclick=()=>readStory(b.dataset.nav));
   api('/api/engine/story/apparatus?id='+encodeURIComponent(s.id)).then(ap=>{ const box=$('#rd-pages'); if(!box||ap.error) return;
     box.insertAdjacentHTML('beforebegin', storyApparatusHtml(ap)); bindStoryApparatus(ap); });
-  api('/api/engine/familypedia/story?id='+encodeURIComponent(s.id)).then(r=>{ const box=$('#rd-pages'); if(!box||!r.subjects.length) return;
-    box.insertAdjacentHTML('beforebegin', `<div class="row fp-instory" style="gap:5px;margin:-4px 0 14px"><span class="derived">In this ${esc(L.story)}:</span>${r.subjects.map(x=>`<a class="chiplink" href="#familypedia/${encodeURIComponent(x.slug)}" onclick="closeOverlay()">${TYPE_ICON[x.type]||''} ${esc(x.title)}</a>`).join('')}</div>`); });
+  Promise.all([api('/api/engine/familypedia/story?id='+encodeURIComponent(s.id)), ensureFP()]).then(([r])=>{ const box=$('#rd-pages'); if(!box||!r.subjects.length) return;
+    box.insertAdjacentHTML('beforebegin', `<div class="row fp-instory" style="gap:5px;margin:-4px 0 14px"><span class="derived">In this ${esc(L.story)}:</span>${r.subjects.map(x=>entryChip(x.slug, x.title, x.type, '', undefined, 'onclick="closeOverlay()"')).join(' ')}</div>`); });
   const r = await api('/api/engine/story/render',{method:'POST',body:{id:s.id}});
   pollJob(r.job, null, res=>{ const box=$('#rd-pages'); if(box) box.innerHTML = res.pages.map(p=>`<img src="${fileUrl(p)}&v=${Date.now()}" alt="page">`).join(''); },
     err=>{ const box=$('#rd-pages'); if(box) box.innerHTML=`<div class="note">Couldn't set this ${L.story} as pages: ${esc(err)}</div>`; });

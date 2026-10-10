@@ -66,8 +66,7 @@ function wikiLink(text, opts={}){
       return `${pre}<a class="wl" href="#familypedia/${encodeURIComponent(a.slug)}">${name}</a>`; });
   }).join('');
 }
-/* The portrait chip: the one way an entry is shown in any list (Rex, 2026-10-10: "use those everywhere as the
-   default"). Its picture is the person's chosen portrait or the entry's first photograph; else the type's icon. */
+/* The portrait chip: the one way an entry is shown in any list. Its picture is the person's chosen portrait or the entry's first photograph; else the type's icon. */
 const thumbSrc = rel => { const u=fileUrl(rel); return window.thumbOf ? window.thumbOf(u) : u; };
 function entryChip(slug, title, type, note, pic, attrs=''){
   const a = FP.bySlug && slug ? FP.bySlug.get(slug) : null;
@@ -327,7 +326,7 @@ function bindTagPanel(target, redraw, done){
 }
 
 /* Recording citations such as "[S5 01:25:44]" written into prose become small chips, so a reader never sees raw
-   bracket codes in a sentence (Rex, 2026-10-10). Text that is already a citation chip on its own is left alone. */
+   bracket codes in a sentence. Text that is already a citation chip on its own is left alone. */
 (function(){
   const RE=/\s*\[(S\d+) (\d{1,2}:\d{2}:\d{2})\]/g, SKIP=new Set(['SCRIPT','STYLE','TEXTAREA','INPUT','CODE','PRE']);
   const fix=root=>{
@@ -352,14 +351,14 @@ function bindTagPanel(target, redraw, done){
 
 
 /* A curated encyclopedia article (data/wiki/<name>.md): infobox, lead, sections and numbered references, in place of
-   the derived page (Rex, 2026-10-10: "full Wikipedia entries for each family member … sources linked at the bottom"). */
+   the derived page. */
 function drawWikiArticle(a){
   const box=$('#wk-article');
   const html=a.wiki.replace(/src="lineage-file:([^"]+)"/g,(m,p)=>`src="${fileUrl(p)}"`);
   const outLinks=[
     a.events.length?`<a class="chiplink" href="#timeline?focus=${encodeURIComponent(a.events[0].id)}">On the timeline · ${a.events.length}</a>`:'',
     `<a class="chiplink" href="#genealogy?focus=${encodeURIComponent(a.genealogy||a.slug)}">In the tree</a>`,
-    // only the chapter about this person; the article's own "In The Book of Daniel" section lists the rest
+    // only the chapter about this person; the article's own book section lists the rest
     ...a.stories.filter(s=>[a.title, a.wiki_title].includes(s.title)).map(s=>storyChip(s.id, s.title))].filter(Boolean).join('');
   const photos=a.photos.filter(p=>p.thumb);
   box.innerHTML=`<article class="card article wiki-article">
@@ -375,7 +374,7 @@ function drawWikiArticle(a){
 }
 
 
-/* People: every member of the family, as portrait cards (Rex, 2026-10-10: add "People" to the Familypedia tabs).
+/* People: every member of the family, as portrait cards.
    From the project's family tree file when it has one; otherwise from the person articles. */
 async function drawPeopleView(){
   await ensureFP();
@@ -403,7 +402,7 @@ async function drawPeopleView(){
 }
 
 
-/* Events (by date) and Places (A–Z), as cards like People (Rex, 2026-10-10: "Add Events, Places also"). */
+/* Events (by date) and Places (A–Z), as cards like People. */
 async function drawTypeCards(type){
   await ensureFP();
   const body=$('#fp-body');

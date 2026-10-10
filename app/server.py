@@ -1771,7 +1771,7 @@ def _opening(project, st, n=3):
 
 
 def engine_gallery(project):
-    """Original photographs only, each once (Rex, 2026-10-10: "Only put original raw photos in the gallery"):
+    """Original photographs only, each once:
     no illustrations, no digital restorations (anything with an unretouched original), no document scans, no crops
     or halves of the same picture — near-duplicates are found by a perceptual hash and the largest copy is kept."""
     import familypedia as _fp

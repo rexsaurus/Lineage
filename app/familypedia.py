@@ -1008,7 +1008,7 @@ def article(project, slug):
     open_q = _open_questions(project, ix, s, events, infobox)
     beyond = {"items": e.get("beyond") or [], "suggestions": _beyond_suggestions(project, s)}
     lead = e.get("lead") or _derived_lead(s, infobox, events, units, records, photos, stories, related)
-    # a passage belongs on this page only if it names the subject (Rex, 2026-10-10: quotes "with no mention of him")
+    # a passage belongs on this page only if it names the subject
     names = {w for k in [s["title"], *s["aliases"]] for w in [norm(k)] if len(w) >= 3}
     tokens = {t for n in names for t in [n.split()[0], n.split()[-1]] if len(t) >= 3} if s["type"] == "person" else names
     def _names_subject(m):
@@ -1020,7 +1020,7 @@ def article(project, slug):
            "lead": lead, "lead_by": "me" if e.get("lead") else "derived", "notes": e.get("notes", ""),
            "infobox": infobox, "tiers": tiers, "passages": passages, "mentions": passages,
            "sources": sources, "records": records, "photos": photos, "stories": stories,
-           # only the sources that name the subject (Rex, 2026-10-10: "only sources directly naming the person")
+           # only the sources that name the subject
            "book_sources": [g for g in ({"story": sid, "title": ix["book_sources"][sid]["title"],
                                          "items": [it for it in ix["book_sources"][sid]["items"] if _names_subject({"text": it.get("text", "")})]}
                                         for sid in sorted(s["stories"], key=lambda z: (len(z), z)) if sid in ix.get("book_sources", {})) if g["items"]],
@@ -1475,7 +1475,7 @@ def catalogue(project, what):
         rows = sorted(ix["records"].values(), key=lambda r: (r["type"], r.get("date") or "", r["title"]))
         return [{**r, "subjects": [x for x in map(name, r["subjects"]) if x]} for r in rows]
     rows = sorted(ix["photos"].values(), key=lambda p: (p.get("id") or ""))
-    # each picture is an original, an illustration or a digital restoration (Rex, 2026-10-10: tag them all)
+    # each picture is an original, an illustration or a digital restoration
     restored = set()
     rj = project.root / "data" / "image_restorations.json"
     if rj.exists():
