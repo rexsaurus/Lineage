@@ -21,6 +21,59 @@
 Every entry says whether it changes anything that would alter already-generated stories
 (templates, the book template, style guides, skills); when it does, a project updating to it
 marks those stories stale rather than regenerating them.</p>
+<h2 id="090-2026-10-12">0.9.0 — 2026-10-12</h2>
+<p><strong>Alters generated stories: no.</strong> New publishing scripts; templates, the book template, the style guides
+and the skills are unchanged.</p>
+<p>From a working family site, in generic form (no names, places, URLs or bucket names from that project).
+Settings live in the project's <code>lineage.json</code> under <code>settings.publish</code>; every key is optional and a step
+whose settings are missing is skipped with a message. Documented in HOWTO 6.11, "Publishing a family site".</p>
+<ul>
+<li><strong>chapter_pdfs.py</strong>: every Typst story in <code>data/chapters.csv</code> as its own compressed PDF (Ghostscript
+  /ebook, 150 dpi) in <code>chapters_dir</code>, through the project's <code>chapter_entry</code> wrapper or a generated one
+  around Lineage's book template. Optional filter by file name.</li>
+<li><strong>book_edition.py</strong>: <code>VERSION</code> (optional <code>--bump</code>), the whole book through Lineage's normal build or the
+  project's <code>book_entry</code>, and a compressed edition <code>output/&lt;slug&gt;-v&lt;VERSION&gt;.pdf</code>.</li>
+<li><strong>r2_sync.py</strong>: pictures and PDFs to Cloudflare R2 under <code>&lt;prefix&gt;/originals|restorations|illustrations|
+  thumbnails|chapters|book/</code>, with illustrations recognised from the project's data, not from paths;
+  writes <code>data/r2_manifest.csv</code> for <code>site/build_instance.py --assets</code>. <code>--dry-run</code> needs no credentials.</li>
+<li><strong>face_focus.py</strong>: <code>data/image_focus.json</code>, face positions so cropped pictures centre on the face.</li>
+<li><strong>restore_photos.py</strong>: classical photo restoration (and halftone descreening), originals kept in
+  <code>_orig/</code>, logged in <code>data/image_restorations.json</code>.</li>
+<li><strong>seo_build.py</strong>: static <code>/stories/</code>, <code>/stories/&lt;slug&gt;/</code>, <code>/family/</code>, <code>/family/&lt;slug&gt;/</code>, <code>sitemap.xml</code>
+  and <code>robots.txt</code>, with schema.org data; curated articles rendered through <code>app/wiki.py</code>; people marked
+  living left out unless <code>include_living</code> is set.</li>
+<li><strong>updates_page.py</strong>: the project's <code>CHANGELOG.md</code> as <code>&lt;site&gt;/updates/index.html</code>.</li>
+<li><strong>image_manager.py drive-sync</strong>: a folder holding a <code>.no-drive</code> file, and everything below it, is never
+  uploaded.</li>
+<li>Makefile: <code>chapter-pdfs</code>, <code>edition</code>, <code>r2-sync</code>, <code>face-focus</code>, <code>seo</code>, <code>updates</code> (each with <code>PROJECT=</code>).</li>
+</ul>
+<h2 id="080-2026-10-12">0.8.0 — 2026-10-12</h2>
+<p><strong>Alters generated stories: no.</strong> New skills, a template and Familypedia behaviour; templates, the book
+template and the style guides are unchanged.</p>
+<p>From a working family book's research, in generic form (no names, places or material from that project):</p>
+<ul>
+<li><strong>Published sources</strong> (skill <code>published-sources</code>). Rights before any download: US public domain
+  before 1930; 1930–63 only if not renewed (check the Copyright Office public records for an <code>RE…</code>
+  renewal and the Stanford renewal database or the Catalog of Copyright Entries); stop and report when a
+  renewal is found. Borrowed (lending-library) copies are read, never captured. Ingest as a secondary
+  source: reading notes with printed page numbers, a dated-events table, a quotations file graded by
+  rights (public domain quoted freely; in copyright paraphrased, quotations under 15 words), timeline rows
+  citing the page, a <code>book</code> row in <code>facts/records/&lt;person&gt;/sources.csv</code> with no file path for in-copyright
+  books (the private copy stays outside git and the datastore).</li>
+<li><strong>archive-open-book</strong> (skill and <code>plugins/lineage/scripts/archive_open_book.js</code>). Saves an open Internet
+  Archive item as a PDF (Text PDF preferred; page-image fallback with Playwright for open items without a
+  PDF) and exits 2 for lending-library, print-disabled, access-restricted or dark items.</li>
+<li><strong>Familypedia: curated articles for any subject.</strong> <code>data/wiki/&lt;slug&gt;.md</code> now renders for organizations,
+  places, events and other subjects (named by title), not only people; <code>[[Name]]</code> links in articles open
+  the matching subject before falling back to the genealogy view; hand-added subjects live in
+  <code>data/familypedia/subjects.json</code>. Documented in HOWTO 5.3.</li>
+<li><strong>Digitization work spec</strong> (<code>templates/digitization/SCANNING-WORK-SPEC.md</code>): what to scan in a family
+  home and at a museum, resolutions and formats, naming, a catalogue that feeds <code>data/archives.csv</code>,
+  handling and confidentiality, and where to find someone to hire.</li>
+<li><strong>CSV files are written with LF line endings</strong> (<code>dossier.py</code>, <code>image_manager.py</code>, <code>export_sources.py</code>,
+  <code>_project.py</code>, <code>demo_lineage.py</code>): Python's default CRLF made every rewrite of a CSV show as a change to
+  every line.</li>
+</ul>
 <h2 id="070-2026-10-08">0.7.0 — 2026-10-08</h2>
 <p><strong>Alters generated stories: no.</strong> New tools, template helpers and a publishing path; the book
 template's existing functions render as before (<code>records</code> gains an internal flag only).</p>

@@ -11,10 +11,10 @@ BUILDERS.stories = async function(el, rest, q={}){
       <select id="rd-filter" style="max-width:220px" aria-label="Filter"><option value="">No filter</option><option value="bridges">Has bridges to approve</option><option value="stale">Stale since a source changed</option><option value="audio">Has audio</option><option value="noaudio">No audio yet</option><option value="audiostale">Audio is stale</option></select>
       <span class="spacer"></span>
       <button class="btn ghost sm" id="rd-narrate-all">Narrate all…</button>
-      <a class="btn ghost sm" id="rd-zip" href="${tokUrl('/api/engine/audio.zip')}">Download audio</a>
+      ${window.demoTokUrl?'':`<a class="btn ghost sm" id="rd-zip" href="${tokUrl('/api/engine/audio.zip')}">Download audio</a>`}
       <a class="btn ghost sm" id="rd-pdf" target="_blank" rel="noopener" href="${fileUrl('output/book-draft.pdf')}">Draft PDF</a></div>
       <div class="row" style="margin-top:10px"><span class="sub" style="margin:0" id="rd-voice-line"></span><span class="spacer"></span>
-        <button class="btn sm" id="rd-generate">${esc(L.generateRemaining)}</button></div></div>
+        ${window.demoTokUrl?'':`<button class="btn sm" id="rd-generate">${esc(L.generateRemaining)}</button>`}</div></div>
     <div id="rd-list"><p class="empty">Loading…</p></div>`);
   if(q.filter) $('#rd-filter').value = q.filter==='bridges'?'bridges':(q.filter==='stale'?'stale':(q.filter==='audio'?'audio':''));
   const [r, v] = await Promise.all([api('/api/engine/stories'), api('/api/voices')]);
@@ -22,7 +22,7 @@ BUILDERS.stories = async function(el, rest, q={}){
   $('#rd-voice-line').innerHTML = S.voices.length ? `Narrator: <b>${esc(settings().voice_name||'not chosen')}</b> · change it in <a href="#/settings/project">Project settings</a>, or per ${L.story} below.` : `Narration needs an ElevenLabs key in <a href="#/settings/connectors">Settings → Connectors</a>.`;
   ['rd-order','rd-state','rd-filter'].forEach(id=>$('#'+id).oninput=drawStories);
   $('#rd-narrate-all').onclick=narrateAll;
-  $('#rd-generate').onclick=generateRemaining;
+  if($('#rd-generate')) $('#rd-generate').onclick=generateRemaining;   // not in a published (read-only) snapshot
   drawStories();
   if(q.read) readStory(q.read);
   if(q.listen){ const s=S.stories.find(x=>x.id===String(q.listen)); if(s && s.has_audio) play(s); else if(s) narrate(s.id); }
@@ -50,6 +50,7 @@ function drawStories(){
         ${audioPill}<span class="pill ${s.state==='in the book'?'ok':''}">${esc(s.state==='in the book'?s.book_position.replace('Chapter',L.bookChapter):L.states[s.state])}</span></div></div>
       <div class="actions">
         ${s.exists?`<button class="btn sm" data-read="${esc(s.id)}">Read</button>`:`<button class="btn sm" data-gen="${esc(s.id)}">Generate</button>`}
+        ${s.pdf?`<a class="btn ghost sm" href="${fileUrl(s.pdf)}" download="${esc(s.title)}.pdf" target="_blank" rel="noopener">Download</a>`:''}
         ${s.has_audio?`<button class="btn ghost sm" data-listen="${esc(s.id)}">Listen</button>`:''}
         ${s.exists?`<button class="btn ghost sm" data-narrate="${esc(s.id)}" ${s.bridges?`title="Approve ${s.bridges} bridge(s) first: an unapproved bridge is never narrated"`:''}>${s.has_audio?'Re-narrate':'Narrate'}</button>`:''}
         ${s.exists&&voices.length?`<select data-voice="${esc(s.id)}" aria-label="Voice for this ${L.story}"><option value="">default voice</option>${options(voices, s.voice_override||'')}</select>`:''}
@@ -132,6 +133,7 @@ async function readStory(id){
   openModal(s.title, `<div class="row" style="margin-bottom:14px"><span class="pill">${esc(s.dates||'undated')}</span><span class="pill">${s.words.toLocaleString()} words</span>
       <span class="pill">${s.citations} cited paragraph${s.citations!==1?'s':''}</span>${s.bridges?`<span class="pill warn">${s.bridges} bridge${s.bridges!==1?'s':''}</span>`:''}
       <span class="pill ${s.state==='in the book'?'ok':''}">${esc(s.book_position)}</span><span class="spacer"></span>
+      ${s.pdf?`<a class="btn sm" href="${fileUrl(s.pdf)}" download="${esc(s.title)}.pdf" target="_blank" rel="noopener">Download PDF</a>`:''}
       ${i>0?`<button class="btn ghost sm" data-nav="${esc(order[i-1].id)}">← ${esc(order[i-1].title)}</button>`:''}
       ${i<order.length-1?`<button class="btn ghost sm" data-nav="${esc(order[i+1].id)}">${esc(order[i+1].title)} →</button>`:''}</div>
     ${s.has_audio?`<div class="row" style="margin-bottom:14px"><audio controls src="${fileUrl(s.audio)}" style="flex:1"></audio>${s.audio_stale?'<span class="pill warn">audio is stale</span>':''}</div>`:''}

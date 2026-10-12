@@ -54,7 +54,7 @@ printed book and narration are exports of that record, made at the end.</p>
 </tr>
 <tr>
 <td><a href="#6-make-stories-and-a-book">6. Make stories and a book</a></td>
-<td>story units, the chapter map, writing, building, printing, narration</td>
+<td>story units, the chapter map, writing, building, printing, narration, publishing a site</td>
 </tr>
 <tr>
 <td><a href="#7-troubleshooting">7. Troubleshooting</a> · <a href="#8-honest-limits">8. Honest limits</a></td>
@@ -752,8 +752,21 @@ project with less material simply has fewer articles. The main inputs:</p>
 <td><code>facts/gaps.md</code>, <code>facts/records/**/context_*.md</code></td>
 <td>open questions; public background for "Beyond the family"</td>
 </tr>
+<tr>
+<td><code>data/wiki/&lt;slug&gt;.md</code></td>
+<td>a curated encyclopedia article (front matter, infobox, <code>[^n]</code> footnotes) shown above the derived material: for a person, named by their family-tree name; for any other subject — a company, a regiment, a theatre troupe, a ship — named by the subject's title</td>
+</tr>
+<tr>
+<td><code>data/familypedia/subjects.json</code></td>
+<td>subjects you add by hand ("New subject…"), e.g. an organization that has a curated article but appears in no passage</td>
+</tr>
 </tbody>
 </table>
+<p><strong>Curated articles link across types.</strong> <code>[[Name]]</code> in a curated article opens the person with that
+family-tree name, or else the Familypedia subject with that title, and only then falls back to the
+genealogy view. A published book that the article draws on belongs in the records catalogue as a
+<code>book</code> (see the <code>published-sources</code> skill), with the people it covers in its title so it attaches to
+their pages.</p>
 <p><code>app/README.md</code> has the full table, including where map coastlines come from. <strong>No map tiles
 are ever fetched</strong>: the map is drawn from the records' own coordinates, with unrecorded legs
 shown as unrecorded.</p>
@@ -1529,6 +1542,165 @@ story changes, plays in a pinned player, and can be downloaded.</p>
 narrated</strong>: decide the bridges first (section 6.4).</p>
 <p>Narration is written but has <strong>not been tested end to end</strong> with a real key; treat the
 first run as a trial. The story's text goes to ElevenLabs to be read aloud.</p>
+<h3 id="611-publishing-a-family-site">6.11 Publishing a family site</h3>
+<p>A lineage can be published as a website: a landing page of your own, the dashboard as a read-only
+snapshot (usually at <code>/lineage/</code>), plain pages for every story and every person that search engines
+can index, an updates page, and every picture and PDF served from a Cloudflare R2 bucket. The tools
+live in Lineage; the project supplies only its content and these settings.</p>
+<h4 id="the-settings">The settings</h4>
+<p>In the project's <code>lineage.json</code>, under <code>"settings"</code> → <code>"publish"</code>. Every key is optional; a step
+that needs a missing value says so and is skipped.</p>
+<pre><code class="language-json">&quot;settings&quot;: {
+  &quot;publish&quot;: {
+    &quot;site_url&quot;: &quot;https://family.example.org&quot;,
+    &quot;title&quot;: &quot;The Book of the Family&quot;,
+    &quot;subtitle&quot;: &quot;An oral history&quot;,
+    &quot;author&quot;: &quot;A. Compiler&quot;,
+    &quot;chapters_dir&quot;: &quot;output/chapters&quot;,
+    &quot;book_entry&quot;: &quot;book/main.typ&quot;,
+    &quot;chapter_entry&quot;: &quot;&quot;,
+    &quot;image&quot;: &quot;https://family.example.org/assets/cover.jpg&quot;,
+    &quot;app_path&quot;: &quot;/lineage/&quot;,
+    &quot;include_living&quot;: false,
+    &quot;hidden_aliases&quot;: [],
+    &quot;r2&quot;: {
+      &quot;env_file&quot;: &quot;~/.config/lineage/r2.env&quot;,
+      &quot;prefix&quot;: &quot;the-book-of-the-family&quot;,
+      &quot;scan&quot;: [&quot;photos&quot;, &quot;sources&quot;, &quot;output/chapters&quot;],
+      &quot;extra_documents&quot;: [{&quot;path&quot;: &quot;records/court/record.pdf&quot;, &quot;key&quot;: &quot;records/record.pdf&quot;}],
+      &quot;illustration_globs&quot;: [],
+      &quot;skip&quot;: []
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>site_url</code></td>
+<td>none</td>
+<td>the site's address; canonical URLs, sitemap. Without it the SEO step is skipped</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td><code>lineage.json</code> title, then <code>book.yaml</code> title</td>
+<td>page titles; its slug names the edition PDF and the R2 prefix</td>
+</tr>
+<tr>
+<td><code>subtitle</code></td>
+<td><code>settings.subtitle</code>, then <code>book.yaml</code> subtitle</td>
+<td>shown under the title and in descriptions</td>
+</tr>
+<tr>
+<td><code>author</code></td>
+<td><code>book.yaml</code> interviewer name</td>
+<td>author meta and schema.org author</td>
+</tr>
+<tr>
+<td><code>chapters_dir</code></td>
+<td><code>output/chapters</code></td>
+<td>where <code>chapter_pdfs.py</code> writes one PDF per story</td>
+</tr>
+<tr>
+<td><code>book_entry</code></td>
+<td><code>book/main.typ</code> when it exists</td>
+<td>the whole book. Anything else is compiled directly with <code>--input updated=&lt;date&gt; --input version=&lt;VERSION&gt;</code>; <code>book/main.typ</code> goes through Lineage's normal build</td>
+</tr>
+<tr>
+<td><code>chapter_entry</code></td>
+<td>none</td>
+<td>a Typst file that typesets one story from <code>--input chapter=&lt;file&gt; --input title=&lt;title&gt;</code>; without it a wrapper around Lineage's book template is generated</td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>none</td>
+<td>the default share (Open Graph) image, an absolute URL</td>
+</tr>
+<tr>
+<td><code>app_path</code></td>
+<td><code>/lineage/</code></td>
+<td>where the dashboard snapshot is published on the site</td>
+</tr>
+<tr>
+<td><code>include_living</code></td>
+<td><code>false</code></td>
+<td>whether people marked living get public pages</td>
+</tr>
+<tr>
+<td><code>hidden_aliases</code></td>
+<td><code>[]</code></td>
+<td>aliases never printed on public pages (household nicknames)</td>
+</tr>
+<tr>
+<td><code>r2.env_file</code></td>
+<td><code>~/.config/lineage/r2.env</code></td>
+<td>credentials: <code>R2_ENDPOINT</code>, <code>R2_BUCKET</code>, <code>R2_ACCESS_KEY_ID</code>, <code>R2_SECRET_ACCESS_KEY</code>, and <code>R2_PUBLIC_BASE</code> once public access is on. Never in git</td>
+</tr>
+<tr>
+<td><code>r2.prefix</code></td>
+<td>the slug of the title</td>
+<td>key prefix in the bucket</td>
+</tr>
+<tr>
+<td><code>r2.scan</code></td>
+<td><code>["photos", "sources", "output/chapters"]</code></td>
+<td>folders searched for images</td>
+</tr>
+<tr>
+<td><code>r2.extra_documents</code></td>
+<td><code>[]</code></td>
+<td>other files to publish: <code>{"path": project path, "key": key under the prefix}</code></td>
+</tr>
+<tr>
+<td><code>r2.illustration_globs</code></td>
+<td><code>[]</code></td>
+<td>extra globs whose images are illustrations</td>
+</tr>
+<tr>
+<td><code>r2.skip</code></td>
+<td><code>[]</code></td>
+<td>path fragments never uploaded</td>
+</tr>
+</tbody>
+</table>
+<p>In the bucket, under the prefix: <code>originals/</code>, <code>restorations/</code> and <code>illustrations/</code> (each keeping the
+file's project path), <code>thumbnails/</code> (~480 px copies), <code>chapters/</code> and <code>book/</code>. What counts as an
+illustration comes from the data, not from folder names: <code>photos/photo_index.csv</code> rows of kind
+<code>illustration</code> (or a subject starting "Illustration"), <code>data/image_catalog.csv</code> kinds <code>generated</code> and
+<code>artwork</code>, <code>data/image_prompts.json</code>, files named <code>IMG-*</code>, and <code>r2.illustration_globs</code>. A restoration is
+a file logged in <code>data/image_restorations.json</code> or with an <code>_orig/</code> copy beside it.</p>
+<h4 id="the-steps-in-order">The steps, in order</h4>
+<pre><code class="language-bash">S=$LINEAGE/plugins/lineage/scripts; PY=$LINEAGE/.venv/bin/python; P=~/books/grandma
+$PY $S/book_edition.py --project $P [--bump]   # VERSION, compressed edition output/&lt;slug&gt;-v&lt;VERSION&gt;.pdf
+$PY $S/chapter_pdfs.py --project $P            # 1. one compressed PDF per story
+$PY $S/r2_sync.py --project $P [--dry-run]     # 2. pictures and PDFs to R2; data/r2_manifest.csv
+$PY $S/face_focus.py --project $P              # 3. data/image_focus.json (needs opencv-python-headless)
+$PY $LINEAGE/site/build_instance.py --project $P --out &lt;site&gt;/lineage --title &quot;…&quot; \
+    --assets $P/data/r2_manifest.csv --allow-real-names   # 4. the dashboard snapshot, pictures from R2
+$PY $S/seo_build.py --project $P &lt;site&gt;        # 5. /stories/, /family/, sitemap.xml, robots.txt
+$PY $S/updates_page.py --project $P &lt;site&gt;     # 6. CHANGELOG.md as /updates/
+</code></pre>
+<p>The same from the Lineage checkout: <code>make chapter-pdfs</code>, <code>make edition [BUMP=1]</code>, <code>make r2-sync
+[DRY=1]</code>, <code>make face-focus</code>, <code>make seo SITE=…</code> and <code>make updates SITE=…</code>, each with <code>PROJECT=…</code>.
+Run <code>r2_sync.py --dry-run</code> first: it needs no credentials and lists every key it would write.</p>
+<p><code>restore_photos.py --project $P &lt;image&gt; …</code> (or <code>--halftone</code> for printed newspaper pictures) is a
+classical restoration (dust and scratches, noise, contrast; nothing generated). It keeps the
+untouched original at <code>&lt;folder&gt;/_orig/&lt;name&gt;</code> and logs every run in <code>data/image_restorations.json</code>;
+the next <code>r2_sync.py</code> files the result under <code>restorations/</code> and the original under <code>originals/</code>.</p>
+<p>The SEO pages render a curated article (<code>data/wiki/&lt;slug&gt;.md</code>) exactly as the Familypedia does. A
+person marked living gets no page unless <code>include_living</code> is true.</p>
+<h4 id="private-folders-no-drive">Private folders: <code>.no-drive</code></h4>
+<p>Put an empty file named <code>.no-drive</code> in any folder that must never leave the computer (in-copyright
+books read for research, a relative's private papers). <code>image_manager.py drive-sync</code> then never
+uploads anything in that folder or below it, images or documents. Keep such folders out of
+<code>r2.scan</code> too, or list them in <code>r2.skip</code>.</p>
 <hr />
 <h2 id="7-troubleshooting">7. Troubleshooting</h2>
 <p><strong><code>UnpicklingError</code> / <code>WeightsUnpickler</code> / "weights_only" when WhisperX starts.</strong> PyTorch

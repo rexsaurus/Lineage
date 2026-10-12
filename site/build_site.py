@@ -429,6 +429,9 @@ class Demo:
         for row in data.values():
             row["thumb"] = server._thumbnail(p, row, self.proj / row["path"])
         sj.write_text(json.dumps(data, indent=1))
+        # each story as its own PDF, so the demo shows the stories' Download buttons
+        subprocess.run([sys.executable, str(ROOT / "plugins" / "lineage" / "scripts" / "chapter_pdfs.py"),
+                        "--project", str(self.proj)], capture_output=True, text=True)
         if not (self.proj / "output" / "book-draft.pdf").exists() and SAMPLE_PDF.exists():
             # the sample book is the same invented family; the dashboard links to the draft
             (self.proj / "output").mkdir(exist_ok=True)
@@ -585,6 +588,8 @@ class Demo:
             self.fetch("/api/engine/story/script?id=" + sid)
             self.render_story(str(s["id"]))
         self.files.add("output/book-draft.pdf")          # Home and Stories link to the draft book directly
+        for f in sorted((self.proj / "output" / "chapters").glob("*.pdf")):   # the stories' Download buttons
+            self.files.add(f.relative_to(self.proj).as_posix())
         tl = self.get_json("/api/engine/timeline") or {}
         self.collect_files(tl)
 
