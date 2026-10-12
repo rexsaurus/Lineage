@@ -42,7 +42,7 @@ def wcsv(rel, header, rows):
     p = OUT / rel
     p.parent.mkdir(parents=True, exist_ok=True)
     with open(p, "w", newline="", encoding="utf-8") as f:
-        cw = csv.writer(f)
+        cw = csv.writer(f, lineterminator="\n")
         cw.writerow(header)
         cw.writerows(rows)
 

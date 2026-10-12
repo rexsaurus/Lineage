@@ -70,7 +70,7 @@ def read_sources(slug):
 def write_sources(slug, rows):
     f = ddir(slug) / "SOURCES.csv"
     with open(f, "w", newline="", encoding="utf-8") as fh:
-        w = csv.DictWriter(fh, fieldnames=COLS, extrasaction="ignore")
+        w = csv.DictWriter(fh, fieldnames=COLS, extrasaction="ignore", lineterminator="\n")
         w.writeheader()
         for r in rows:
             w.writerow({k: r.get(k, "") for k in COLS})

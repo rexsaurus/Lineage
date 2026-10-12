@@ -718,6 +718,14 @@ project with less material simply has fewer articles. The main inputs:
 | `facts/**/*track*.csv`, `*route*.csv` | ports, positions and map coordinates (section 4.3) |
 | `photos/photo_index.csv` | photographs, with illustrations marked (section 3.3) |
 | `facts/gaps.md`, `facts/records/**/context_*.md` | open questions; public background for "Beyond the family" |
+| `data/wiki/<slug>.md` | a curated encyclopedia article (front matter, infobox, `[^n]` footnotes) shown above the derived material: for a person, named by their family-tree name; for any other subject — a company, a regiment, a theatre troupe, a ship — named by the subject's title |
+| `data/familypedia/subjects.json` | subjects you add by hand ("New subject…"), e.g. an organization that has a curated article but appears in no passage |
+
+**Curated articles link across types.** `[[Name]]` in a curated article opens the person with that
+family-tree name, or else the Familypedia subject with that title, and only then falls back to the
+genealogy view. A published book that the article draws on belongs in the records catalogue as a
+`book` (see the `published-sources` skill), with the people it covers in its title so it attaches to
+their pages.
 
 `app/README.md` has the full table, including where map coastlines come from. **No map tiles
 are ever fetched**: the map is drawn from the records' own coordinates, with unrecorded legs

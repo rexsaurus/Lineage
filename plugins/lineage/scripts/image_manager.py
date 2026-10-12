@@ -141,7 +141,7 @@ def catalog(args=None):
                          drive_md5=o.get("drive_md5", "") if o.get("sha256") == digest else "", note=note))
     CATALOG.parent.mkdir(exist_ok=True)
     with open(CATALOG, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=FIELDS); w.writeheader(); w.writerows(rows)
+        w = csv.DictWriter(fh, fieldnames=FIELDS, lineterminator="\n"); w.writeheader(); w.writerows(rows)
     CATALOG.with_suffix(".json").write_text(json.dumps(rows, indent=1))
     by = {}
     for r in rows: by[r["kind"]] = by.get(r["kind"], 0) + 1
@@ -249,7 +249,7 @@ def drive_sync(args):
         r["drive_id"], r["drive_md5"] = res["id"], res["md5Checksum"]; up += 1
         print("uploaded", r["path"])
     with open(CATALOG, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=FIELDS); w.writeheader(); w.writerows(rows)
+        w = csv.DictWriter(fh, fieldnames=FIELDS, lineterminator="\n"); w.writeheader(); w.writerows(rows)
     ledger_p = Path("data/drive_documents.json")
     ledger = json.loads(ledger_p.read_text()) if ledger_p.exists() else {}
     docs = [(p, "Records/" + p.parent.name) for p in sorted(Path("records").rglob("*.pdf"))]

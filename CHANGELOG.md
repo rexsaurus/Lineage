@@ -5,6 +5,35 @@ Every entry says whether it changes anything that would alter already-generated 
 (templates, the book template, style guides, skills); when it does, a project updating to it
 marks those stories stale rather than regenerating them.
 
+## 0.8.0 — 2026-10-12
+
+**Alters generated stories: no.** New skills, a template and Familypedia behaviour; templates, the book
+template and the style guides are unchanged.
+
+From a working family book's research, in generic form (no names, places or material from that project):
+
+- **Published sources** (skill `published-sources`). Rights before any download: US public domain
+  before 1930; 1930–63 only if not renewed (check the Copyright Office public records for an `RE…`
+  renewal and the Stanford renewal database or the Catalog of Copyright Entries); stop and report when a
+  renewal is found. Borrowed (lending-library) copies are read, never captured. Ingest as a secondary
+  source: reading notes with printed page numbers, a dated-events table, a quotations file graded by
+  rights (public domain quoted freely; in copyright paraphrased, quotations under 15 words), timeline rows
+  citing the page, a `book` row in `facts/records/<person>/sources.csv` with no file path for in-copyright
+  books (the private copy stays outside git and the datastore).
+- **archive-open-book** (skill and `plugins/lineage/scripts/archive_open_book.js`). Saves an open Internet
+  Archive item as a PDF (Text PDF preferred; page-image fallback with Playwright for open items without a
+  PDF) and exits 2 for lending-library, print-disabled, access-restricted or dark items.
+- **Familypedia: curated articles for any subject.** `data/wiki/<slug>.md` now renders for organizations,
+  places, events and other subjects (named by title), not only people; `[[Name]]` links in articles open
+  the matching subject before falling back to the genealogy view; hand-added subjects live in
+  `data/familypedia/subjects.json`. Documented in HOWTO 5.3.
+- **Digitization work spec** (`templates/digitization/SCANNING-WORK-SPEC.md`): what to scan in a family
+  home and at a museum, resolutions and formats, naming, a catalogue that feeds `data/archives.csv`,
+  handling and confidentiality, and where to find someone to hire.
+- **CSV files are written with LF line endings** (`dossier.py`, `image_manager.py`, `export_sources.py`,
+  `_project.py`, `demo_lineage.py`): Python's default CRLF made every rewrite of a CSV show as a change to
+  every line.
+
 ## 0.7.0 — 2026-10-08
 
 **Alters generated stories: no.** New tools, template helpers and a publishing path; the book
