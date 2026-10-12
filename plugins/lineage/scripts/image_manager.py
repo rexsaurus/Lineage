@@ -10,6 +10,7 @@ re-sourcing what already exists, and a sync to Google Drive.
   python3 image_manager.py unused             # catalogued images no chapter uses
   python3 image_manager.py missing            # chapter references with no file, and PLATE-TODOs
   python3 image_manager.py drive-sync   # upload new/changed files; record Drive ids (book.yaml drive:)
+                                       (a folder holding a .no-drive file, and everything below it, is never uploaded)
 
 `check` exits 0 and prints the match when the image already exists (so: do NOT regenerate or
 re-download), and exits 1 when nothing matches. generate_images.py calls it before every generation.
@@ -204,11 +205,30 @@ def drive_settings():
     return cfg.get("parent_id"), Path(cfg.get("token", ".gdrive_token_rw.json")).expanduser()
 
 
+_NO_DRIVE = {}
+
+
+def no_drive(p):
+    """True when p sits in, or below, a folder that holds a ".no-drive" file (such folders are never uploaded)."""
+    p = Path(p)
+    if p.name == ".no-drive":
+        return True
+    for d in [p.parent, *p.parent.parents]:
+        if d not in _NO_DRIVE:
+            _NO_DRIVE[d] = (d / ".no-drive").exists()
+        if _NO_DRIVE[d]:
+            return True
+    return False
+
+
 def drive_sync(args):
     """Upload every catalogued image not yet on Drive (or changed since) into <parent>/Lineage/Images/<kind>/,
     plus PDFs under records/ and output/ into <parent>/Lineage/Records and /Book, and the catalogue itself.
     Needs google-api-python-client and google-auth-oauthlib, book.yaml drive.parent_id, and a user token
-    with the drive.file scope (create it once with any OAuth installed-app flow)."""
+    with the drive.file scope (create it once with any OAuth installed-app flow).
+
+    Private folders: a folder holding a file named ".no-drive" is never uploaded, nor is anything below it
+    (in-copyright books read for research, a relative's private papers). The rule applies to images and documents."""
     from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
     from googleapiclient.discovery import build
@@ -232,6 +252,8 @@ def drive_sync(args):
     rows = catalog(); kinds = {}; up = 0
     for r in rows:
         p = ROOT / r["path"]
+        if no_drive(p):
+            continue
         if r["note"].startswith("STAND-IN"):
             continue
         m = sha(p, "md5")
@@ -254,6 +276,7 @@ def drive_sync(args):
     ledger = json.loads(ledger_p.read_text()) if ledger_p.exists() else {}
     docs = [(p, "Records/" + p.parent.name) for p in sorted(Path("records").rglob("*.pdf"))]
     docs += [(p, "Book") for p in sorted(Path("output").glob("*.pdf"))]
+    docs = [(p, sub) for p, sub in docs if not no_drive(p)]
     for p, sub in docs:
         rel = p.as_posix(); m = sha(p, "md5")
         if ledger.get(rel, {}).get("md5") == m:

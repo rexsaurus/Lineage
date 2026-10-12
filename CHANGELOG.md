@@ -5,6 +5,34 @@ Every entry says whether it changes anything that would alter already-generated 
 (templates, the book template, style guides, skills); when it does, a project updating to it
 marks those stories stale rather than regenerating them.
 
+## 0.9.0 — 2026-10-12
+
+**Alters generated stories: no.** New publishing scripts; templates, the book template, the style guides
+and the skills are unchanged.
+
+From a working family site, in generic form (no names, places, URLs or bucket names from that project).
+Settings live in the project's `lineage.json` under `settings.publish`; every key is optional and a step
+whose settings are missing is skipped with a message. Documented in HOWTO 6.11, "Publishing a family site".
+
+- **chapter_pdfs.py**: every Typst story in `data/chapters.csv` as its own compressed PDF (Ghostscript
+  /ebook, 150 dpi) in `chapters_dir`, through the project's `chapter_entry` wrapper or a generated one
+  around Lineage's book template. Optional filter by file name.
+- **book_edition.py**: `VERSION` (optional `--bump`), the whole book through Lineage's normal build or the
+  project's `book_entry`, and a compressed edition `output/<slug>-v<VERSION>.pdf`.
+- **r2_sync.py**: pictures and PDFs to Cloudflare R2 under `<prefix>/originals|restorations|illustrations|
+  thumbnails|chapters|book/`, with illustrations recognised from the project's data, not from paths;
+  writes `data/r2_manifest.csv` for `site/build_instance.py --assets`. `--dry-run` needs no credentials.
+- **face_focus.py**: `data/image_focus.json`, face positions so cropped pictures centre on the face.
+- **restore_photos.py**: classical photo restoration (and halftone descreening), originals kept in
+  `_orig/`, logged in `data/image_restorations.json`.
+- **seo_build.py**: static `/stories/`, `/stories/<slug>/`, `/family/`, `/family/<slug>/`, `sitemap.xml`
+  and `robots.txt`, with schema.org data; curated articles rendered through `app/wiki.py`; people marked
+  living left out unless `include_living` is set.
+- **updates_page.py**: the project's `CHANGELOG.md` as `<site>/updates/index.html`.
+- **image_manager.py drive-sync**: a folder holding a `.no-drive` file, and everything below it, is never
+  uploaded.
+- Makefile: `chapter-pdfs`, `edition`, `r2-sync`, `face-focus`, `seo`, `updates` (each with `PROJECT=`).
+
 ## 0.8.0 — 2026-10-12
 
 **Alters generated stories: no.** New skills, a template and Familypedia behaviour; templates, the book

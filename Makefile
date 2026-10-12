@@ -18,6 +18,14 @@
 #                                    PDF, read-only demo snapshot); deploy: docs/DEPLOY.md
 #   make clean                       remove generated files from the examples
 #
+# Publishing a family site (settings: lineage.json -> settings.publish; docs/HOWTO.md "Publishing a family site"):
+#   make chapter-pdfs PROJECT=... [ONLY=text]   one compressed PDF per story into the chapters folder
+#   make edition PROJECT=... [BUMP=1]           versioned, compressed book PDF: output/<slug>-v<VERSION>.pdf
+#   make r2-sync PROJECT=... [DRY=1]            images and PDFs to Cloudflare R2; writes data/r2_manifest.csv
+#   make face-focus PROJECT=...                 data/image_focus.json (faces, for cropped pictures)
+#   make seo PROJECT=... SITE=dir               static /stories/, /family/, sitemap.xml, robots.txt into SITE
+#   make updates PROJECT=... SITE=dir           CHANGELOG.md as SITE/updates/index.html
+#
 # Everything runs inside the project folder; nothing here edits your recordings.
 
 SHELL   := /bin/bash
@@ -30,8 +38,10 @@ EXAMPLE := $(BA)/examples/erasthus-burnham
 export LINEAGE := $(BA)
 # zsh passes PROJECT=~/x through unexpanded; expand a leading ~ here.
 override PROJECT := $(patsubst ~/%,$(HOME)/%,$(PROJECT))
+override SITE := $(patsubst ~/%,$(HOME)/%,$(SITE))
 
-.PHONY: install install-transcribe sample new status draft final clean check-project screenshots demo chapter site
+.PHONY: install install-transcribe sample new status draft final clean check-project screenshots demo chapter site \
+        chapter-pdfs edition r2-sync face-focus seo updates check-lineage-project
 
 install:
 	@command -v python3 >/dev/null || { echo "python3 is required"; exit 1; }
@@ -98,6 +108,34 @@ final: draft
 chapter: check-project
 	@test -n "$(CHAPTER)" || { echo "usage: make chapter PROJECT=path CHAPTER=chapters/NN-x.typ [FINAL=1] [PAGES=1]"; exit 1; }
 	@cd "$(PROJECT)" && $(PY) $(SKILLS)/book-generator/scripts/build_book.py chapter "$(CHAPTER)" $(if $(FINAL),--final) $(if $(PAGES),--pages)
+
+# ---- publishing a family site --------------------------------------------------------
+PUB := $(BA)/plugins/lineage/scripts
+
+check-lineage-project:
+	@test -n "$(PROJECT)" || { echo "set PROJECT=path/to/your-lineage"; exit 1; }
+	@test -d "$(PROJECT)" || { echo "$(PROJECT) not found"; exit 1; }
+	@test -x $(PY) || { echo "run 'make install' first"; exit 1; }
+
+chapter-pdfs: check-lineage-project
+	@$(PY) $(PUB)/chapter_pdfs.py --project "$(PROJECT)" $(ONLY)
+
+edition: check-lineage-project
+	@$(PY) $(PUB)/book_edition.py --project "$(PROJECT)" $(if $(BUMP),--bump)
+
+r2-sync: check-lineage-project
+	@$(PY) $(PUB)/r2_sync.py --project "$(PROJECT)" $(if $(DRY),--dry-run)
+
+face-focus: check-lineage-project
+	@$(PY) $(PUB)/face_focus.py --project "$(PROJECT)"
+
+seo: check-lineage-project
+	@test -n "$(SITE)" || { echo "usage: make seo PROJECT=path SITE=path/to/built/site"; exit 1; }
+	@$(PY) $(PUB)/seo_build.py --project "$(PROJECT)" "$(SITE)"
+
+updates: check-lineage-project
+	@test -n "$(SITE)" || { echo "usage: make updates PROJECT=path SITE=path/to/built/site"; exit 1; }
+	@$(PY) $(PUB)/updates_page.py --project "$(PROJECT)" "$(SITE)"
 
 screenshots: sample
 	@$(PY) -c "import playwright" 2>/dev/null || $(PY) -m pip install -q playwright

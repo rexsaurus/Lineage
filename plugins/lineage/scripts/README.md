@@ -41,6 +41,7 @@ Contents: [transcribe.sh](#transcribesh) · [sessions.py](#sessionspy) ·
 [verify_quotes.py](#verify_quotespy) · [export_sources.py](#export_sourcespy) ·
 [make_route_map.py](#make_route_mappy) · [fetch_records.py](#fetch_recordspy) ·
 [dossier.py](#dossierpy) · [generate_images.py](#generate_imagespy) · [_project.py](#_projectpy) ·
+[Publishing a site](#publishing-a-site) ·
 [Left out on purpose](#left-out-on-purpose)
 
 ---
@@ -433,6 +434,25 @@ outside every repo) and is never printed or written. Example plan and style file
 
 Shared helpers (project folder, `book.yaml`, `sessions.csv`, timestamps).
 Imported by the other scripts; not run directly.
+
+## Publishing a site
+
+Scripts that publish a lineage as a website; settings in the project's `lineage.json` under
+`settings.publish` (read by `_publish.py`, every key optional). Full guide: docs/HOWTO.md 6.11.
+
+| Script | Does |
+|---|---|
+| `chapter_pdfs.py [text]` | one compressed PDF per Typst story into `chapters_dir` |
+| `book_edition.py [--bump]` | `VERSION`, the whole book, `output/<slug>-v<VERSION>.pdf` (Ghostscript /ebook) |
+| `r2_sync.py [--dry-run]` | pictures and PDFs to Cloudflare R2; `data/r2_manifest.csv` |
+| `face_focus.py` | `data/image_focus.json` from the manifest (OpenCV) |
+| `restore_photos.py [--halftone] <image>…` | classical restoration; originals in `_orig/`; `data/image_restorations.json` |
+| `seo_build.py <site>` | `/stories/`, `/family/`, sitemap and robots into a built site |
+| `updates_page.py [<site>]` | `CHANGELOG.md` as `<site>/updates/index.html` |
+
+`image_manager.py drive-sync` never uploads a folder holding a `.no-drive` file, or anything below it.
+
+---
 
 ## Left out on purpose
 

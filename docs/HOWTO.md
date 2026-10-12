@@ -16,7 +16,7 @@ This guide follows the work in the order a family usually does it:
 | [3. Add sources](#3-add-sources) | intake of every file; transcription of recordings; photographs catalogued |
 | [4. Research records](#4-research-records) | the family's own papers and public records, catalogued by type and snapshotted |
 | [5. Build the record](#5-build-the-record-timeline-genealogy-familypedia) | the timeline, the genealogy and the Familypedia |
-| [6. Make stories and a book](#6-make-stories-and-a-book) | story units, the chapter map, writing, building, printing, narration |
+| [6. Make stories and a book](#6-make-stories-and-a-book) | story units, the chapter map, writing, building, printing, narration, publishing a site |
 | [7. Troubleshooting](#7-troubleshooting) · [8. Honest limits](#8-honest-limits) | |
 
 It uses the sample project throughout: an invented family, the Calders. **Ruth Calder** (born
@@ -1606,6 +1606,104 @@ narrated**: decide the bridges first (section 6.4).
 
 Narration is written but has **not been tested end to end** with a real key; treat the
 first run as a trial. The story's text goes to ElevenLabs to be read aloud.
+
+### 6.11 Publishing a family site
+
+A lineage can be published as a website: a landing page of your own, the dashboard as a read-only
+snapshot (usually at `/lineage/`), plain pages for every story and every person that search engines
+can index, an updates page, and every picture and PDF served from a Cloudflare R2 bucket. The tools
+live in Lineage; the project supplies only its content and these settings.
+
+#### The settings
+
+In the project's `lineage.json`, under `"settings"` → `"publish"`. Every key is optional; a step
+that needs a missing value says so and is skipped.
+
+```json
+"settings": {
+  "publish": {
+    "site_url": "https://family.example.org",
+    "title": "The Book of the Family",
+    "subtitle": "An oral history",
+    "author": "A. Compiler",
+    "chapters_dir": "output/chapters",
+    "book_entry": "book/main.typ",
+    "chapter_entry": "",
+    "image": "https://family.example.org/assets/cover.jpg",
+    "app_path": "/lineage/",
+    "include_living": false,
+    "hidden_aliases": [],
+    "r2": {
+      "env_file": "~/.config/lineage/r2.env",
+      "prefix": "the-book-of-the-family",
+      "scan": ["photos", "sources", "output/chapters"],
+      "extra_documents": [{"path": "records/court/record.pdf", "key": "records/record.pdf"}],
+      "illustration_globs": [],
+      "skip": []
+    }
+  }
+}
+```
+
+| Key | Default | What it does |
+|---|---|---|
+| `site_url` | none | the site's address; canonical URLs, sitemap. Without it the SEO step is skipped |
+| `title` | `lineage.json` title, then `book.yaml` title | page titles; its slug names the edition PDF and the R2 prefix |
+| `subtitle` | `settings.subtitle`, then `book.yaml` subtitle | shown under the title and in descriptions |
+| `author` | `book.yaml` interviewer name | author meta and schema.org author |
+| `chapters_dir` | `output/chapters` | where `chapter_pdfs.py` writes one PDF per story |
+| `book_entry` | `book/main.typ` when it exists | the whole book. Anything else is compiled directly with `--input updated=<date> --input version=<VERSION>`; `book/main.typ` goes through Lineage's normal build |
+| `chapter_entry` | none | a Typst file that typesets one story from `--input chapter=<file> --input title=<title>`; without it a wrapper around Lineage's book template is generated |
+| `image` | none | the default share (Open Graph) image, an absolute URL |
+| `app_path` | `/lineage/` | where the dashboard snapshot is published on the site |
+| `include_living` | `false` | whether people marked living get public pages |
+| `hidden_aliases` | `[]` | aliases never printed on public pages (household nicknames) |
+| `r2.env_file` | `~/.config/lineage/r2.env` | credentials: `R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_PUBLIC_BASE` once public access is on. Never in git |
+| `r2.prefix` | the slug of the title | key prefix in the bucket |
+| `r2.scan` | `["photos", "sources", "output/chapters"]` | folders searched for images |
+| `r2.extra_documents` | `[]` | other files to publish: `{"path": project path, "key": key under the prefix}` |
+| `r2.illustration_globs` | `[]` | extra globs whose images are illustrations |
+| `r2.skip` | `[]` | path fragments never uploaded |
+
+In the bucket, under the prefix: `originals/`, `restorations/` and `illustrations/` (each keeping the
+file's project path), `thumbnails/` (~480 px copies), `chapters/` and `book/`. What counts as an
+illustration comes from the data, not from folder names: `photos/photo_index.csv` rows of kind
+`illustration` (or a subject starting "Illustration"), `data/image_catalog.csv` kinds `generated` and
+`artwork`, `data/image_prompts.json`, files named `IMG-*`, and `r2.illustration_globs`. A restoration is
+a file logged in `data/image_restorations.json` or with an `_orig/` copy beside it.
+
+#### The steps, in order
+
+```bash
+S=$LINEAGE/plugins/lineage/scripts; PY=$LINEAGE/.venv/bin/python; P=~/books/grandma
+$PY $S/book_edition.py --project $P [--bump]   # VERSION, compressed edition output/<slug>-v<VERSION>.pdf
+$PY $S/chapter_pdfs.py --project $P            # 1. one compressed PDF per story
+$PY $S/r2_sync.py --project $P [--dry-run]     # 2. pictures and PDFs to R2; data/r2_manifest.csv
+$PY $S/face_focus.py --project $P              # 3. data/image_focus.json (needs opencv-python-headless)
+$PY $LINEAGE/site/build_instance.py --project $P --out <site>/lineage --title "…" \
+    --assets $P/data/r2_manifest.csv --allow-real-names   # 4. the dashboard snapshot, pictures from R2
+$PY $S/seo_build.py --project $P <site>        # 5. /stories/, /family/, sitemap.xml, robots.txt
+$PY $S/updates_page.py --project $P <site>     # 6. CHANGELOG.md as /updates/
+```
+
+The same from the Lineage checkout: `make chapter-pdfs`, `make edition [BUMP=1]`, `make r2-sync
+[DRY=1]`, `make face-focus`, `make seo SITE=…` and `make updates SITE=…`, each with `PROJECT=…`.
+Run `r2_sync.py --dry-run` first: it needs no credentials and lists every key it would write.
+
+`restore_photos.py --project $P <image> …` (or `--halftone` for printed newspaper pictures) is a
+classical restoration (dust and scratches, noise, contrast; nothing generated). It keeps the
+untouched original at `<folder>/_orig/<name>` and logs every run in `data/image_restorations.json`;
+the next `r2_sync.py` files the result under `restorations/` and the original under `originals/`.
+
+The SEO pages render a curated article (`data/wiki/<slug>.md`) exactly as the Familypedia does. A
+person marked living gets no page unless `include_living` is true.
+
+#### Private folders: `.no-drive`
+
+Put an empty file named `.no-drive` in any folder that must never leave the computer (in-copyright
+books read for research, a relative's private papers). `image_manager.py drive-sync` then never
+uploads anything in that folder or below it, images or documents. Keep such folders out of
+`r2.scan` too, or list them in `r2.skip`.
 
 ---
 
