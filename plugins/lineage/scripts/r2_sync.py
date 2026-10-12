@@ -154,9 +154,13 @@ def plan_for(cfg):
         base = Path(d)
         if not base.exists():
             continue
+        # a folder holding ".no-drive" (or ".no-publish") is private — e.g. an in-copyright book read for research:
+        # nothing in it or below it is ever uploaded, the same rule image_manager.py drive-sync follows
+        private = {m.parent for pat in (".no-drive", ".no-publish") for m in base.rglob(pat)}
         for f in base.rglob("*"):
             rel = f.as_posix()
-            if f.is_file() and IMG.search(f.name) and not any(s in "/" + rel for s in skip):
+            if f.is_file() and IMG.search(f.name) and not any(s in "/" + rel for s in skip) \
+                    and not any(pd == f.parent or pd in f.parents for pd in private):
                 files.add(rel)
     illus, globs = illustrations(cfg)
     ctx = (illus, globs, restorations(), files, where_map(), prefix)
