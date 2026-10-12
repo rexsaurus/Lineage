@@ -1123,11 +1123,14 @@ def engine_stories(project):
             "bridges": len(re.findall(r"#bridge\[|⟦BRIDGE", text)),
             "quotes": len(re.findall(r'"[^"\n]{12,}"|“[^”\n]{12,}”', text)),
             "photos": len(re.findall(r"#(?:plate|photo|plate-pair)\(", text)),
-            "citations": len(re.findall(r"// src:", text)),
+            "citations": len(re.findall(r"//\s*(?:src|context|record):", text)),
             "year": years[0] if years else None, "state": state,
             "book_position": (f"{'Part ' + str(len(parts)) + ', ' if r['part'] else ''}Chapter {chapter_no}"
                               if state == "in the book" else ("kept aside" if state == "kept aside" else "not in the book yet")),
             "mtime": f.stat().st_mtime if f and f.is_file() else None,
+            # the chapter as its own PDF, if the project built one (output/chapters/<file stem>.pdf): the Download button
+            "pdf": (f"output/chapters/{Path(r['file']).stem}.pdf"
+                    if r["file"] and (project.root / "output" / "chapters" / f"{Path(r['file']).stem}.pdf").is_file() else None),
             "stale": stale.get(r["id"]),
         }
         r.update(rows_extra)
@@ -1156,25 +1159,46 @@ def story_apparatus(project, story_id):
     photos = {r.get("id"): r for r in csv.DictReader(open(project.root / "photos" / "photo_index.csv", encoding="utf-8"))} \
         if (project.root / "photos" / "photo_index.csv").exists() else {}
     paras, images, buf = [], [], []
+
+    def prose(lines):
+        text = re.sub(r"#\w[\w.-]*\(\s*\"[^\"]*\"\s*\)", "", " ".join(lines)).replace("][", " ")
+        text = re.sub(r"#\w+\[|[\[\]]|#\w+", "", text)
+        # layout code is not prose: drop key: value arguments, quoted file paths and stray brackets
+        text = re.sub(r"\b[\w-]+:\s*(?:\"[^\"]*\"|\d+(?:\.\d+)?(?:in|pt|em|%)?|true|false|none)", "", text)
+        text = re.sub(r"\"/[^\"]+\"|[(){}\"*_]|\\u\{[0-9A-Fa-f]+\}", " ", text)
+        text = re.sub(r"\s*,\s*(?=,|$)", "", re.sub(r"\s+", " ", text)).strip(" ,;")
+        if len(re.findall(r"[A-Za-z]{3,}", text)) < 6 or re.search(r"\b(?:setting|epigraph|summary|width|caption)\b", text):
+            return ""
+        return text
+
+    def flush():
+        # a paragraph ends at a blank line, a source note, a picture or layout code; every prose paragraph is
+        # listed, cited or not, so the reader shows the whole story
+        if buf:
+            text = prose(buf)
+            if text:
+                paras.append({"excerpt": text[:220], "cites": [], "note": ""})
+            buf.clear()
+
+    note_open = False                                   # inside a multi-line source note ("//   …" continuation lines)
     for line in f.read_text(encoding="utf-8", errors="ignore").splitlines():
         t = line.strip()
-        if t.startswith("// src:"):
-            src = t[len("// src:"):].strip()
-            text = re.sub(r"#\w[\w.-]*\(\s*\"[^\"]*\"\s*\)", "", " ".join(buf)).replace("][", " ")
-            text = re.sub(r"#\w+\[|[\[\]]|#\w+", "", text)
-            chips = CITE_TOKEN.findall(src)
-            rest = CITE_TOKEN.sub("", src).strip(" ;,-")
-            # layout code is not prose: drop key: value arguments, quoted file paths and stray brackets
-            text = re.sub(r"\b[\w-]+:\s*(?:\"[^\"]*\"|\d+(?:\.\d+)?(?:in|pt|em|%)?|true|false|none)", "", text)
-            text = re.sub(r"\"/[^\"]+\"|[(){}\"*_]|\\u\{[0-9A-Fa-f]+\}", " ", text)
-            text = re.sub(r"\s*,\s*(?=,|$)", "", re.sub(r"\s+", " ", text)).strip(" ,;")
-            if len(re.findall(r"[A-Za-z]{3,}", text)) < 6 or re.search(r"\b(?:setting|epigraph|summary|width|caption)\b", text):
-                text = ""
-            paras.append({"excerpt": re.sub(r"\s+", " ", text).strip()[:220], "cites": chips, "note": rest})
-            buf = []
+        m_note = re.match(r"//\s*(src|context|record):\s*(.*)", t)
+        if m_note or (note_open and re.match(r"//\s{2,}\S", line.lstrip()[:0] + t) and not re.match(r"//\s*[A-Z]+:", t)):
+            flush()
+            src = m_note.group(2) if m_note else t.lstrip("/ ")
+            note_open = True
+            if paras:
+                last = paras[-1]
+                last["cites"] += [c for c in CITE_TOKEN.findall(src) if c not in last["cites"]]
+                rest = CITE_TOKEN.sub("", src).strip(" ;,-")
+                if rest:
+                    last["note"] = (last["note"] + "; " + rest).strip("; ")[:600]
             continue
+        note_open = False
         m = PLATE.match(t)
         if m:
+            flush()
             path, args = m.group(1).lstrip("/"), m.group(2)
             cap = re.search(r'caption:\s*"([^"]*)"', args)
             pid = re.search(r'id:\s*"([^"]*)"', args)
@@ -1187,12 +1211,12 @@ def story_apparatus(project, story_id):
                            "date_basis": row.get("date_basis", ""), "location": row.get("location", ""),
                            "holder": row.get("holder", ""), "source_file": row.get("source_file", ""),
                            "placeholder": "placeholder" in (caption + row.get("kind", "")).lower()})
-            buf = []
             continue
-        if t.startswith("//") or t.startswith("#show") or t.startswith("#import"):
+        if not t or t.startswith("//") or t.startswith("#show") or t.startswith("#import") or t.startswith("#sectionbreak"):
+            flush()
             continue
-        if t:
-            buf.append(t)
+        buf.append(t)
+    flush()
     return {"id": st["id"], "title": st["title"], "paragraphs": paras, "images": images}
 
 

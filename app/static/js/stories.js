@@ -50,6 +50,7 @@ function drawStories(){
         ${audioPill}<span class="pill ${s.state==='in the book'?'ok':''}">${esc(s.state==='in the book'?s.book_position.replace('Chapter',L.bookChapter):L.states[s.state])}</span></div></div>
       <div class="actions">
         ${s.exists?`<button class="btn sm" data-read="${esc(s.id)}">Read</button>`:`<button class="btn sm" data-gen="${esc(s.id)}">Generate</button>`}
+        ${s.pdf?`<a class="btn ghost sm" href="${fileUrl(s.pdf)}" download="${esc(s.title)}.pdf" target="_blank" rel="noopener">Download</a>`:''}
         ${s.has_audio?`<button class="btn ghost sm" data-listen="${esc(s.id)}">Listen</button>`:''}
         ${s.exists?`<button class="btn ghost sm" data-narrate="${esc(s.id)}" ${s.bridges?`title="Approve ${s.bridges} bridge(s) first: an unapproved bridge is never narrated"`:''}>${s.has_audio?'Re-narrate':'Narrate'}</button>`:''}
         ${s.exists&&voices.length?`<select data-voice="${esc(s.id)}" aria-label="Voice for this ${L.story}"><option value="">default voice</option>${options(voices, s.voice_override||'')}</select>`:''}
@@ -132,6 +133,7 @@ async function readStory(id){
   openModal(s.title, `<div class="row" style="margin-bottom:14px"><span class="pill">${esc(s.dates||'undated')}</span><span class="pill">${s.words.toLocaleString()} words</span>
       <span class="pill">${s.citations} cited paragraph${s.citations!==1?'s':''}</span>${s.bridges?`<span class="pill warn">${s.bridges} bridge${s.bridges!==1?'s':''}</span>`:''}
       <span class="pill ${s.state==='in the book'?'ok':''}">${esc(s.book_position)}</span><span class="spacer"></span>
+      ${s.pdf?`<a class="btn sm" href="${fileUrl(s.pdf)}" download="${esc(s.title)}.pdf" target="_blank" rel="noopener">Download PDF</a>`:''}
       ${i>0?`<button class="btn ghost sm" data-nav="${esc(order[i-1].id)}">← ${esc(order[i-1].title)}</button>`:''}
       ${i<order.length-1?`<button class="btn ghost sm" data-nav="${esc(order[i+1].id)}">${esc(order[i+1].title)} →</button>`:''}</div>
     ${s.has_audio?`<div class="row" style="margin-bottom:14px"><audio controls src="${fileUrl(s.audio)}" style="flex:1"></audio>${s.audio_stale?'<span class="pill warn">audio is stale</span>':''}</div>`:''}
