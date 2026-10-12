@@ -1032,28 +1032,36 @@ def article(project, slug):
            "history": e.get("history", [])[-12:]}
     if s["type"] == "event":
         out.update(_event_extra(project, s))
-    if s["type"] == "person":
-        out["wiki"], out["wiki_title"] = _wiki_html(project, s)
+    out["wiki"], out["wiki_title"] = _wiki_html(project, s)
     return out
 
 
 def _wiki_html(project, s):
-    """The curated encyclopedia article (data/wiki/<family-name slug>.md) for this person, rendered; or None."""
+    """The curated encyclopedia article (data/wiki/<slug>.md) for this subject, rendered; or None.
+    A person's article is named by their family-tree name; any other subject's by its title."""
     import wiki
-    canon = _family_canon(project)
-    fam = family_name_of(canon, s["title"]) or s["title"]
+    if s["type"] == "person":
+        fam = family_name_of(_family_canon(project), s["title"]) or s["title"]
+    else:
+        fam = s["title"]
     art = wiki.load(project.root, fam)
     if not art:
         return None, None
-    best = {}
+    best, by_title = {}, {}
     for a in summaries(project):
+        by_title.setdefault(norm(a["title"]), a)
         if a.get("family_name"):
             cur = best.get(a["family_name"])
             if not cur or (bool(a.get("portrait")), a.get("sources") or 0) > (bool(cur.get("portrait")), cur.get("sources") or 0):
                 best[a["family_name"]] = a
     import server
     titles = {st["title"]: st["id"] for st in server.engine_stories(project) if st.get("exists")}
-    person = lambda n: ("#familypedia/" + best[n]["slug"]) if n in best else ("#genealogy?focus=" + wiki.slug(n))
+    def person(n):
+        if n in best:
+            return "#familypedia/" + best[n]["slug"]
+        if norm(n) in by_title:                                   # a non-person subject: an organization, place, …
+            return "#familypedia/" + by_title[norm(n)]["slug"]
+        return "#genealogy?focus=" + wiki.slug(n)
     chapter = lambda t: ("#stories?read=" + titles[t]) if t in titles else None
     return wiki.render(art, person, chapter, file_url=lambda p: "lineage-file:" + p), art["short"]
 
