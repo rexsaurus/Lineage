@@ -128,6 +128,11 @@ class Instance(bs.Demo):
             if f.is_file() and not (self.proj / rel).exists():
                 (self.proj / rel).parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(f, self.proj / rel)
+        # each chapter's own PDF (output/chapters/), so stories get their Download button; served from R2 when mapped
+        ch = self.src / "output" / "chapters"
+        for f in (sorted(ch.glob("*.pdf")) if ch.is_dir() else []):
+            (self.proj / "output" / "chapters").mkdir(parents=True, exist_ok=True)
+            shutil.copy2(f, self.proj / "output" / "chapters" / f.name)
         bs.log(f"  scratch copy: skipped {len(skipped)} paths, {len(denied)} unreadable files")
         sys.path.insert(0, str(bs.APP))
         import server  # noqa: E402
