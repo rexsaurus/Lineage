@@ -377,7 +377,7 @@ def family_name_of(canon, title):
     t = norm(title)
     if t in canon:
         return canon[t]
-    m = re.match(r"\s*([^,]+),\s*(\S+)", title)                       # Burnham, Charles Lee
+    m = re.match(r"\s*([^,]+),\s*(\S+)", title)                       # Smith, John Lee
     first, last = (m.group(2), m.group(1)) if m else ((title.split() or [""])[0], (title.split() or [""])[-1])
     return canon.get("fl:" + first.replace(".", "").lower() + "|" + last.strip().lower())
 
