@@ -4,7 +4,7 @@ ends that fall outside quotation marks. Nothing is reworded, added or dropped; o
 
     python split_paragraphs.py --project DIR                  # report paragraphs over the limit (default 130 words)
     python split_paragraphs.py --project DIR --fix            # split them in place
-    python split_paragraphs.py --project DIR --fix --max 110 --only kingsley
+    python split_paragraphs.py --project DIR --fix --max 110 --only cabin
 
 Works on the Typst story files listed in data/chapters.csv. Only plain prose paragraphs are touched: a paragraph that
 contains layout code with brackets (#opening[...], #verbatim[...], #records(...), tables) or starts with '#', '//', '[',
