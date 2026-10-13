@@ -248,6 +248,34 @@ def is_private(text):
     return bool(PRIVATE_FM.match(text or ""))
 
 
+def _secs(ts):
+    h, m, sec = (int(x) for x in ts.split(":"))
+    return h * 3600 + m * 60 + sec
+
+
+def private_spans(project):
+    """Transcript stretches covered by private units ("spans": ["S5 01:27:02-01:32:25"]): {session: [(start, end), ...]}."""
+    out = {}
+    for p in project.root.glob("content/units/*.md"):
+        try:
+            text = p.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+        if not is_private(text):
+            continue
+        for sid, a, b in re.findall(r"(S\d+) (\d\d:\d\d:\d\d)-(\d\d:\d\d:\d\d)", text.split("\n---", 1)[0]):
+            out.setdefault(sid, []).append((_secs(a), _secs(b)))
+    return out
+
+
+def in_private_span(spans, sid, ts):
+    try:
+        t = _secs(ts)
+    except Exception:
+        return False
+    return any(a <= t <= b for a, b in spans.get(sid, ()))
+
+
 def _texts(project, globs):
     for g in globs:
         for p in project.root.glob(g):
@@ -1319,7 +1347,7 @@ def _transcript_line(project, cite):
     if not m:
         return None
     f = project.root / "transcript" / "clean" / f"{m.group(1)}.md"
-    if not f.exists():
+    if not f.exists() or in_private_span(private_spans(project), m.group(1), m.group(2)):
         return None
     for line in f.read_text(encoding="utf-8").splitlines():
         pm = PARA.match(line)

@@ -511,10 +511,11 @@ def _build(project):
 
     # transcripts
     paras = []
+    hidden = HOST.private_spans(project)                 # transcript stretches behind private units
     for p in sorted(root.glob("transcript/clean/*.md")):
         for line in p.read_text(encoding="utf-8", errors="ignore").splitlines():
             pm = HOST.PARA.match(line)
-            if pm:
+            if pm and not HOST.in_private_span(hidden, pm["sid"], pm["ts"]):
                 paras.append({"speaker": pm["spk"], "session": pm["sid"], "t": pm["ts"],
                               "cite": f"[{pm['sid']} {pm['ts']}]", "text": pm["text"]})
     whole = "\n".join(p["text"] for p in paras)

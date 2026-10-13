@@ -137,8 +137,15 @@ class Instance(bs.Demo):
         sys.path.insert(0, str(bs.APP))
         import server as _srv  # noqa: E402
         private = [u for u in (self.proj / "content" / "units").glob("*.md") if _srv.is_private(u.read_text(errors="ignore"))]
+        spans = _srv.private_spans(_srv.Project(self.proj)) if private else {}
         for u in private:
             u.unlink()
+        # and the transcript lines those units cover
+        for t in (self.proj / "transcript").rglob("*.md") if spans else []:
+            lines = t.read_text(errors="ignore").split("\n")
+            keep = [l for l in lines if not ((m := re.match(r".*?\[(S\d+) (\d\d:\d\d:\d\d)\]", l)) and _srv.in_private_span(spans, m.group(1), m.group(2)))]
+            if len(keep) != len(lines):
+                t.write_text("\n".join(keep))
         if private:
             bs.log(f"  private units left out: {len(private)}")
         bs.log(f"  scratch copy: skipped {len(skipped)} paths, {len(denied)} unreadable files")
