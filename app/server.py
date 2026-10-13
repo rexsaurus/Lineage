@@ -239,14 +239,26 @@ def drive_map(project):
     return json.loads(p.read_text()) if p.exists() else {}
 
 
+PRIVATE_FM = re.compile(r"^---\n(?:.*\n)*?private:\s*(?:true|yes)\s*\n(?:.*\n)*?---", re.I)
+
+
+def is_private(text):
+    """A story unit (or any Markdown file) whose front matter says `private: true` stays in the project as the raw
+    record but is never quoted, indexed or published: the family has asked for it to be kept out."""
+    return bool(PRIVATE_FM.match(text or ""))
+
+
 def _texts(project, globs):
     for g in globs:
         for p in project.root.glob(g):
             if p.is_file():
                 try:
-                    yield p, p.read_text(encoding="utf-8", errors="ignore")
+                    text = p.read_text(encoding="utf-8", errors="ignore")
                 except Exception:
                     continue
+                if p.suffix == ".md" and is_private(text):
+                    continue
+                yield p, text
 
 
 def engine_sources(project):

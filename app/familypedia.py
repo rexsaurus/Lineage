@@ -187,6 +187,8 @@ def _units(project):
             k, _, v = line.partition(":")
             if k and not k.startswith(" "):
                 fm[k.strip()] = v.strip()
+        if fm.get("private", "").lower() in ("true", "yes"):      # kept out at the family's request
+            continue
         body = m.group(2)
         shaped = body.split("## Shaped", 1)[1].split("## Notes", 1)[0] if "## Shaped" in body else ""
         out.append({"id": fm.get("id", p.stem), "file": p.relative_to(project.root).as_posix(),

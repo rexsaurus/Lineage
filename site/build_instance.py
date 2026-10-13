@@ -133,6 +133,14 @@ class Instance(bs.Demo):
         for f in (sorted(ch.glob("*.pdf")) if ch.is_dir() else []):
             (self.proj / "output" / "chapters").mkdir(parents=True, exist_ok=True)
             shutil.copy2(f, self.proj / "output" / "chapters" / f.name)
+        # units the family marked `private: true` are never published, not even as raw files
+        sys.path.insert(0, str(bs.APP))
+        import server as _srv  # noqa: E402
+        private = [u for u in (self.proj / "content" / "units").glob("*.md") if _srv.is_private(u.read_text(errors="ignore"))]
+        for u in private:
+            u.unlink()
+        if private:
+            bs.log(f"  private units left out: {len(private)}")
         bs.log(f"  scratch copy: skipped {len(skipped)} paths, {len(denied)} unreadable files")
         sys.path.insert(0, str(bs.APP))
         import server  # noqa: E402

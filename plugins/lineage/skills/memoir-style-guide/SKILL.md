@@ -239,3 +239,9 @@ Right:
 
 Family-history chapters (ancestors, tiers, records beside lore) add the rules in the
 family-history-chapters skill.
+
+## Paragraph length
+- Keep paragraphs short enough to read at a sitting: **no prose paragraph over 130 words**; most should be 50–110.
+  Break at a turn in the story, a change of source, or a new scene. A long verbatim quotation may run longer.
+- `python plugins/lineage/scripts/split_paragraphs.py --project DIR` reports paragraphs over the limit; `--fix` splits
+  them at sentence ends outside quotations without changing a word.

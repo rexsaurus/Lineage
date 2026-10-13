@@ -719,6 +719,7 @@ project with less material simply has fewer articles. The main inputs:
 | `photos/photo_index.csv` | photographs, with illustrations marked (section 3.3) |
 | `facts/gaps.md`, `facts/records/**/context_*.md` | open questions; public background for "Beyond the family" |
 | `data/wiki/<slug>.md` | a curated encyclopedia article (front matter, infobox, `[^n]` footnotes) shown above the derived material: for a person, named by their family-tree name; for any other subject — a company, a regiment, a theatre troupe, a ship — named by the subject's title |
+| `content/units/*.md` with `private: true` in the front matter | nothing: a private unit stays in the project as the raw record but is never quoted, indexed, or published (the family asked for it to be kept out) |
 | `data/familypedia/subjects.json` | subjects you add by hand ("New subject…"), e.g. an organization that has a curated article but appears in no passage |
 
 **Curated articles link across types.** `[[Name]]` in a curated article opens the person with that

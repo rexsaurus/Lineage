@@ -5,6 +5,17 @@ Every entry says whether it changes anything that would alter already-generated 
 (templates, the book template, style guides, skills); when it does, a project updating to it
 marks those stories stale rather than regenerating them.
 
+## 0.9.1 — 2026-10-13
+
+**Alters generated stories: no** (the paragraph tool changes them only when run with `--fix`).
+
+- **Private units.** A story unit whose front matter says `private: true` is skipped by the Familypedia, the timeline
+  and every engine view, and the publishing step deletes it from the snapshot copy, so it is never published even as a
+  raw file. For passages the family wants kept out.
+- **Paragraph length** (`split_paragraphs.py`, style guide): prose paragraphs over 130 words are reported, and with
+  `--fix` split at sentence ends outside quotations, words unchanged; wrapped lines never begin with Typst list or
+  heading markup.
+
 ## 0.9.0 — 2026-10-12
 
 **Alters generated stories: no.** New publishing scripts; templates, the book template, the style guides
