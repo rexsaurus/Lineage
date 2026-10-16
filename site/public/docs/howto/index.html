@@ -1549,7 +1549,7 @@ first run as a trial. The story's text goes to ElevenLabs to be read aloud.</p>
 <h3 id="611-publishing-a-family-site">6.11 Publishing a family site</h3>
 <p>A lineage can be published as a website: a landing page of your own, the dashboard as a read-only
 snapshot (usually at <code>/lineage/</code>), plain pages for every story and every person that search engines
-can index, an updates page, and every picture and PDF served from a Cloudflare R2 bucket. The tools
+can index, an updates page, a changelog that keeps itself, and every picture and PDF served from a Cloudflare R2 bucket. The tools
 live in Lineage; the project supplies only its content and these settings.</p>
 <h4 id="the-settings">The settings</h4>
 <p>In the project's <code>lineage.json</code>, under <code>"settings"</code> → <code>"publish"</code>. Every key is optional; a step
@@ -1643,6 +1643,11 @@ that needs a missing value says so and is skipped.</p>
 <td>aliases never printed on public pages (household nicknames)</td>
 </tr>
 <tr>
+<td><code>changelog_commit_messages</code></td>
+<td><code>false</code></td>
+<td>list the project's own commit messages on <code>/changelog/</code> (otherwise commits are summarised as file counts by area)</td>
+</tr>
+<tr>
 <td><code>r2.env_file</code></td>
 <td><code>~/.config/lineage/r2.env</code></td>
 <td>credentials: <code>R2_ENDPOINT</code>, <code>R2_BUCKET</code>, <code>R2_ACCESS_KEY_ID</code>, <code>R2_SECRET_ACCESS_KEY</code>, and <code>R2_PUBLIC_BASE</code> once public access is on. Never in git</td>
@@ -1691,6 +1696,7 @@ $PY $LINEAGE/site/build_instance.py --project $P --out &lt;site&gt;/lineage --ti
 $PY $S/seo_build.py --project $P &lt;site&gt;        # 5. /stories/, /family/, sitemap.xml, robots.txt
 $PY $S/updates_page.py --project $P &lt;site&gt;     # 6. CHANGELOG.md as /updates/
 </code></pre>
+<p>Steps 4 and 5 also record and render the site changelog (below); nothing to run for it.</p>
 <p>The same from the Lineage checkout: <code>make chapter-pdfs</code>, <code>make edition [BUMP=1]</code>, <code>make r2-sync
 [DRY=1]</code>, <code>make face-focus</code>, <code>make seo SITE=…</code> and <code>make updates SITE=…</code>, each with <code>PROJECT=…</code>.
 Run <code>r2_sync.py --dry-run</code> first: it needs no credentials and lists every key it would write.</p>
@@ -1700,6 +1706,39 @@ untouched original at <code>&lt;folder&gt;/_orig/&lt;name&gt;</code> and logs ev
 the next <code>r2_sync.py</code> files the result under <code>restorations/</code> and the original under <code>originals/</code>.</p>
 <p>The SEO pages render a curated article (<code>data/wiki/&lt;slug&gt;.md</code>) exactly as the Familypedia does. A
 person marked living gets no page unless <code>include_living</code> is true.</p>
+<h4 id="the-site-changelog">The site changelog</h4>
+<p>Every published site keeps a changelog of its own at <code>/changelog/</code>, newest first, linked from the
+footer of the story and family pages, the updates page and the dashboard snapshot's banner. You
+never write it: each build appends one entry listing everything that changed since the last one.</p>
+<ul>
+<li><strong>Where it lives.</strong> A family site: <code>data/site_changelog.json</code> in the project (commit it with the
+  rest). The Lineage website: <code>site/changelog.json</code> in this repo (<code>make site</code> writes it; commit it).</li>
+<li><strong>When it is written.</strong> <code>site/build_instance.py</code> and <code>seo_build.py</code> (and <code>site/build_site.py</code>
+  for this website) call <code>plugins/lineage/scripts/site_changelog.py</code> before they render anything,
+  so no build, and so no deploy, can skip it. Running a build twice with nothing changed adds
+  nothing. <code>make changelog PROJECT=$P DRY=1</code> (or <code>site_changelog.py --project $P --dry-run</code>) shows
+  the entry the next build would add without writing it; leave out <code>PROJECT</code> for this website.</li>
+<li><strong>What becomes a line.</strong> For a family site: each new <code>## Version X.Y — date</code> section of the
+  book's <code>CHANGELOG.md</code>, bullet by bullet; stories new or revised; Familypedia articles new or
+  updated, by title; timeline events added or corrected; sources newly indexed (counted by kind,
+  never named); a new Lineage version in <code>lineage.lock</code> and the core changes the site was built
+  with; and the project's commits since the last entry, summarised as file counts by area. For
+  this website: every commit message since the last entry, new releases from
+  <code>docs/blog/releases.csv</code>, new blog posts and the docs pages that changed. Every line comes from
+  git, a file or a hash difference; nothing is invented. Lockfiles, caches, build output and
+  generated manifests are counted as "housekeeping files", never listed.</li>
+<li><strong>Privacy.</strong> Only what the site itself publishes is named: an article whose front matter says
+  <code>private: true</code>, a living person's article (unless <code>include_living</code>), and timeline events drawn
+  from a private unit's passages or about a living person never appear. Removals are counted, not
+  named. If something listed earlier is later made private, its old line disappears from the page.
+  Commit messages are free text, so a family site lists them only with
+  <code>changelog_commit_messages: true</code>; this website withholds any message that fails the real-names
+  or local-path checks.</li>
+<li><strong>The first entry.</strong> The first build creates the file with a backfill from history: one entry
+  per version in the book's <code>CHANGELOG.md</code> (for this website, one per release in
+  <code>docs/blog/releases.csv</code>, with the commits between its git tags), then a "changelog started"
+  baseline.</li>
+</ul>
 <h4 id="private-folders-no-drive">Private folders: <code>.no-drive</code></h4>
 <p>Put an empty file named <code>.no-drive</code> in any folder that must never leave the computer (in-copyright
 books read for research, a relative's private papers). <code>image_manager.py drive-sync</code> then never
@@ -1846,7 +1885,7 @@ and Typst in the project folder, with raw snapshots of the records it used. Keep
 in a private git repository and it outlives the links, the apps and the people in it.</p></article>
 </main>
 <footer class="site-foot"><div class="wrap">
-  <p>Lineage is open source under the MIT license. <a href="https://github.com/rexsaurus/Lineage">github.com/rexsaurus/Lineage</a></p>
+  <p>Lineage is open source under the MIT license. <a href="https://github.com/rexsaurus/Lineage">github.com/rexsaurus/Lineage</a> · <a href="../../changelog/">Site changelog</a></p>
   <p class="muted">Every family in the screenshots and the demo is invented. Your recordings, transcripts and photographs stay yours: the license does not cover them.</p>
 </div></footer>
 </body>

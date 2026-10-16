@@ -2,8 +2,8 @@
  "format": 1,
  "site": "Lineage",
  "state": {
-  "commit": "b88d39f57cd0bb5dfa6cbbd42e5a6d1cf49d88fe",
-  "describe": "v0.9.1-6-gb88d39f",
+  "commit": "d274f4edf82a577c0e463777fe2e680bc2cedc5c",
+  "describe": "v0.9.1-10-gd274f4e",
   "content": {
    "blog": {
     "2026-10-01-how-lineage-began.md": [
@@ -22,7 +22,7 @@
    "docs": {
     "docs/HOWTO.md": [
      "How to use Lineage",
-     "a67c12869493fdf6"
+     "50fcdd949dbc67a8"
     ],
     "docs/FACTORY.md": [
      "The Factory",
@@ -39,6 +39,18 @@
     "CHANGELOG.md": [
      "Changelog",
      "daa0e230b425b342"
+    ],
+    "README.md": [
+     "README",
+     "7e52307a5b8036c6"
+    ],
+    "docs/GETTING-STARTED.md": [
+     "Getting started",
+     "f36f83447fa7881d"
+    ],
+    "docs/QUICKSTART.md": [
+     "Quickstart",
+     "d1f3942c63107661"
     ]
    },
    "releases": {
@@ -313,6 +325,25 @@
     "Test drive: deploy the api/ function (vercelignore), 40 s max duration, longer Library of Congress timeout, short cache when an archive fails"
    ],
    "noise": 114,
+   "backfill": false
+  },
+  {
+   "id": "2026-10-16.2",
+   "date": "2026-10-16",
+   "at": "2026-10-16T14:42:55-07:00",
+   "version": "v0.9.1-10-gd274f4e",
+   "lineage": "v0.9.1-10-gd274f4e",
+   "commits": {
+    "from": "b88d39f57cd0bb5dfa6cbbd42e5a6d1cf49d88fe",
+    "to": "d274f4edf82a577c0e463777fe2e680bc2cedc5c",
+    "count": 2
+   },
+   "changes": [
+    "Join page for in-person sign-ups: /join/ with ?src attribution, env-gated offer, lead form",
+    "Site changelog on every published site, captured on every build",
+    "Docs updated: How to use Lineage, README, Getting started, Quickstart."
+   ],
+   "noise": 4,
    "backfill": false
   }
  ]

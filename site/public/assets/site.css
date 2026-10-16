@@ -59,3 +59,4 @@ pre code{background:none;padding:0}
 @media (max-width:640px){.hero{padding:32px 0 16px}.site-top .wrap{gap:6px;padding-top:6px;padding-bottom:6px}.site-nav{margin-left:0}
   .site-nav a{padding:5px 7px;font-size:14px}.doc{padding-top:22px}}
 @media (max-width:480px){.site-nav a.gh{display:none}}
+.clog-entry{border-top:1px solid var(--line,#ddd);padding-top:14px;margin-top:22px}.clog-entry h2,.clog-entry h3{margin:0}.clog-meta{color:var(--ink2,var(--ink-3,#777));font-size:14px;margin:2px 0 8px}.clog-entry li{margin:0 0 6px;overflow-wrap:anywhere}
