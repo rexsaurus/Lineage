@@ -6,6 +6,14 @@
   "outputDirectory": "site/public",
   "cleanUrls": true,
   "trailingSlash": true,
+  "redirects": [
+    {
+      "source": "/",
+      "has": [{ "type": "query", "key": "src", "value": "^(?<src>[a-z0-9-]{1,64})$" }],
+      "destination": "/join/?src=:src",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -23,6 +31,10 @@
           "value": "SAMEORIGIN"
         }
       ]
+    },
+    {
+      "source": "/join/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
     },
     {
       "source": "/(assets|images|sample)/(.*)",

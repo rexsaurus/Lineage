@@ -407,6 +407,15 @@ make demo            # the dashboard, on a scratch copy of the demo lineage</cod
     write(SITE / "testdrive" / "index.html", page("testdrive", "Test drive", td,
           "Type a family name and see what Lineage's research would start from: newspapers, books and notable people.", "testdrive"))
 
+    # --- join: the page a QR code at a genealogy meeting opens (api/join-config.js, api/lead.js); not in the nav, not indexed
+    def noindex(s):
+        return s.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n<meta name="robots" content="noindex">', 1)
+    for frag, dst, title, desc in (("join.html", "join", "Join", "Become a Founding Archivist: turn your family's records into a family history."),
+                                   ("join-demo.html", "join/demo", "What a family history looks like", "A few pages from a family record."),
+                                   ("join-privacy.html", "join/privacy", "Privacy", "How Lineage keeps your information private.")):
+        body = (ROOT / "site" / frag).read_text(encoding="utf-8")
+        write(SITE / dst / "index.html", noindex(page(dst, title, body, desc, "join")))
+
     # --- blog: posts, and the release history from CHANGELOG.md
     def nice(d):
         try:
@@ -930,6 +939,9 @@ LEAKS = re.compile(r"/Users/|/home/[a-z]|/private/|/var/folders|__LINEAGE_TOKEN_
                    r"(?:fetch|EventSource|WebSocket)\(\s*[\"'`](?:https?|wss?)://(?:127\.0\.0\.1|localhost)")
 
 
+JOIN_CONTACT = "rex@verafy.ai"
+
+
 def check_text():
     findings = {"names": [], "leaks": []}
     for f in sorted(SITE.rglob("*")):
@@ -943,9 +955,15 @@ def check_text():
         else:
             text = f.read_text(encoding="utf-8", errors="replace")
         r = str(f.relative_to(SITE))
+        # /join/ is the maintainer's own sign-up page: it names him and his contact address on purpose (and nothing else)
+        is_join = r.startswith("join/")
         for m in REAL_NAMES.finditer(text):
+            if is_join and m.group(0).lower() == "rex":
+                continue
             findings["names"].append(f"{r}: …{text[max(0, m.start() - 40):m.end() + 40]!r}…")
         for m in LEAKS.finditer(text):
+            if is_join and m.group(0) == JOIN_CONTACT:
+                continue
             findings["leaks"].append(f"{r}: …{text[max(0, m.start() - 50):m.end() + 30]!r}…")
     return findings
 
