@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lineage 0.9: publish a family site from the core · Lineage</title>
+<meta name="description" content="Chapter downloads, a reader that shows every paragraph&#x27;s sources, private passages, and every publishing step built in.">
+<link rel="icon" href="../../assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<header class="site-top"><div class="wrap">
+  <a class="brand" href="../../"><img src="../../assets/logo.svg" alt="" width="26" height="26"><span>Lineage</span></a>
+  <nav class="site-nav" aria-label="Site"><a href="../../">Home</a><a href="../../start/">Get started</a><a href="../../quickstart/">Quickstart</a><a href="../../tour/">Tour</a><a href="../../demo/">Live demo</a><a href="../../docs/">Docs</a><a href="../" aria-current=page>Blog</a><a href="https://github.com/rexsaurus/Lineage" class="gh">GitHub</a></nav>
+</div></header>
+<main>
+<article class="doc"><p class="muted"><a href="../">Blog</a> · 13 October 2026</p><h1>Lineage 0.9: publish a family site from the core</h1><p>Lineage 0.8, 0.9 and 0.9.1 shipped between 12 and 13 October. They came out of finishing and
+publishing a real family's book, and every piece is now part of Lineage for any family.</p>
+<h2 id="every-chapter-downloadable">Every chapter downloadable</h2>
+<p>Each story now has a <strong>Download</strong> button on its card and in the reader, serving the chapter as its
+own compressed PDF.</p>
+<p><img loading="lazy" alt="Stories, each with Read, Download and Narrate" src="../../images/stories.png" /></p>
+<h2 id="a-reader-that-shows-every-paragraphs-sources">A reader that shows every paragraph's sources</h2>
+<p>The story reader lists every paragraph with the recordings and records behind it. Before this fix it
+merged paragraphs, so stories looked far shorter than they were.</p>
+<p><img loading="lazy" alt="Reading a story, with each paragraph's sources" src="../../images/story.png" /></p>
+<h2 id="encyclopedia-articles-for-anything">Encyclopedia articles for anything</h2>
+<p>Curated Familypedia articles, with an infobox and numbered references, now work for companies,
+regiments, ships and places as well as people. <code>[[Links]]</code> between them open the right subject.</p>
+<p><img loading="lazy" alt="An article about an organization" src="../../images/familypedia-organization.png" /></p>
+<h2 id="published-sources-handled-properly">Published sources, handled properly</h2>
+<p>A new <code>published-sources</code> skill checks a book's copyright before anything is copied: US public domain
+before 1930, and 1930–63 only if the copyright wasn't renewed. Borrowed lending-library copies are
+read, never captured. The book becomes a secondary source with page-cited notes, and in-copyright
+books are paraphrased, with quotations kept under 15 words. <code>archive-open-book</code> downloads open
+Internet Archive items and refuses restricted ones.</p>
+<h2 id="private-passages">Private passages</h2>
+<p>A story unit marked <code>private: true</code> stays in the family's record but is never quoted, indexed or
+published. Neither are the stretches of interview it covers. This is for the things a family asks to
+keep out.</p>
+<h2 id="publishing-from-the-core">Publishing from the core</h2>
+<p>Everything that turns a record into a public site is now in Lineage, configured per project in
+<code>lineage.json</code>: chapter PDFs, versioned editions, image hosting on Cloudflare R2, face-centred
+crops, classical photo restoration, search-engine pages and an updates page. A folder marked
+<code>.no-drive</code> is never uploaded anywhere. See <a href="../../docs/howto/">Publishing a family site</a> in the
+how-to guide.</p>
+<h2 id="shorter-paragraphs">Shorter paragraphs</h2>
+<p>Prose paragraphs are now kept under about 130 words. <code>split_paragraphs.py</code> reports longer ones and
+splits them at sentence ends without changing a word.</p>
+<p>The full list is in the <a href="../../docs/changelog/">changelog</a>.</p></article>
+</main>
+<footer class="site-foot"><div class="wrap">
+  <p>Lineage is open source under the MIT license. <a href="https://github.com/rexsaurus/Lineage">github.com/rexsaurus/Lineage</a></p>
+  <p class="muted">Every family in the screenshots and the demo is invented. Your recordings, transcripts and photographs stay yours: the license does not cover them.</p>
+</div></footer>
+</body>
+</html>

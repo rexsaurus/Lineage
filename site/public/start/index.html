@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting started · Lineage</title>
+<meta name="description" content="New to Lineage? What it is, what you need, and your first week, step by step.">
+<link rel="icon" href="../assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="site-top"><div class="wrap">
+  <a class="brand" href="../"><img src="../assets/logo.svg" alt="" width="26" height="26"><span>Lineage</span></a>
+  <nav class="site-nav" aria-label="Site"><a href="../">Home</a><a href="./" aria-current=page>Get started</a><a href="../quickstart/">Quickstart</a><a href="../tour/">Tour</a><a href="../demo/">Live demo</a><a href="../docs/">Docs</a><a href="../blog/">Blog</a><a href="https://github.com/rexsaurus/Lineage" class="gh">GitHub</a></nav>
+</div></header>
+<main>
+<article class="doc"><h1 id="getting-started-with-lineage">Getting started with Lineage</h1>
+<p>New to Lineage? This page explains what it is, what you need, and what a first week with it looks
+like. No technical background is assumed. When you want the commands, the
+<a href="../quickstart/">Quickstart</a> has them on one page.</p>
+<h2 id="what-lineage-is">What Lineage is</h2>
+<p>Every family has its history scattered: a grandparent's memories, a shoebox of letters, photographs
+in three houses, a census entry nobody has looked up. Lineage gathers it into <strong>one record that you
+own</strong>, checks it against public records, and keeps every fact tied to where it came from.</p>
+<p>From that record it builds:</p>
+<ul>
+<li>a <strong>Familypedia</strong>, an encyclopedia with an article for every person, place, ship, company and
+  event the material names;</li>
+<li>a <strong>genealogy</strong>, where every line points at the evidence for it;</li>
+<li>a <strong>timeline</strong>, coloured by how well each date is known;</li>
+<li><strong>stories</strong>, written from the recordings, readable as book pages, downloadable, and narrated;</li>
+<li>and, at the end, a <strong>printed book</strong>.</li>
+</ul>
+<p>Everything is plain files (text, spreadsheets, the original scans) in a folder on your computer.
+The record outlives any app, including this one.</p>
+<h2 id="what-you-need">What you need</h2>
+<ol>
+<li><strong>Something to start from.</strong> One recorded conversation with a relative is enough. So is a box of
+   photographs, or a single family Bible.</li>
+<li><strong>A Mac or Linux computer.</strong></li>
+<li><strong>A Claude subscription and <a href="https://claude.com/claude-code">Claude Code</a>.</strong> Claude does the
+   reading, transcribing, researching and writing, following Lineage's rules. You talk to it in plain
+   English.</li>
+<li><strong>About an hour</strong> for the first setup.</li>
+</ol>
+<h2 id="step-1-look-around-the-demo">Step 1: look around the demo</h2>
+<p>Before using your own family, open the demo. It shows a finished record for the Calders, an invented
+family, so you can see where you are heading. <a href="../demo/">Open the live demo</a> in your browser, or run
+<code>make demo</code> on your own machine (see the <a href="../quickstart/">Quickstart</a>).</p>
+<p>The <strong>Home</strong> tab shows the story of the day, the relatives, and what needs a person's decision.</p>
+<p><img loading="lazy" alt="Home: the story of the day, the relatives and what needs deciding" src="../images/home.png" /></p>
+<h2 id="step-2-add-what-the-family-has">Step 2: add what the family has</h2>
+<p>Everything comes in through <strong>Sources</strong>. Drop in recordings, photographs, letters, PDFs or links.
+Lineage reads each one, writes a summary, and tags it with the people, places and dates in it. It
+never renames or alters your originals.</p>
+<p><img loading="lazy" alt="Sources as a gallery" src="../images/sources-gallery.png" /></p>
+<p>Click any item to see what was found in it and correct anything that is wrong.</p>
+<p><img loading="lazy" alt="One source opened: its summary, its subjects and where it is used" src="../images/source-drawer.png" /></p>
+<h2 id="step-3-let-the-record-build-itself">Step 3: let the record build itself</h2>
+<p>Ask Claude Code to transcribe the recordings and build the record. The <strong>Familypedia</strong> fills in with
+an article for every subject. Each sentence carries a footnote, so you can always see whether a fact
+came from a recording ("told"), from a document ("what the records show"), or from family lore.</p>
+<p><img loading="lazy" alt="A Familypedia article: infobox, sections and numbered references" src="../images/familypedia-article.png" /></p>
+<p>Articles are not only about people. Ships, regiments, companies and places get their own.</p>
+<p><img loading="lazy" alt="An article about a company the family worked for" src="../images/familypedia-organization.png" /></p>
+<p>The <strong>Genealogy</strong> draws the family tree. No line is drawn without evidence behind it.</p>
+<p><img loading="lazy" alt="The genealogy, every link backed by evidence" src="../images/genealogy.png" /></p>
+<p>The <strong>Timeline</strong> puts every dated event in order, and flags where two sources disagree.</p>
+<p><img loading="lazy" alt="The timeline, coloured by how well each date is known" src="../images/timeline.png" /></p>
+<h2 id="step-4-read-the-stories">Step 4: read the stories</h2>
+<p>From the recordings, Lineage writes stories in the family's own voice, with quotations kept exact
+and every paragraph cited. Each one can be read as finished book pages, downloaded as a PDF, or
+listened to as narration.</p>
+<p><img loading="lazy" alt="The Stories tab: read, download or listen" src="../images/stories.png" /></p>
+<p>Open a story to read it as pages, with every paragraph's sources beside it.</p>
+<p><img loading="lazy" alt="Reading a story, with each paragraph's sources" src="../images/story.png" /></p>
+<h2 id="step-5-invite-the-family">Step 5: invite the family</h2>
+<p>Relatives can add what they have, too: their own recordings, photographs and corrections. Everything
+they add is reviewed before it counts.</p>
+<p><img loading="lazy" alt="Inviting contributors" src="../images/contributors.png" /></p>
+<h2 id="step-6-share-it-or-print-it">Step 6: share it, or print it</h2>
+<p>When you are ready, Lineage publishes a read-only website of the record, like the
+<a href="../demo/">demo</a>, and builds a printed book with a table of contents, an index and a list of every
+source. You decide what is public. Living relatives can be left out, and private passages stay
+private.</p>
+<h2 id="three-rules-lineage-always-keeps">Three rules Lineage always keeps</h2>
+<ul>
+<li><strong>Nothing is invented.</strong> Anything a writer would like to add is held as a "bridge" until a person
+  approves it.</li>
+<li><strong>Contradictions are kept.</strong> When the family remembers one date and a record says another, both
+  are shown.</li>
+<li><strong>Pictures are honest.</strong> A generated illustration is always marked as one, and is never used as a
+  person's photograph.</li>
+</ul>
+<h2 id="where-to-go-next">Where to go next</h2>
+<ul>
+<li><a href="../quickstart/">Quickstart</a>: the commands, on one page.</li>
+<li><a href="../tour/">The tour</a>: every screen of the dashboard.</li>
+<li><a href="../docs/howto/">The how-to guide</a>: everything, in detail.</li>
+<li><a href="../blog/">The blog</a>: what's new and how Lineage came to be.</li>
+</ul></article>
+</main>
+<footer class="site-foot"><div class="wrap">
+  <p>Lineage is open source under the MIT license. <a href="https://github.com/rexsaurus/Lineage">github.com/rexsaurus/Lineage</a></p>
+  <p class="muted">Every family in the screenshots and the demo is invented. Your recordings, transcripts and photographs stay yours: the license does not cover them.</p>
+</div></footer>
+</body>
+</html>

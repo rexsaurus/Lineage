@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Lineage began · Lineage</title>
+<meta name="description" content="From a script that turned a recorded interview into a book, to a family record platform, in a few weeks.">
+<link rel="icon" href="../../assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<header class="site-top"><div class="wrap">
+  <a class="brand" href="../../"><img src="../../assets/logo.svg" alt="" width="26" height="26"><span>Lineage</span></a>
+  <nav class="site-nav" aria-label="Site"><a href="../../">Home</a><a href="../../start/">Get started</a><a href="../../quickstart/">Quickstart</a><a href="../../tour/">Tour</a><a href="../../demo/">Live demo</a><a href="../../docs/">Docs</a><a href="../" aria-current=page>Blog</a><a href="https://github.com/rexsaurus/Lineage" class="gh">GitHub</a></nav>
+</div></header>
+<main>
+<article class="doc"><p class="muted"><a href="../">Blog</a> · 1 October 2026</p><h1>How Lineage began</h1><p>Lineage started as <strong>BookAssembler</strong>: a set of scripts and Claude Code skills that took a recorded
+conversation with a relative and turned it into a printed book. The first commit, on 1 October 2026,
+did exactly that: transcribe, split the talk into stories, shape them in the speaker's own voice,
+and set them in Typst.</p>
+<p>It became clear almost at once that the book was the wrong centre. A family's history is not one
+recording. It's letters, photographs, a ship's manifest, a census page, a cousin's memory that
+contradicts a grandmother's. The book is only one way of reading all of that. So the same day the
+project was renamed <strong>Lineage</strong>, and rebuilt around a <strong>record</strong>: plain files in a repository the
+family owns, with the book as an export.</p>
+<h2 id="the-first-day-a-dashboard-and-an-encyclopedia">The first day: a dashboard and an encyclopedia</h2>
+<p>Within that first day Lineage gained a dashboard (Home, Sources, Familypedia, Genealogy, Stories and
+Timeline) and the <strong>Familypedia</strong>, an article for every subject the material names. Releases 0.3.0
+to 0.5.0 all landed on 1 October: article types for people, places, vessels, organizations and
+events; projects that track their Lineage version and update safely; and an invented demo family,
+the Calders, with a tour built from real screenshots.</p>
+<p><img loading="lazy" alt="The Familypedia for the invented demo family" src="../../images/familypedia-person.png" /></p>
+<h2 id="learning-from-a-real-book">Learning from a real book</h2>
+<p>From 5 October, Lineage was used to write a real family's book, and every lesson came back as a
+general rule (no family's names or material ever enter Lineage itself):</p>
+<ul>
+<li><strong>0.6.0</strong> brought the writing rules that made the book trustworthy: every chapter ends with the
+  records it rests on, no "general knowledge" sources, generated illustrations always marked, and
+  chapter dossiers for research. It also brought the public website and its read-only demo.</li>
+<li><strong>0.7.0</strong> added a whole-book index, document exhibits, readable editions of court and service
+  records, an image catalogue, and publishing a real family's dashboard as a website.</li>
+<li>From 10 October the Familypedia grew portrait cards, People, Events and Places tabs, curated
+  encyclopedia articles with numbered references, and image hosting on Cloudflare R2.</li>
+</ul>
+<h2 id="research-rights-and-publishing">Research, rights and publishing</h2>
+<p><strong>0.8.0</strong> (12 October) taught Lineage to clear the rights on a published book before using it, and to
+treat it as a secondary source. <strong>0.9.0</strong> moved every publishing step into the core: chapter PDFs,
+versioned editions, image hosting, face-centred crops, photo restoration and search-engine pages.
+<strong>0.9.1</strong> added private passages, which stay in the record but are never quoted or published, and
+shorter paragraphs. The <a href="../2026-10-13-lineage-0-9/">release notes</a> have the details.</p>
+<p>The principle hasn't changed since the first week: <strong>the family's material is the record, every fact
+points at its source, and nothing is invented.</strong></p></article>
+</main>
+<footer class="site-foot"><div class="wrap">
+  <p>Lineage is open source under the MIT license. <a href="https://github.com/rexsaurus/Lineage">github.com/rexsaurus/Lineage</a></p>
+  <p class="muted">Every family in the screenshots and the demo is invented. Your recordings, transcripts and photographs stay yours: the license does not cover them.</p>
+</div></footer>
+</body>
+</html>

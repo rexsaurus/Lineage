@@ -71,7 +71,8 @@ def log(*a, **k):
 # =========================================================================================
 # page shell
 # =========================================================================================
-NAV = [("", "Home"), ("tour", "Tour"), ("demo", "Live demo"), ("docs", "Docs"), ("install", "Install")]
+NAV = [("", "Home"), ("start", "Get started"), ("quickstart", "Quickstart"), ("tour", "Tour"), ("demo", "Live demo"),
+       ("docs", "Docs"), ("blog", "Blog")]
 
 
 def rel(from_page, to):
@@ -248,6 +249,24 @@ def build_pages(with_example):
     docs = DOCS + ([EXAMPLE_CHAPTER] if with_example else [])
     page_map = {src: dst for src, dst, _ in docs}
     page_map.update({"README.md": "", "examples/demo-lineage": "demo"})
+    # the newcomer pages and the blog (posts are docs/blog/<date>-<slug>.md)
+    page_map.update({"docs/GETTING-STARTED.md": "start", "docs/QUICKSTART.md": "quickstart",
+                     "start": "start", "quickstart": "quickstart", "demo": "demo", "tour": "tour",
+                     "blog": "blog", "install": "install"})
+    posts = []
+    for f in sorted((ROOT / "docs" / "blog").glob("*.md"), reverse=True):
+        raw = f.read_text(encoding="utf-8")
+        fm, body = {}, raw
+        m = re.match(r"^---\n(.*?)\n---\n(.*)$", raw, re.S)
+        if m:
+            body = m.group(2)
+            for line in m.group(1).splitlines():
+                k, _, v = line.partition(":")
+                fm[k.strip()] = v.strip().strip('"')
+        slug = f.stem
+        posts.append({"src": f"docs/blog/{f.name}", "slug": slug, "title": fm.get("title", slug),
+                      "date": fm.get("date", slug[:10]), "summary": fm.get("summary", ""), "body": body})
+        page_map[f"docs/blog/{f.name}"] = f"blog/{slug}"
 
     # assets
     (SITE / "assets").mkdir(parents=True, exist_ok=True)
@@ -274,7 +293,7 @@ def build_pages(with_example):
     <p class="lede">Collect what the family has, check it against the records, and keep it as a sourced,
     browsable record that outlives everyone in it. Recorded interviews, letters, scans and public records
     become a living family encyclopedia, and, at the end, a sourced book.</p>
-    <div class="cta"><a class="btn" href="demo/">Open the live demo</a><a class="btn ghost" href="tour/">Take the tour</a>
+    <div class="cta"><a class="btn" href="start/">Get started</a><a class="btn ghost" href="demo/">Open the live demo</a><a class="btn ghost" href="tour/">Take the tour</a>
       <a class="btn ghost" href="install/">Install</a><a class="btn ghost" href="{GITHUB}">GitHub</a></div>
   </section>
   <figure><a href="demo/"><img class="shot" src="images/home.png" width="1440" height="900"
@@ -374,10 +393,47 @@ make demo            # the dashboard, on a scratch copy of the demo lineage</cod
     docs_index = f'<article class="doc"><h1>Docs</h1><ul class="doclist">{"".join(items)}{readme_link}</ul></article>'
     write(SITE / "docs" / "index.html", page("docs", "Docs", docs_index, "Lineage documentation.", "docs"))
 
+    # --- getting started and quickstart
+    for src, dst, title, desc in (("docs/GETTING-STARTED.md", "start", "Getting started",
+                                   "New to Lineage? What it is, what you need, and your first week, step by step."),
+                                  ("docs/QUICKSTART.md", "quickstart", "Quickstart",
+                                   "Install Lineage, load it into Claude Code, and the prompts for researching a family.")):
+        body = rewrite_links(md_to_html((ROOT / src).read_text(encoding="utf-8")), src, dst, page_map)
+        body = body.replace("<img ", '<img loading="lazy" ')
+        write(SITE / dst / "index.html", page(dst, title, f'<article class="doc">{body}</article>', desc, dst))
+
+    # --- blog: posts, and the release history from CHANGELOG.md
+    def nice(d):
+        try:
+            import datetime
+            return datetime.date.fromisoformat(d).strftime("%-d %B %Y")
+        except Exception:
+            return d
+    for po in posts:
+        dst = f"blog/{po['slug']}"
+        body = rewrite_links(md_to_html(po["body"]), po["src"], dst, page_map).replace("<img ", '<img loading="lazy" ')
+        art = (f'<article class="doc"><p class="muted"><a href="{rel(dst, "blog/")}">Blog</a> · {nice(po["date"])}</p>'
+               f'<h1>{html.escape(po["title"])}</h1>{body}</article>')
+        write(SITE / dst / "index.html", page(dst, po["title"], art, po["summary"], "blog"))
+    releases = []
+    import csv as _csv
+    rc = ROOT / "docs" / "blog" / "releases.csv"          # one hand-written line per release
+    for r in (_csv.DictReader(open(rc, encoding="utf-8")) if rc.exists() else []):
+        releases.append(f'<tr><td><b>{html.escape(r["version"])}</b></td><td class="muted" style="white-space:nowrap">'
+                        f'{nice(r["date"])}</td><td>{html.escape(r["highlights"])}</td></tr>')
+    items = "".join(f'<li><a href="{po["slug"]}/"><b>{html.escape(po["title"])}</b></a> <span class="muted">· {nice(po["date"])}</span>'
+                    f'<br><span class="muted">{html.escape(po["summary"])}</span></li>' for po in posts)
+    blog = (f'<article class="doc"><h1>Blog</h1><p class="lede">What\'s new in Lineage, and how it came to be. '
+            f'New here? Start with <a href="../start/">Getting started</a> or the <a href="../quickstart/">Quickstart</a>.</p>'
+            f'<ul class="doclist">{items}</ul><h2>Releases</h2><table><thead><tr><th>Version</th><th>Date</th><th>Highlights</th></tr></thead>'
+            f'<tbody>{"".join(releases)}</tbody></table><p><a href="../docs/changelog/">The full changelog</a></p></article>')
+    write(SITE / "blog" / "index.html", page("blog", "Blog", blog, "Lineage news, release notes and project history.", "blog"))
+
     # --- 404
     nf = '<article class="doc"><h1>Not here</h1><p>That page doesn\'t exist. <a href="/">Back to Lineage</a>.</p></article>'
     write(SITE / "404.html", page("", "Not found", nf).replace('href="./"', 'href="/"').replace('="assets/', '="/assets/')
-          .replace('="tour/', '="/tour/').replace('="demo/', '="/demo/').replace('="docs/', '="/docs/').replace('="install/', '="/install/'))
+          .replace('="tour/', '="/tour/').replace('="demo/', '="/demo/').replace('="docs/', '="/docs/').replace('="install/', '="/install/')
+          .replace('="start/', '="/start/').replace('="quickstart/', '="/quickstart/').replace('="blog/', '="/blog/'))
 
 
 def write(p, text):

@@ -36,6 +36,8 @@ SHOTS = [
     ("source-lightbox", "#sources?view=gallery", "open_lightbox", False),
     ("source-drawer", "#sources", "open_source", False),
     ("familypedia-person", "#familypedia/anders-calder", None, False),
+    ("familypedia-article", "#familypedia/ruth-calder", None, False),
+    ("familypedia-organization", "#familypedia/duluth-ore-dock-company", None, False),
     ("familypedia-vessel", "#familypedia/s-s-ottavia", None, False),
     ("familypedia-map", "#familypedia?view=map", None, False),
     ("genealogy", "#genealogy", None, False),
@@ -68,6 +70,9 @@ def prepare(tmp):
     for row in data.values():
         row["thumb"] = server._thumbnail(p, row, proj / row["path"])
     (proj / "data" / "sources.json").write_text(json.dumps(data, indent=1))
+    # each story as its own PDF, so the Stories pictures show the Download buttons
+    subprocess.run([sys.executable, str(ROOT / "plugins/lineage/scripts/chapter_pdfs.py"), "--project", str(proj)],
+                   capture_output=True)
     return proj
 
 
