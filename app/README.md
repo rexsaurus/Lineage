@@ -97,7 +97,9 @@ websockets, no extra dependencies.
 - the genealogy rebuild (Claude, evidence checked against the material, no evidence no link),
   review and apply, my edits, GEDCOM round trip;
 - Home: story of the day, featured relative, Needs you, requests, counts, activity;
-- stories with states, rendering to pages, and narration script extraction (bridges refused);
+- stories with states, rendering to pages, narration script extraction (bridges refused), and what each
+  story rests on: citation chips per paragraph and each image's provenance, with a toolbar;
+- the Sources gallery and lightbox; illustrations are marked and never used as a person's picture;
 - settings, identity, stale marks, repo verification, live key checks, voice list.
 
 **Written, not tested end to end on the build machine:** ElevenLabs narration (no key used in

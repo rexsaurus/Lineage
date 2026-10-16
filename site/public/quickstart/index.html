@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quickstart · Lineage</title>
+<meta name="description" content="Install Lineage, load it into Claude Code, and the prompts for researching a family.">
+<link rel="icon" href="../assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="site-top"><div class="wrap">
+  <a class="brand" href="../"><img src="../assets/logo.svg" alt="" width="26" height="26"><span>Lineage</span></a>
+  <nav class="site-nav" aria-label="Site"><a href="../">Home</a><a href="../start/">Get started</a><a href="./" aria-current=page>Quickstart</a><a href="../testdrive/">Test drive</a><a href="../tour/">Tour</a><a href="../demo/">Live demo</a><a href="../docs/">Docs</a><a href="../blog/">Blog</a><a href="https://github.com/rexsaurus/Lineage" class="gh">GitHub</a></nav>
+</div></header>
+<main>
+<article class="doc"><h1 id="quickstart">Quickstart</h1>
+<p>From nothing to a researched family record, with Claude Code doing the work and you approving every
+step that leaves your computer. You need a Mac or Linux machine, Python 3.10+, <code>git</code>,
+<a href="https://github.com/typst/typst#installation">Typst</a> (<code>brew install typst</code>), and a Claude
+subscription with <a href="https://claude.com/claude-code">Claude Code</a>.</p>
+<h2 id="1-install-lineage-and-look-at-the-demo">1. Install Lineage and look at the demo</h2>
+<pre><code class="language-bash">git clone https://github.com/rexsaurus/Lineage.git
+cd Lineage
+make install
+make demo            # the dashboard on an invented family, at http://127.0.0.1:8777
+</code></pre>
+<p><img loading="lazy" alt="The dashboard's Home tab for the invented demo family" src="../images/home.png" /></p>
+<h2 id="2-start-your-familys-lineage">2. Start your family's lineage</h2>
+<pre><code class="language-bash">make new PROJECT=&quot;$HOME/lineages/our-family&quot;   # its own folder and its own private git repo
+cd &quot;$HOME/lineages/our-family&quot;
+make dashboard                                   # leave this running in one terminal
+</code></pre>
+<h2 id="3-load-lineage-into-claude-code">3. Load Lineage into Claude Code</h2>
+<p>In a second terminal, in the family's folder:</p>
+<pre><code class="language-bash">cd &quot;$HOME/lineages/our-family&quot;
+claude
+</code></pre>
+<p>Then, inside Claude Code, install the Lineage skills:</p>
+<pre><code>/plugin marketplace add rexsaurus/Lineage
+/plugin install lineage@lineage
+</code></pre>
+<p>The project already carries a <code>CLAUDE.md</code> and Lineage's rules, so Claude knows where everything
+goes. Check it is working with:</p>
+<pre><code>Where are we? Summarise this lineage and tell me what to do first.
+</code></pre>
+<h2 id="4-the-research-workflow-as-prompts">4. The research workflow, as prompts</h2>
+<p>Paste these one at a time, in order. Each names what to do and what not to do. Change the names and
+places in brackets.</p>
+<h3 id="gather-and-archive-what-the-family-has">Gather and archive what the family has</h3>
+<pre><code>I've put photos, scans and documents in sources/. Catalogue every one: what it is, who and
+what it shows, its date and where it came from. Don't rename or alter any original. Make
+restored copies of damaged photos, keep the raw files, and mark anything generated as an
+illustration.
+</code></pre>
+<pre><code>Transcribe the recordings in sources/, label the speakers, and build the timeline from them.
+Flag every date that is a guess and every place where two accounts disagree.
+</code></pre>
+<pre><code>Fill in book.yaml and data/family_tree.csv from what you've found. Leave out living people
+unless I say otherwise, and list what you're unsure of as questions for me.
+</code></pre>
+<h3 id="hunt-down-public-records-a-research-swarm">Hunt down public records (a research swarm)</h3>
+<pre><code>For each relative in the family tree, run parallel research agents to find publicly
+available records: censuses, vital records, military service files, ship manifests, city
+directories, yearbooks, newspapers, court and land records, and published books. Use only
+open, public sources. Respect robots.txt, never log in to anything or get past a paywall,
+and never download a borrowed (lending-library) book. Save each find with its URL, date
+retrieved and a checksum, and write a research log per person.
+</code></pre>
+<pre><code>Before you use any published book, check its copyright first: US public domain before 1930,
+1930–63 only if the copyright wasn't renewed. Quote public-domain sources freely; paraphrase
+anything in copyright with page numbers and keep quotations under 15 words. Keep private
+research copies out of git and out of anything that syncs.
+</code></pre>
+<h3 id="write-to-archives-and-museums-drafts-only">Write to archives and museums (drafts only)</h3>
+<pre><code>From the research gaps, work out which archives, libraries, museums, historical societies
+and courts would hold what we're missing. Find each one's current research-request address
+from its own website. Write a short, specific request to each: who the person is, the
+dates, what we already have, exactly what we hope they hold, and an offer to pay fees.
+Save every email as a Gmail DRAFT and show me the list. Do not send anything until I say
+&quot;send it&quot; for that email.
+</code></pre>
+<pre><code>Every two hours, check my inbox for replies from those archives. For each new reply: save
+attachments to the project (never to git), ingest the records into the right person's
+research notes, log it in REQUESTS-SENT.md, and tell me in a line or two what arrived and
+anything they ask for: fees, forms or questions. Report any bounced request with an
+alternative address, as a draft. Never reply, pay or fill in a form without my go-ahead.
+</code></pre>
+<h3 id="turn-it-into-a-familypedia-and-a-book">Turn it into a Familypedia and a book</h3>
+<pre><code>Write a Familypedia article for every relative, and for the places, ships, companies and
+regiments they're connected to. Every sentence needs a footnote to a recording or a
+record. Keep family memory and documents side by side where they disagree. Use real
+photographs only; never use an illustration as a person's portrait.
+</code></pre>
+<pre><code>Write the chapter for [name], from the recordings and the records we've gathered. Keep
+quotations exact, cite every paragraph, mark anything you'd like to add that isn't sourced
+as a bridge for me to approve, and keep paragraphs under about 130 words. Then build it as
+a PDF and show me.
+</code></pre>
+<pre><code>Remove [the statement / the topic] about [relative] from the chapter, the Familypedia and
+the timeline, and mark the interview passages it came from as private so they're never
+published.
+</code></pre>
+<h3 id="publish-and-share">Publish and share</h3>
+<pre><code>Build the book with the next version number, write the changelog entry, and publish the
+read-only family website with each chapter downloadable. Hide sources and settings, keep
+living people private, and run the privacy check before you deploy.
+</code></pre>
+<h2 id="5-what-you-approve-always">5. What you approve, always</h2>
+<p>Lineage and Claude never do these on their own:</p>
+<ul>
+<li><strong>Send</strong> an email, <strong>pay</strong> a fee or <strong>submit</strong> a form.</li>
+<li><strong>Publish</strong> anything, or upload a private research copy.</li>
+<li><strong>Add</strong> a fact that no recording or record supports. It waits as a bridge for you to approve.</li>
+</ul>
+<h2 id="next">Next</h2>
+<ul>
+<li><a href="../start/">Getting started</a>, the same journey explained for newcomers, with pictures.</li>
+<li><a href="../docs/howto/">The how-to guide</a>, everything in detail.</li>
+<li><a href="../demo/">The live demo</a>, the dashboard in your browser, read-only.</li>
+</ul></article>
+</main>
+<footer class="site-foot"><div class="wrap">
+  <p>Lineage is open source under the MIT license. <a href="https://github.com/rexsaurus/Lineage">github.com/rexsaurus/Lineage</a> · <a href="../changelog/">Site changelog</a></p>
+  <p class="muted">Every family in the screenshots and the demo is invented. Your recordings, transcripts and photographs stay yours: the license does not cover them.</p>
+</div></footer>
+</body>
+</html>

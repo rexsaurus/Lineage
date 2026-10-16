@@ -4,6 +4,7 @@
    Every card carries its tier and its citations; nothing here is inferred for display. */
 const TIER_LABEL={documented:'documented', witnessed:'witnessed', told:'told', lore:'family lore', unconfirmed:'unconfirmed'};
 BUILDERS.timeline = async function(el, rest, q={}){
+  await ensureFP();                                 // entry chips need the Familypedia's portraits
   el.innerHTML='';
   head(el,{kicker:'Timeline', title:'What happened, and when', lede:'Every dated event in the material, with how sure it is and where it comes from. Gaps show where the next question should go.'});
   el.insertAdjacentHTML('beforeend', `<div class="card"><div class="row">
@@ -38,7 +39,7 @@ function tlFiltered(){
     && (!$('#tl-hl').checked || e.highlight) && (!$('#tl-conf').checked || e.conflict));
 }
 function evCard(e){
-  const pl = p => e.person_slugs[p] ? `<a class="chiplink" href="#familypedia/${encodeURIComponent(e.person_slugs[p])}">${esc(p)}</a>` : `<span class="chiplink">${esc(p)}</span>`;
+  const pl = p => e.person_slugs[p] ? entryChip(e.person_slugs[p], p, 'person') : `<span class="chiplink">${esc(p)}</span>`;
   return `<div class="ev tc-${esc(e.tier)}${e.highlight?' hl':''}${e.conflict?' conf':''}" id="ev-${esc(e.id)}">
     <button class="star${e.starred?' on':''}" data-star="${esc(e.id)}" aria-label="${e.starred?'Unstar':'Star'} this event" aria-pressed="${e.starred}">${e.starred?'★':'☆'}</button>
     ${e.photo?`<img class="ph" src="${fileUrl(e.photo)}" alt="">`:''}
@@ -46,10 +47,10 @@ function evCard(e){
     <h4>${e.slug?`<a class="wl" href="#familypedia/${encodeURIComponent(e.slug)}">${esc(e.title)}</a>`:esc(e.title)}</h4>
     ${e.quote?`<p class="quote" style="font-size:14px;margin:4px 0">“${esc(e.quote)}”</p>`:''}
     ${e.conflict?`<div class="note" style="padding:7px 10px;margin:6px 0;font-size:12.8px;background:#FBF4E4"><b>The sources disagree:</b> ${esc(e.conflict)}</div>`:''}
-    <div class="tags">${e.people.map(pl).join('')}${e.place?(e.place_slug?`<a class="chiplink" href="#familypedia/${encodeURIComponent(e.place_slug)}">⌖ ${esc(e.place)}</a>`:`<span class="chiplink">⌖ ${esc(e.place)}</span>`):''}
+    <div class="tags">${e.people.map(pl).join('')}${e.place?(e.place_slug?entryChip(e.place_slug, e.place, 'place'):`<span class="chiplink">${esc(e.place)}</span>`):''}
       ${e.cites.map(c=>`<a class="cite" data-cite="${esc(c)}">${esc(c)}</a>`).join('')}
-      ${e.story_id&&e.story?`<a class="chiplink" href="#stories?read=${encodeURIComponent(e.story_id)}">${esc(L.Story)}: ${esc(e.story)}</a>`:''}
-      ${(e.subjects||[]).map(s=>`<a class="chiplink" href="#familypedia/${encodeURIComponent(s.slug)}">${TYPE_ICON[s.type]||''} ${esc(s.title)}</a>`).join('')}
+      ${e.story_id&&e.story?storyChip(e.story_id, e.story):''}
+      ${(e.subjects||[]).map(s=>entryChip(s.slug, s.title, s.type)).join(' ')}
       <button class="chiplink" data-evtag="${esc(e.id)}" title="Tag this event to any article">Tag…</button></div></div>`;
 }
 function drawTimeline(){

@@ -39,9 +39,11 @@ function gName(id){ const p=G.data.people.find(x=>x.id===id); return p ? (p.name
 function drawGenealogy(){
   const d=G.data;
   $$('[data-gview]').forEach(b=>{ b.className='btn sm'+(b.dataset.gview===G.view?'':' ghost'); b.setAttribute('aria-selected', b.dataset.gview===G.view); });
-  $('#g-review').classList.toggle('hidden', !d.pending);
+  $('#g-review').classList.toggle('hidden', !d.pending || !!d.from_file);
+  $('#g-rebuild').classList.toggle('hidden', !!d.from_file);
   $('#g-note').innerHTML = (d.applied?`Last rebuild applied ${esc(ago(d.applied))}${d.note?' · '+esc(d.note):''}.`:'No rebuild applied yet. "Rebuild from sources" reads the material and proposes a tree for you to review.')
-    + (d.pending?' <b>A rebuild is waiting for your review.</b>':'') + (d.conflicts.length?` <span class="pill warn">${d.conflicts.length} contradiction${d.conflicts.length>1?'s':''} kept</span>`:'');
+    + (d.pending&&!d.from_file?' <b>A rebuild is waiting for your review.</b>':'') + (d.conflicts.length?` <span class="pill warn">${d.conflicts.length} contradiction${d.conflicts.length>1?'s':''} kept</span>`:'');
+  if(d.from_file){ $('#g-note').innerHTML=`From the family tree file, <code>${esc(d.from_file)}</code>: ${d.people.length} people, ${d.links.length} links, each with its evidence. Click anyone to open their Familypedia article.`; }
   if(!d.people.length){ $('#g-focus').innerHTML='<option>No one yet</option>'; $('#g-focus').disabled=true; $('#g-body').innerHTML='<div class="card"><p class="empty">No people yet. They appear as sources are read; then "Rebuild from sources" links them with evidence.</p></div>'; return; }
   const linked = new Set(d.links.flatMap(l=>[l.a,l.b]));
   if(!G.focus || !d.people.some(p=>p.id===G.focus)) G.focus = (d.subject && linked.has(d.subject)) ? d.subject : ([...linked][0] || d.people[0].id);
@@ -53,13 +55,20 @@ function drawGenealogy(){
       <div class="legend">${Object.entries(G_TIER).map(([k,v])=>`<span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" class="glink ${k}"/></svg>${esc(v)}</span>`).join('')}<span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" class="glink mine"/></svg>my edit</span><span><svg width="18" height="12"><rect x="1" y="1" width="16" height="10" rx="3" fill="#F3EEE4" stroke="#C9BFAE" stroke-dasharray="3 2"/></svg>unknown parents</span></div>
       <div id="g-float"></div></div>
     <aside class="card" id="g-side" style="margin:0;position:sticky;top:84px;max-height:calc(100vh - 110px);overflow-y:auto"></aside></div>`;
+  const fresh = !G.vb;
   $('#g-canvas').insertAdjacentHTML('afterbegin', treeSvg(false));
+  if(fresh && !G.fitAll){                         // open at reading size, centred on the focus person; "fit" shows everyone
+    const c=$('#g-canvas'), f=G.lay.pos[G.focus], w=Math.max(c.clientWidth,320), h=Math.max(c.clientHeight,300);
+    if(f && G.vb.w > w*1.15){ G.vb={x:f.x+G.lay.W/2-w/2, y:f.y+G.lay.H/2-h/2, w, h}; $('#g-canvas svg').setAttribute('viewBox', `${G.vb.x} ${G.vb.y} ${G.vb.w} ${G.vb.h}`); }
+  }
+  G.fitAll=false;
   bindPanZoom();
   const lay=G.lay, floating=d.people.filter(p=>!lay.nodes.some(n=>n.id===p.id));
   $('#g-float').innerHTML = floating.length ? `<div class="card" style="margin-top:12px"><h3>Not in this view · ${floating.length}</h3><p class="sub">${G.layout==='all'?'No evidenced link to the people above yet. Nothing is guessed; add a source, or state a link yourself.':'Outside this layout. Switch to "Everyone connected", or centre on someone else.'}</p>
-    <div class="float">${floating.map(p=>`<button class="chiplink" data-gpick="${esc(p.id)}">${esc(p.name||p.id)}${linked.has(p.id)?'':' · unattached'}</button>`).join('')}</div></div>` : '';
+    <div class="float">${floating.map(p=>entryChip(p.article, p.name||p.id, 'person', '', p.photo||null, p.article?'':`data-gpick="${esc(p.id)}"`)).join(' ')}</div></div>` : '';
   $$('[data-gpick]').forEach(b=>b.onclick=()=>selectPerson(b.dataset.gpick));
-  $$('#g-canvas .gnode').forEach(n=>n.onclick=e=>{ e.stopPropagation(); if(n.dataset.id && !n.classList.contains('unknown')) selectPerson(n.dataset.id); });
+  $$('#g-canvas .gnode').forEach(n=>n.onclick=e=>{ e.stopPropagation(); if(!n.dataset.id || n.classList.contains('unknown')) return;
+    const p=d.people.find(x=>x.id===n.dataset.id); if(p && p.article){ location.hash='#familypedia/'+encodeURIComponent(p.article); return; } selectPerson(n.dataset.id); });
   selectPerson(G.sel && d.people.some(p=>p.id===G.sel) ? G.sel : G.focus, true);
 }
 /* ---- layout: generations from the focus person; parents above, children below, spouses beside */
@@ -81,7 +90,7 @@ function layoutTree(){
   if(G.layout!=='desc') order.filter(id=>gen[id]<=0 && !(up[id]||[]).length && (G.layout!=='all' || id===G.focus)).forEach(id=>{ const u='?'+id; gen[u]=gen[id]-1; unknown.push({id:u, child:id}); order.push(u); });
   const gens={}; order.forEach(id=>{ (gens[gen[id]]=gens[gen[id]]||[]).push(id); });
   const keys=Object.keys(gens).map(Number).sort((a,b)=>a-b);
-  const W=156, H=48, GX=28, GY=96, pos={};
+  const W=188, H=46, GX=22, GY=86, pos={};
   keys.forEach((g,gi)=>{
     let row=gens[g];
     if(gi>0){ const prev=gens[keys[gi-1]]; const bc=id=>{ const ps=(up[id]||[]).filter(p=>prev.includes(p)); const ix=ps.map(p=>prev.indexOf(p)); return ix.length?ix.reduce((a,b)=>a+b,0)/ix.length:(prev.indexOf('?'+id)>=0?prev.indexOf('?'+id):row.indexOf(id)); };
@@ -115,9 +124,12 @@ function treeSvg(standalone){
   const nodes=lay.nodes.map(n=>{ if(n.unknown) return `<g class="gnode unknown" data-id="${esc(n.id)}" transform="translate(${n.x},${n.y})"><rect width="${W}" height="${H}" rx="9"/><text x="${W/2}" y="${H/2+4}" text-anchor="middle" class="d">parents unknown</text></g>`;
     let p=d.people.find(x=>x.id===n.id)||{name:n.id};
     if(standalone && p.living) p={name:'Living person', dates:''};      // living people stay out of exports
-    return `<g class="gnode${n.id===G.focus?' focus':''}${n.id===G.sel?' sel':''}${p.by==='me'?' mine':''}" data-id="${esc(n.id)}" transform="translate(${n.x},${n.y})" tabindex="0"><rect width="${W}" height="${H}" rx="9"/>
-      <text x="12" y="20">${esc(trunc(p.name||n.id,21))}</text><text x="12" y="36" class="d">${esc(trunc(p.dates||'dates unknown',24))}</text><title>${esc(p.name||n.id)}</title></g>`; }).join('');
-  const style = standalone ? `<style>.gnode rect{fill:#FFFDF8;stroke:#C9BFAE;stroke-width:1.2}.gnode.focus rect{stroke:#C96F4A;stroke-width:2.4}.gnode.unknown rect{fill:#F3EEE4;stroke-dasharray:4 3}.gnode text{font-family:Helvetica,Arial,sans-serif;font-size:12.5px;fill:#1C1A17}.gnode text.d{font-size:11px;fill:#7C756A}.glink{fill:none;stroke-width:1.6}.glink.documented{stroke:#3D3A35}.glink.told{stroke:#C96F4A}.glink.lore{stroke:#B07BB0;stroke-dasharray:6 4}.glink.unconfirmed{stroke:#B5AC9C;stroke-dasharray:2 4}.glink.mine{stroke:#4F7A54}.glink.spouse{stroke-width:2.4}</style>` : '';
+    // the portrait chip, drawn in the tree: round picture at the left, name and dates beside it
+    const pic = p.photo && !(standalone && p.living) ? thumbSrc(p.photo) : null, tx = pic ? H+4 : 16, cid='gc-'+n.id.replace(/[^a-z0-9-]/gi,'');
+    return `<g class="gnode${n.id===G.focus?' focus':''}${n.id===G.sel?' sel':''}${p.by==='me'?' mine':''}${p.article?' linked':''}" data-id="${esc(n.id)}" transform="translate(${n.x},${n.y})" tabindex="0"><rect width="${W}" height="${H}" rx="${H/2}"/>
+      ${pic?`<clipPath id="${cid}"><circle cx="${H/2}" cy="${H/2}" r="${H/2-5}"/></clipPath><image href="${esc(pic)}" x="5" y="5" width="${H-10}" height="${H-10}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${cid})"/>`:''}
+      <text x="${tx}" y="21">${esc(trunc(p.name||n.id,pic?19:23))}</text><text x="${tx}" y="35" class="d">${esc(trunc(p.dates||'',pic?22:26))}</text><title>${esc(p.name||n.id)}${p.article?' · open in the Familypedia':''}</title></g>`; }).join('');
+  const style = standalone ? `<style>.gnode rect{fill:#FFFDF8;stroke:#C9BFAE;stroke-width:1.2}.gnode.focus rect{stroke:#C96F4A;stroke-width:2.4}.gnode.unknown rect{fill:#F3EEE4;stroke-dasharray:4 3}.gnode text{font-family:Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;fill:#1C1A17}.gnode text.d{font-size:12px;font-weight:500;fill:#4A453E}.glink{fill:none;stroke-width:1.6}.glink.documented{stroke:#3D3A35}.glink.told{stroke:#C96F4A}.glink.lore{stroke:#B07BB0;stroke-dasharray:6 4}.glink.unconfirmed{stroke:#B5AC9C;stroke-dasharray:2 4}.glink.mine{stroke:#4F7A54}.glink.spouse{stroke-width:2.4}</style>` : '';
   return `<svg xmlns="http://www.w3.org/2000/svg" ${standalone?`width="${Math.round(box.w)}" height="${Math.round(box.h)}"`:''} viewBox="${vb.x} ${vb.y} ${vb.w} ${vb.h}" role="img" aria-label="Family tree">${style}<rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" fill="${standalone?'#fff':'none'}"/>${links}${nodes}</svg>`;
 }
 function bindPanZoom(){
@@ -130,7 +142,7 @@ function bindPanZoom(){
   c.onpointermove=e=>{ if(!drag) return; const r=c.getBoundingClientRect(); const k=G.vb.w/r.width;
     G.vb.x=drag.vx-(e.clientX-drag.x)*k; G.vb.y=drag.vy-(e.clientY-drag.y)*k; apply(); };
   c.onpointerup=()=>{ drag=null; c.classList.remove('drag'); };
-  $('#gz-in').onclick=()=>zoom(1/1.25); $('#gz-out').onclick=()=>zoom(1.25); $('#gz-fit').onclick=()=>{ G.vb=null; drawGenealogy(); };
+  $('#gz-in').onclick=()=>zoom(1/1.25); $('#gz-out').onclick=()=>zoom(1.25); $('#gz-fit').onclick=()=>{ G.vb=null; G.fitAll=true; drawGenealogy(); };
 }
 /* ---- the side panel: who this is, every link with its evidence, and my edits */
 function selectPerson(id, quiet){
@@ -140,16 +152,16 @@ function selectPerson(id, quiet){
   const say=l=>{ const other=l.a===id?l.b:l.a;
     const rel = l.rel==='parent' ? (l.a===id?'parent of':'child of') : l.rel+' of';
     return `<div style="border-top:1px solid var(--line);padding:8px 0">
-      <div class="row" style="gap:6px"><span>${esc(rel)} <button class="linkish" data-gpick="${esc(other)}">${esc(gName(other))}</button></span><span class="spacer"></span>
+      <div class="row" style="gap:6px"><span>${esc(rel)} ${(o=>entryChip(o&&o.article, gName(other), 'person', '', o&&o.photo||null, o&&o.article?'':`data-gpick="${esc(other)}"`))(d.people.find(x=>x.id===other))}</span><span class="spacer"></span>
         <select data-gtier="${esc(l.id)}" style="padding:3px 6px;font-size:12px;width:auto" aria-label="How sure">${Object.entries(G_TIER).map(([k,v])=>`<option value="${k}" ${l.tier===k?'selected':''}>${esc(v)}</option>`).join('')}</select>
         <button class="btn ghost sm" data-gdel="${esc(l.id)}" title="Remove this link (recorded as my edit)">×</button></div>
       ${(l.evidence||[]).map(e=>`<p class="quote" style="font-size:13.4px;margin:5px 0">${e.quote?'“'+esc(e.quote)+'”':''} ${/^\[?S\d+ \d\d:/.test(e.cite||'')?`<a class="cite" data-cite="${esc(e.cite)}">${esc(e.cite)}</a>`:`<span class="derived">${esc(e.cite||'')}</span>`}</p>`).join('')||'<p class="derived">no evidence recorded</p>'}
       <span class="derived">${l.by==='me'?'my edit':'derived from the sources'}</span></div>`; };
   const merges=(d.merges||[]).filter(m=>m.keep===id);
-  $('#g-side').innerHTML = `<div class="row" style="align-items:flex-start;gap:12px">${p.photo?`<img class="portrait" style="width:64px;height:64px" src="${fileUrl(p.photo)}" alt="">`:`<div class="portrait" style="width:64px;height:64px;font-size:26px">${esc((p.name||'?')[0])}</div>`}
+  $('#g-side').innerHTML = `<div class="row" style="align-items:flex-start;gap:12px">${p.photo?`<img class="portrait" style="width:64px;height:64px" src="${fileUrl(p.photo)}" alt="">`:''}
       <div style="flex:1;min-width:0"><h3 style="font-family:var(--serif);font-size:20px">${esc(p.name||p.id)}</h3><div style="font-size:13px;color:var(--ink-3)">${esc(p.dates||'dates unknown')}${p.living?' · living':''}</div>
       ${(p.aliases||[]).length?`<div style="font-size:12.4px;color:var(--ink-3)">also ${p.aliases.map(esc).join(', ')}</div>`:''}<span class="derived">${p.by==='me'?'edited by me':'derived'}</span></div></div>
-    <div class="row" style="gap:6px;margin:10px 0">${p.article?`<a class="chiplink" href="#familypedia/${encodeURIComponent(p.article)}">Familypedia</a>`:''}<button class="chiplink" id="gp-focus">Centre the tree here</button>
+    <div class="row" style="gap:6px;margin:10px 0">${p.article?entryChip(p.article, p.name||p.id, 'person', '', p.photo||null):''}<button class="chiplink" id="gp-focus">Centre the tree here</button>
       <span class="pill">${p.n_sources||0} source${p.n_sources!==1?'s':''}</span>${p.has_story?`<span class="pill ok">in a ${L.story}</span>`:''}</div>
     <h4 style="margin:12px 0 2px;font-size:13.5px">Relationships · ${mine.length}</h4>${mine.map(say).join('')||'<p class="empty" style="padding:6px 0">No evidenced relationships. Nothing is guessed.</p>'}
     <h4 style="margin:14px 0 6px;font-size:13.5px">Edit <span class="derived">recorded as mine, kept across rebuilds</span></h4>
@@ -194,10 +206,9 @@ function drawCast(){
   const d=G.data, subj=d.subject;
   const people=d.people.slice().sort((a,b)=>(b.n_sources||0)-(a.n_sources||0) || (a.name||'').localeCompare(b.name||''));
   const nlinks=id=>d.links.filter(l=>l.a===id||l.b===id).length;
-  $('#g-body').innerHTML = `<div class="cast">${people.map(p=>`<div class="card"><div class="row" style="gap:10px">${p.photo?`<img class="portrait" style="width:52px;height:52px" src="${fileUrl(p.photo)}" alt="">`:`<div class="portrait" style="width:52px;height:52px;font-size:22px">${esc((p.name||'?')[0])}</div>`}
-      <div style="min-width:0"><b style="font-family:var(--serif);font-size:16.5px">${esc(p.name||p.id)}</b><div style="font-size:12.6px;color:var(--ink-3)">${esc(p.dates||'dates unknown')}${p.id===subj?' · the subject':''}</div></div></div>
+  $('#g-body').innerHTML = `<div class="cast">${people.map(p=>`<div class="card"><div>${entryChip(p.article, p.name||p.id, 'person', '', p.photo||null)}<div style="font-size:12.6px;color:var(--ink-3);margin:4px 0 0 4px">${esc(p.dates||'')}${p.id===subj?' · the subject':''}</div></div>
     <div class="row" style="gap:5px"><span class="pill">${p.n_sources||0} source${p.n_sources!==1?'s':''}</span><span class="pill ${nlinks(p.id)?'':'warn'}">${nlinks(p.id)?nlinks(p.id)+' link'+(nlinks(p.id)>1?'s':''):'unattached'}</span>${p.has_story?`<span class="pill ok">in a ${L.story}</span>`:''}</div>
-    <div class="row" style="gap:6px">${p.article?`<a class="chiplink" href="#familypedia/${encodeURIComponent(p.article)}">Familypedia</a>`:''}<button class="chiplink" data-gtree="${esc(p.id)}">In the tree</button></div></div>`).join('')}</div>`;
+    <div class="row" style="gap:6px"><button class="chiplink" data-gtree="${esc(p.id)}">In the tree</button></div></div>`).join('')}</div>`;
   $$('[data-gtree]').forEach(b=>b.onclick=()=>{ G.view='tree'; G.focus=b.dataset.gtree; G.sel=b.dataset.gtree; G.vb=null; drawGenealogy(); });
 }
 /* ---- rebuild with review: nothing changes until I approve it */

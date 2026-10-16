@@ -1,0 +1,11 @@
+version,date,highlights
+0.9.1,2026-10-13,"Private passages that are never quoted or published; paragraphs kept under 130 words"
+0.9.0,2026-10-12,"Publishing built in: chapter PDFs, versioned editions, image hosting, face-centred crops, photo restoration, search-engine pages"
+0.8.0,2026-10-12,"Copyright checks for published books; open Internet Archive downloads; encyclopedia articles for any subject; a digitization work spec"
+0.7.0,2026-10-08,"Whole-book index; document exhibits; readable editions of records; an image catalogue; publishing a family's dashboard"
+0.6.0,2026-10-05,"Writing rules from a real book: sources on every chapter, marked illustrations, epigraphs; chapter research dossiers; the public website"
+0.5.0,2026-10-01,"The invented demo family, the Calders; a tour built from real screenshots"
+0.4.0,2026-10-01,"Projects track their Lineage version and update safely; a Makefile in every project"
+0.3.2,2026-10-01,"Places on a route link back to the ships and voyages that passed them"
+0.3.1,2026-10-01,"Merged Familypedia articles keep every name; links into the family tree"
+0.3.0,2026-10-01,"The dashboard and the Familypedia's article types"

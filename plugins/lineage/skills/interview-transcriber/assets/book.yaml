@@ -27,3 +27,16 @@ narration:
   subject_name: ""      # how the narrative names the subject after first mention, e.g. "Ruth"
 front:
   introduction_title: "Introduction"   # or "Preface" / "About This Book"
+  illustrations_note: "The illustrations in this book are artist's renderings, not photographs."
+                        # printed on the copyright page when any placed image is an illustration;
+                        # false leaves it out
+chapters:
+  min_pages: 10         # a chapter's minimum, measured by building it; reached with real material
+                        # or by combining sparse chapters, never by padding (0 = no minimum)
+  epigraphs: 1          # epigraphs per chapter by default (a family-history chapter may carry two)
+research:
+  user_agent: ""        # names the project only, e.g. "Lineage family research (calder-book)";
+                        # never anyone's email address. Blank: "Lineage family research".
+workflow:
+  gates: [speakers, chapter_map, final]   # where work stops for the author (book-generator);
+                        # the author may add gates (e.g. each_chapter) or ask for a full first pass

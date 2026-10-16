@@ -4,7 +4,7 @@ let srcPoll=null;
 BUILDERS.sources = function(el, rest, q={}){
   S.srcQ = q;
   el.innerHTML='';
-  head(el,{kicker:'Sources', title:'What the book is made from', lede:'Recordings, scans, letters, documents. Each file is scanned, named, summarized and indexed as it lands. Originals are never modified or renamed on disk.'});
+  head(el,{kicker:'Sources', title:'Everything the family has', lede:'Recordings, photographs, scans, letters and documents, from everyone who contributes. Each one is scanned, named, summarized, tagged and indexed as it lands. Originals are never modified or renamed on disk.'});
   el.insertAdjacentHTML('beforeend', `
     <div class="drop" id="drop"><p style="font-size:16px;color:var(--ink)">Drop files here</p><p>audio · video · pdf · images · text — scanned in the background, ten at a time is fine</p>
       <div class="row" style="justify-content:center;margin-top:10px"><button class="btn ghost sm" id="pick">Choose files</button><button class="btn ghost sm" id="from-drive">Add from Drive folder</button><button class="btn ghost sm" id="scan-all">Scan unindexed files</button><button class="btn ghost sm" id="show-trash">Trash</button></div>
@@ -13,7 +13,8 @@ BUILDERS.sources = function(el, rest, q={}){
       <input type="search" id="src-filter" placeholder="Search names, summaries, notes and the text inside" style="max-width:380px">
       <select id="src-sort" style="max-width:190px"><option value="name">Sort: name</option><option value="added">Sort: date added</option><option value="content">Sort: date of content</option><option value="bytes">Sort: size</option><option value="status">Sort: status</option></select>
       <label class="toggle" style="padding:0;margin:0"><input type="checkbox" id="src-group" checked><div><b>Group by kind</b></div></label>
-      <span id="src-hfilter"></span><span class="spacer"></span><span class="pill" id="src-count"></span></div>
+      <span id="src-hfilter"></span><span class="spacer"></span><span class="pill" id="src-count"></span>
+      <div class="seg" role="group" aria-label="View"><button class="btn ghost sm" data-view="table">Table</button><button class="btn ghost sm" data-view="gallery">Gallery</button></div></div>
       <div class="row hidden" id="src-bulk" style="margin-bottom:10px;background:#F3EEE4;border-radius:9px;padding:8px 12px"><b id="src-nsel"></b>
         <button class="btn ghost sm" id="bulk-reingest">Re-ingest</button><button class="btn ghost sm" id="bulk-tag">Tag…</button><button class="btn ghost sm" id="bulk-subject">Tag to a subject…</button><button class="btn ghost sm" id="bulk-del">Delete…</button><button class="btn ghost sm" id="bulk-clear">Clear selection</button></div>
       <div id="src-table"><p class="empty">Loading…</p></div></div>`);
@@ -39,6 +40,8 @@ BUILDERS.sources = function(el, rest, q={}){
   };
   let t=null; $('#src-filter').oninput=()=>{ clearTimeout(t); t=setTimeout(drawSources,220); };
   ['src-sort','src-group'].forEach(id=>$('#'+id).oninput=drawSources);
+  try{ S.srcView = q.view || localStorage.getItem('lineage.srcView') || 'table'; }catch(e){ S.srcView = q.view || 'table'; }
+  $$('[data-view]', el).forEach(b=>b.onclick=()=>{ S.srcView=b.dataset.view; try{ localStorage.setItem('lineage.srcView', S.srcView); }catch(e){} drawSources(); });
   loadSources();
 };
 async function loadSources(){
@@ -86,6 +89,9 @@ async function drawSources(){
   rows=rows.slice().sort({name:(a,b)=>a.display_name.localeCompare(b.display_name), added:(a,b)=>b.added.localeCompare(a.added), content:(a,b)=>(a.content_date||'9999').localeCompare(b.content_date||'9999'), bytes:(a,b)=>b.bytes-a.bytes, status:(a,b)=>a.status.localeCompare(b.status)}[sort]);
   $('#src-count').textContent=`${rows.length} of ${S.sources.length}`;
   if(!S.sources.length){ $('#src-table').innerHTML='<p class="empty">No sources yet. Add a recording, a photo or a document to start.</p>'; return; }
+  $$('.seg [data-view]').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.view===S.srcView)));
+  const bulkBar=$('#src-bulk'); bulkBar.classList.toggle('hidden', !S.sel.size); $('#src-nsel').textContent=`${S.sel.size} selected`;
+  if(S.srcView==='gallery'){ drawGallery(rows); return; }
   const order=['audio','video','text','pdf','image','other'];
   const groups = group ? order.map(k=>[k, rows.filter(r=>r.kind===k)]).filter(([,v])=>v.length) : [[null, rows]];
   const used = x => x.cited_in ? `<span class="pill ok">used in ${x.cited_in} ${x.cited_in>1?L.stories:L.story}</span>` : '';
@@ -237,6 +243,56 @@ async function bulkTag(){
     <div class="grid three"><div><label>Person</label><input type="text" id="bt-person" placeholder="Aunt May"></div><div><label>Place</label><input type="text" id="bt-place" placeholder="Duluth, Minnesota"></div><div><label>Date or range</label><input type="text" id="bt-date" placeholder="1950–1955"></div></div>
     <div class="row" style="margin-top:14px"><button class="btn go" id="bt-go">Apply to ${S.sel.size}</button></div>`);
   $('#bt-go').onclick=async()=>{ await api('/api/engine/source/bulk',{method:'POST',body:{action:'tag', rids:[...S.sel], person:$('#bt-person').value.trim(), place:$('#bt-place').value.trim(), date:$('#bt-date').value.trim()}}); closeOverlay(); loadSources(); alertNote('Tagged.'); };
+}
+/* ------------------------------------------------------------------ gallery and lightbox */
+function cardThumb(x, big=false){
+  if(x.kind==='image') return `<img src="${fileUrl(big?x.id:(x.thumb||x.id))}" alt="${esc(x.display_name)}" loading="lazy">`;
+  if(x.thumb) return `<img src="${fileUrl(x.thumb)}" alt="${esc(x.display_name)}" loading="lazy">`;
+  return `<div class="gk"><span class="icon ${esc(x.kind)}">${KIND_LABEL[x.kind]||'FILE'}</span></div>`;
+}
+function drawGallery(rows){
+  S.galleryRows=rows;
+  $('#src-table').innerHTML = rows.length ? `<div class="gallery">${rows.map((x,i)=>`<figure class="gcard${S.sel.has(x.rid)?' on':''}" data-gi="${i}" tabindex="0">
+      ${x.rid?`<label class="gsel" title="Select"><input type="checkbox" data-sel="${esc(x.rid)}" ${S.sel.has(x.rid)?'checked':''}></label>`:''}
+      <div class="gimg">${cardThumb(x)}</div>
+      <figcaption><b>${esc(x.display_name)}</b>${x.illustration?' <span class="pill warn" title="Generated or drawn: never presented as a photograph">illustration</span>':''}
+        <span class="derived">${esc(x.doc_kind||x.kind)}${x.content_date?' · '+esc(x.content_date):''}${x.added_by&&x.added_by!=='me'?' · added by '+esc(x.added_by):''}</span>
+        ${(x.people||[]).length?`<span class="gppl">${x.people.slice(0,3).map(esc).join(', ')}${x.people.length>3?' +'+(x.people.length-3):''}</span>`:''}</figcaption></figure>`).join('')}</div>`
+    : '<p class="empty">Nothing matches.</p>';
+  $$('.gcard').forEach(c=>{ const open=()=>openLightbox(+c.dataset.gi); c.onclick=e=>{ if(e.target.closest('.gsel')) return; open(); }; c.onkeydown=e=>{ if(e.key==='Enter') open(); }; });
+  $$('.gallery [data-sel]').forEach(c=>c.onchange=()=>{ c.checked?S.sel.add(c.dataset.sel):S.sel.delete(c.dataset.sel); drawSources(); });
+}
+async function openLightbox(i){
+  const rows=S.galleryRows||[]; const x=rows[i]; if(!x) return;
+  const media = x.kind==='audio'||x.kind==='video';
+  const view = x.kind==='image' ? `<img src="${fileUrl(x.id)}" alt="${esc(x.display_name)}">`
+    : x.kind==='pdf' ? `${x.thumb?`<img src="${fileUrl(x.thumb)}" alt="">`:''}<a class="btn ghost sm" href="${fileUrl(x.id)}" target="_blank" rel="noopener">Open the PDF</a>`
+    : media ? `${x.thumb?`<img src="${fileUrl(x.thumb)}" alt="" style="max-height:120px">`:''}<audio controls src="${fileUrl(x.id)}" style="width:100%"></audio>`
+    : `<div class="gk big"><span class="icon ${esc(x.kind)}">${KIND_LABEL[x.kind]||'FILE'}</span></div>`;
+  $('#overlay').innerHTML=`<div class="scrim lb-scrim"></div><div class="lightbox" role="dialog" aria-label="${esc(x.display_name)}">
+    <div class="lb-view">${view}<button class="lb-nav prev" aria-label="Previous" ${i?'':'disabled'}>‹</button><button class="lb-nav next" aria-label="Next" ${i<rows.length-1?'':'disabled'}>›</button></div>
+    <aside class="lb-side"><div class="row"><span class="derived">${i+1} of ${rows.length}</span><span class="spacer"></span><button class="btn ghost sm" id="lb-close">Close</button></div>
+      <h3>${esc(x.display_name)}</h3>
+      ${x.illustration?'<p class="note" style="background:#FBF4E4">A generated or drawn <b>illustration</b>. It may illustrate a story; it is never presented as a photograph, and never stands in for anyone\'s portrait.</p>':''}
+      <p>${x.summary?esc(x.summary)+` <span class="derived">${x.summary_by==='me'?'mine':'derived'}</span>`:'<span class="derived">no summary yet</span>'}</p>
+      <dl class="kv">${x.content_date?`<dt>date</dt><dd>${esc(x.content_date)}</dd>`:''}${(x.people||[]).length?`<dt>people</dt><dd>${x.people.map(p=>wikiLink?wikiLink(p):esc(p)).join(', ')}</dd>`:''}
+        ${(x.places||[]).length?`<dt>places</dt><dd>${x.places.map(p=>wikiLink?wikiLink(p):esc(p)).join(', ')}</dd>`:''}<dt>added</dt><dd>${esc(x.added.slice(0,10))}${x.added_by?' by '+esc(x.added_by):''}</dd>
+        ${x.provenance?`<dt>provenance</dt><dd>${esc(x.provenance)}</dd>`:''}<dt>file</dt><dd class="mono">${esc(x.id)}</dd></dl>
+      ${x.rid?`<label style="margin-top:12px">Notes <span class="derived">stated by me</span></label><textarea id="lb-notes" rows="3" placeholder="What's on the back, who wrote it, where it came from">${esc(x.notes||'')}</textarea>
+        <div class="row" style="margin:6px 0 10px"><button class="btn ghost sm" id="lb-save">Save notes</button><button class="btn ghost sm" id="lb-details">All details…</button></div>
+        <h5>Subjects</h5><div id="lb-subj"><p class="empty">Loading…</p></div>`:'<p class="sub">Scan this file to summarize and tag it.</p>'}
+    </aside></div>`;
+  const close=()=>{ closeOverlay(); document.removeEventListener('keydown', key); };
+  const key=e=>{ if(!$('.lightbox')){ document.removeEventListener('keydown', key); return; } if(/INPUT|TEXTAREA/.test((document.activeElement||{}).tagName||'')) return; if(e.key==='ArrowLeft' && i>0){ e.preventDefault(); openLightbox(i-1); } if(e.key==='ArrowRight' && i<rows.length-1){ e.preventDefault(); openLightbox(i+1); } };
+  document.removeEventListener('keydown', S.lbKey||(()=>{})); S.lbKey=key; document.addEventListener('keydown', key);
+  $('.lb-scrim').onclick=close; $('#lb-close').onclick=close;
+  $('.lb-nav.prev').onclick=()=>openLightbox(i-1); $('.lb-nav.next').onclick=()=>openLightbox(i+1);
+  if(x.rid){
+    $('#lb-save').onclick=async()=>{ await api('/api/engine/source/edit',{method:'POST',body:{rid:x.rid, notes:$('#lb-notes').value}}); x.notes=$('#lb-notes').value; alertNote('Notes saved, marked as yours.'); };
+    $('#lb-details').onclick=()=>{ close(); editSource(x.id); };
+    const fill=async()=>{ if(typeof ensureFP!=='function') return; await ensureFP(); const r=await api('/api/engine/tags?target='+encodeURIComponent('source:'+x.rid)); const b=$('#lb-subj'); if(!b) return; b.innerHTML=tagPanelHtml(r); bindTagPanel('source:'+x.rid, fill); };
+    fill();
+  }
 }
 async function openTranscript(id, atSeconds=null){
   const d=await api('/api/engine/source?id='+encodeURIComponent(id));
