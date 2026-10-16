@@ -1660,6 +1660,10 @@ that needs a missing value says so and is skipped.
 | `include_living` | `false` | whether people marked living get public pages |
 | `hidden_aliases` | `[]` | aliases never printed on public pages (household nicknames) |
 | `changelog_commit_messages` | `false` | list the project's own commit messages on `/changelog/` (otherwise commits are summarised as file counts by area) |
+| `posts_dir` | `posts` | news posts published under `/updates/<slug>/` (see "Posts, the feed and subscriptions" below) |
+| `digest.sender_line` | none | the footer line of every digest email: who sends it and why the reader gets it |
+| `digest.postal_address` | none | the footer's postal address (required by anti-spam law). It is published in `api/_lineage-config.json`, so prefer the `DIGEST_POSTAL_ADDRESS` env var |
+| `digest.schedule` | `0 15 * * 1` | the weekly digest's Vercel cron, in UTC (Mondays 15:00) |
 | `r2.env_file` | `~/.config/lineage/r2.env` | credentials: `R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_PUBLIC_BASE` once public access is on. Never in git |
 | `r2.prefix` | the slug of the title | key prefix in the bucket |
 | `r2.scan` | `["photos", "sources", "output/chapters"]` | folders searched for images |
@@ -1685,7 +1689,7 @@ $PY $S/face_focus.py --project $P              # 3. data/image_focus.json (needs
 $PY $LINEAGE/site/build_instance.py --project $P --out <site>/lineage --title "…" \
     --assets $P/data/r2_manifest.csv --allow-real-names   # 4. the dashboard snapshot, pictures from R2
 $PY $S/seo_build.py --project $P <site>        # 5. /stories/, /family/, sitemap.xml, robots.txt
-$PY $S/updates_page.py --project $P <site>     # 6. CHANGELOG.md as /updates/
+$PY $S/updates_page.py --project $P <site>     # 6. /updates/: posts, CHANGELOG.md, feed, Subscribe, api/
 ```
 
 Steps 4 and 5 also record and render the site changelog (below); nothing to run for it.
@@ -1735,6 +1739,106 @@ never write it: each build appends one entry listing everything that changed sin
   per version in the book's `CHANGELOG.md` (for this website, one per release in
   `docs/blog/releases.csv`, with the commits between its git tags), then a "changelog started"
   baseline.
+
+#### Posts, the feed and subscriptions
+
+**Posts.** News for the family goes in `posts/<name>.md` in the project, one file per post:
+
+```markdown
+---
+title: A Week of Letters from the Archives
+date: 2026-10-16
+summary: One line for the list, the feed, the digest and the share card.
+image: photos/print/cover.jpg        # optional hero: a project path or a URL
+author: A. Compiler                  # optional
+slug: a-week-of-letters              # optional; default: the file name without a leading YYYY-MM-DD-
+draft: true                          # optional: leaves the post out
+---
+Markdown: **bold**, [links](/stories/homer/), tables.
+
+![Alt text](photos/a.jpg "Caption") ![Alt text](photos/b.jpg "Caption")
+```
+
+- An image or link that is a **project path** (no `https:`, not starting with `/`) is looked up in
+  `data/r2_manifest.csv` and replaced by its R2 address, so `r2_sync.py` must run first (the
+  publish steps above do). A path that is not in the manifest **stops the build** and is listed.
+  Site links (`/stories/…`, `/family/…`, `/lineage/…`, `/book/…`, `/records/…`) pass through.
+- A paragraph made only of images is a **gallery**: a grid of thumbnails, each linking to the full
+  picture, captioned from the image's title (the quoted text). One image alone is a figure.
+- Each post is published at `/updates/<slug>/` with its own title, description, Open Graph image and
+  canonical URL; `/updates/` lists the posts newest first above the edition notes, and the sitemap
+  lists them. `posts.py --project $P` (or `make posts PROJECT=$P`) checks every post and writes nothing.
+- **Privacy check.** Everything the updates step writes (posts, list, feed, functions) and
+  `/changelog/` + `/changelog.json` go through the same leak check as the dashboard snapshot: local
+  paths, `localhost` links, API keys and real email addresses stop the build.
+
+**The feed.** `/updates/feed.xml` (Atom) carries the posts and every edition from `CHANGELOG.md`;
+every updates page links it with `<link rel="alternate">`. It needs `site_url` and nothing else: no
+account, no service.
+
+**Subscriptions and the weekly digest.** Every `/updates/` page, each post and `/changelog/` carry a
+Subscribe form (email only) and "or follow the RSS feed". The updates step also copies four Vercel
+functions into the site's `api/` folder and adds a weekly cron to the site's `vercel.json` (merged
+into what is there, never replacing it):
+
+| Function | What it does |
+|---|---|
+| `api/subscribe` | `GET`: is it open? `POST {email}`: double opt-in. Stores the address as *pending* (forgotten after 7 days) and emails a signed confirmation link. A honeypot field and a per-visitor hourly limit stop bots |
+| `api/confirm` | the confirmation link: *pending* becomes *confirmed* |
+| `api/unsubscribe` | the one-click link in every digest (and RFC 8058 `List-Unsubscribe-Post`): deletes the record |
+| `api/digest` | the cron, Mondays 15:00 UTC. Reads the site's own `/changelog.json` and `/updates/posts.json`, takes what no earlier digest carried, and emails every confirmed subscriber with an unsubscribe link and the sender/postal footer. Once per ISO week; a run that failed part way resumes without re-sending. Refuses any caller without `Authorization: Bearer $CRON_SECRET` |
+
+**It is closed until configured.** Until *every* variable below is set, the form says
+"Subscriptions open soon — follow the RSS feed meanwhile" and every function answers 503: nothing
+is stored, nothing is sent. Nothing needs npm: storage is Upstash Redis over its REST API and email
+is Resend's REST API, both with plain `fetch`. An address is never logged; a record holds only the
+email, its status, created/confirmed times and the hash of the pending confirmation token.
+
+| Vercel env var | Value |
+|---|---|
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | set for you by the Upstash integration (step 1) |
+| `RESEND_API_KEY` | a Resend API key with *sending access* only (step 2) |
+| `DIGEST_FROM` | e.g. `The Book of the Family <updates@example.org>`, on the domain verified in Resend |
+| `DIGEST_REPLY_TO` | where replies go (your own address) |
+| `DIGEST_POSTAL_ADDRESS` | a postal address for the footer (a P.O. box is fine) |
+| `CRON_SECRET` | 32+ random characters (`openssl rand -hex 32`); Vercel sends it to the cron |
+| `SUBSCRIBE_SECRET` | 32+ random characters (`openssl rand -hex 32`); signs confirm/unsubscribe links. Changing it invalidates every unsubscribe link already sent, so set it once |
+
+Setting it up (once per site, in the Vercel project the site deploys to):
+
+1. **Upstash.** Vercel dashboard → the site's project → **Storage** → **Create Database** →
+   **Upstash for Redis** (the free plan is plenty) → connect it to the project for Production. That
+   adds `KV_REST_API_URL` and `KV_REST_API_TOKEN`. One database can serve several family sites:
+   keys are prefixed with the site's slug.
+2. **Resend.** Make an account at resend.com → **Domains** → add a sending subdomain you own (e.g.
+   `mail.family.example.org`) and add the DNS records it shows (SPF, DKIM; DMARC recommended) where
+   the domain's DNS lives; wait for *Verified*. **API Keys** → create one with *Sending access*.
+3. **The variables.** Project → **Settings** → **Environment Variables**, for Production:
+   `RESEND_API_KEY`, `DIGEST_FROM`, `DIGEST_REPLY_TO`, `DIGEST_POSTAL_ADDRESS`, `CRON_SECRET`,
+   `SUBSCRIBE_SECRET` (or `vercel env add NAME production` in the site folder).
+4. Optionally set `digest.sender_line` in `lineage.json` (e.g. "Sent by A. Compiler, who is writing
+   the family book. You subscribed at family.example.org.").
+5. **Republish** (the variables are read at request time, but the cron is registered by a
+   deploy). The form opens by itself. Subscribe yourself, confirm, then run the digest once by hand:
+   `curl -H "Authorization: Bearer $CRON_SECRET" https://family.example.org/api/digest/`.
+   The cron then runs every Monday; its runs are under the project's **Settings → Cron Jobs**.
+
+**The form on other pages.** Any page of the site (the family's own landing page, for one) can carry
+the form with two lines; the script fills in the form and keeps it closed until the functions are
+configured:
+
+```html
+<div data-lineage-subscribe></div>
+<script src="/updates/subscribe.js" defer></script>
+```
+
+**Testing without accounts.** `make test-subscribe SITE=<built site>` (or
+`node plugins/lineage/publish/test_functions.js <built site>`) runs the functions against a fake
+Upstash and a fake Resend on your machine: closed (503) when unconfigured, honeypot, subscribe →
+pending, confirm, `CRON_SECRET` required, the digest sent once per week and resumed after a failure,
+one-click unsubscribe, and no address in any log. Nothing is sent.
+
+`updates_page.py --no-subscribe` leaves out the form and the functions (the feed stays).
 
 #### Private folders: `.no-drive`
 
