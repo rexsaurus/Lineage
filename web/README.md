@@ -7,6 +7,11 @@ app and vice versa: nothing here changes how lineage.rexstjohn.com is built or d
 
 **Status: local and test mode only.** Nothing is deployed, no accounts were created, no email is sent, no price is set.
 
+**Also built: family subscriptions, regular updates and archivist referral earnings** (see "Subscriptions, updates and
+referral earnings" below). A relative follows (free) or subscribes (paid) to a family's page from the archivist's link;
+they get read access and email digests; the archivist earns a share of what referred subscribers pay, paid out through
+Stripe Connect. All test mode, all decisions (price, share, hold, minimum) left to Rex.
+
 ## Run it
 
 ```bash
@@ -32,12 +37,15 @@ from the newest file in `.data/outbox/`.
 ## Tests
 
 ```bash
-npm test                                         # Vitest: 25 unit tests, in-memory PGlite, no network
+npm test                                         # Vitest: 38 unit tests, in-memory PGlite, no network
 npm run build                                    # needed before the browser tests
-npx playwright test                              # 6 tests: iPhone 13 (WebKit) + Pixel 7 (Chromium), price set, fake Stripe
+npx playwright test                              # 10 tests: iPhone 13 (WebKit) + Pixel 7 (Chromium), prices set, fake Stripe + Connect
 npx playwright test -c playwright.tbd.config.ts  # 2 tests: the default no-price reservation flow
 npm run typecheck
 ```
+
+The browser run sets test-only values in `playwright.config.ts` (a fake $10 subscription invoice, a 20% share, no
+hold) purely to exercise the referral path; they are not defaults and not decisions.
 
 The browser tests run the whole journey on a production build: scan with `?src=` → email → test checkout → name the
 family → photo → family page (about 2 s automated), the follow-up email, inviting a cousin who joins on another phone
@@ -84,8 +92,78 @@ tests/unit, tests/e2e, tests/e2e-tbd
 | `ADMIN_EMAILS` | prod | comma-separated; see /admin; excluded from every count |
 | `KPI_EXPORT_TOKEN` | for append-kpi | 24+ chars |
 | `CRON_SECRET` | prod | 16+ chars; Vercel Cron sends it |
+| `SUB_PRICE_TBD` | — | default `true`: relatives can only **follow** free; no price shown, no payment |
+| `SUB_PRICE_DISPLAY` | when `SUB_PRICE_TBD=false` | the text after "Subscribe —"; never defaulted |
+| `STRIPE_PRICE_ID_FAMILY_SUB` | paid subs with Stripe | a recurring Price; the interval comes from Stripe |
+| `REV_SHARE_PCT` | — | e.g. `20` or `12.5`. **No default**: unset = "earnings program not yet open"; ledger rows are kept at 0 |
+| `REFUND_HOLD_DAYS` | — | days before an earning can be paid out. **No default**: unset = earnings stay pending |
+| `MIN_PAYOUT_CENTS` | — | smallest payout, in the currency's smallest unit; unset = no minimum |
+| `PAYOUT_CRON_ENABLED` | — | default `false`: payouts only by admin approval; `true` also pays everyone due on the 1st |
+| `CONNECT_DRIVER` | — | `fake` (default) or `stripe` (Connect Express, test keys) |
+| `FAKE_SUB_AMOUNT_CENTS`, `FAKE_SUB_CURRENCY` | — | fake driver only: what a fake subscription invoice charges; ignored with real Stripe |
 
 `.env.example` lists them all. Empty values count as unset.
+
+## Subscriptions, updates and referral earnings
+
+**Routes.** `/f/[familyId]?ref=<code>` (follow or subscribe; shows only the family name and who shared it) ·
+`/f/[familyId]/welcome` (Stripe success) · `/family/[id]/updates` (weekly / monthly / never; stop following) · `/u/[token]`
+and `POST /api/unsubscribe/[token]` (signed one-click unsubscribe, RFC 8058 header) · `/earnings` (archivist: link + QR per
+family, referred / active / paying counts, pending / available / paid, "Get paid", payout history) · `/earnings/connected`
+(Connect return) · `/admin/earnings` (paid subscribers, followers, MRR, referrals by archivist, ready-to-pay with
+"Approve payout", ledger, payouts) · `/api/admin/earnings.csv` · `/api/cron/digests` (daily) · `/api/cron/payouts`
+(monthly, only with `PAYOUT_CRON_ENABLED`) · `/terms/referrals`, `/terms/subscribers` (DRAFT) · `/dev/fake-connect` (fake only).
+
+**Tables.** `subscriptions` (kind follow|paid, status, Stripe ids, amount/interval from Stripe, referrer + code, digest
+frequency), `activity` (every record/caption/member/family change, with a private flag), `earnings` (the ledger),
+`payouts`; `users` gains `ref_code` and Connect fields; `records` gains `is_private`.
+
+**Access.** Members (archivist, invited relatives) edit; followers and subscribers (status active, or past_due while
+Stripe retries) only read, and never see records marked "Only for family members". Cancelled → no access.
+
+**Attribution.** The archivist's code (8 characters, made on first use) rides on their link; the proxy keeps it in an
+HttpOnly `lineage_ref` cookie for 60 days, first touch wins. It is credited only if its owner is the archivist of that
+family and is not the subscriber (self-referral blocked). It is stored on the subscription row and in the Stripe
+subscription metadata.
+
+**Ledger rules** (`src/lib/ledger.ts`). One row per paid invoice (idempotent on the invoice id): net = amount paid − tax;
+earning = floor(net × share) — rounding always down. Pending until `REFUND_HOLD_DAYS` after the payment date, then
+available. Refund before payout: the earning is recomputed on what's left (full refund → reversed). Refund or chargeback
+after payout: a negative clawback row comes off the next payout. Payouts claim every available row atomically, transfer
+through Connect with an idempotency key (the payout id), and release the rows if the transfer fails.
+
+**Stripe events handled** (`src/lib/webhooks.ts`): `checkout.session.completed` (payment and subscription modes),
+`customer.subscription.created|updated|deleted`, `invoice.paid`, `invoice.payment_failed`, `charge.refunded`,
+`charge.dispute.created`, `account.updated`. All idempotent; invoice fields are read for both older and newer Stripe API
+shapes.
+
+**Digests** (`src/lib/digest.ts`). Daily cron; each subscription gets at most one email per ISO week or month
+(`emails.dedupe_key = digest:<subscription>:<period>`), only when something public changed, never their own changes,
+nothing in the period they joined (the first digest covers it the next period). Every digest carries a signed unsubscribe
+link and `List-Unsubscribe` headers.
+
+### Stripe Connect setup (test mode) — for Rex; nothing here has been done
+1. Stripe Dashboard (test mode) → **Connect** → get started → platform profile: Lineage is a platform paying its users
+   (archivists) for referrals; choose **Express** accounts.
+2. Branding (name, icon, colour) for the onboarding pages; set the **redirect** domain to the app's `APP_URL`.
+3. Make sure the platform balance can fund transfers (in test mode, use the test card `4000 0000 0000 0077` to add
+   available balance).
+4. Add `account.updated` to the webhook endpoint, and enable "Listen to events on Connected accounts".
+5. `CONNECT_DRIVER=stripe`. Test: sign in as an archivist → /earnings → Get paid → Stripe's test onboarding → back on
+   /earnings it shows "Payouts are set up" → as admin, approve a payout in /admin/earnings.
+6. For paid subscriptions: create a recurring Price → `STRIPE_PRICE_ID_FAMILY_SUB`; `SUB_PRICE_TBD=false`,
+   `SUB_PRICE_DISPLAY`; add the subscription and invoice events listed above to the webhook endpoint.
+7. Live mode only after Rex decides the numbers and the legal entity; Stripe may require the platform's own tax and
+   identity details, and will collect each archivist's.
+
+### Known limits (subscriptions)
+- Cancelling a paid subscription is manual (reply to an update email); the Stripe Customer Portal is a later step.
+- In paid mode, an invited family member who wants email updates is offered the paid subscription; whether members get
+  updates free is one of Rex's decisions (below).
+- A first-time account can be signed in on the device right after paying (an existing account never is; it gets the
+  emailed link). Someone paying with an email address that has never been used would hold that new account's session.
+- MRR is reported per currency, from the amounts Stripe reports on each subscription.
+- Earnings are per currency; one payout per archivist per currency.
 
 ## Dependencies (what and why)
 
@@ -151,3 +229,13 @@ Demo phone: `npm run seed:demo -- <folder of images Rex picks> --name "…"` (ag
 - [ ] **Storage limits** per family and the data-retention/deletion promise for `/privacy` (currently: delete on request).
 - [ ] **Event slugs** (§9): confirm names, venues and dates in `/admin/qr`; the seven slugs are pre-created.
 - [ ] **App domain** (deploy step 1) and whether the cron runs every 15 minutes (Pro) or daily (Hobby).
+
+Subscriptions and referrals (each ships "off" or "not yet open" until decided):
+- [ ] **Subscription price and interval** (monthly / yearly?), and currency. Until then `SUB_PRICE_TBD=true`: free follow only.
+- [ ] **Paid to view, or paid only for updates?** As built: a paid subscription gives read access and updates; while the price isn't set, following is free and gives both.
+- [ ] **Do invited family members get updates free?** As built they edit for free; in paid mode, updates are offered as the paid subscription.
+- [ ] **Revenue share %** (`REV_SHARE_PCT`) and whether it's on the amount after tax only (as built) or also after Stripe's fees.
+- [ ] **Hold period** before an earning can be paid (`REFUND_HOLD_DAYS`); until set, earnings stay pending.
+- [ ] **Minimum payout** (`MIN_PAYOUT_CENTS`) and payout schedule (admin approval only, as built, or the monthly cron too).
+- [ ] **Does the share last for the subscriber's lifetime** (as built and as the draft terms say) or for a limited time?
+- [ ] **Tax and legal entity** for the platform (Stripe Connect requires it), whether Lineage must issue tax forms to archivists, and a lawyer's review of the DRAFT referral terms, subscriber terms and privacy page.

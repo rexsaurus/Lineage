@@ -42,6 +42,7 @@ export function UploadForm({ familyId }: { familyId: string }) {
   const library = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState("");
 
@@ -70,7 +71,7 @@ export function UploadForm({ familyId }: { familyId: string }) {
           const { url, key } = await sign.json();
           const put = await send(url, "PUT", blob, setProgress, { "Content-Type": blob.type || "application/octet-stream" });
           if (put.status >= 300) throw new Error("storage");
-          res = await fetch("/api/upload/complete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ familyId, key, caption }) }).then(async r => ({ status: r.status, text: await r.text() }));
+          res = await fetch("/api/upload/complete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ familyId, key, caption, private: isPrivate }) }).then(async r => ({ status: r.status, text: await r.text() }));
         } else {
           res = await viaServer();
         }
@@ -81,6 +82,7 @@ export function UploadForm({ familyId }: { familyId: string }) {
         const fd = new FormData();
         fd.set("familyId", familyId);
         fd.set("caption", caption);
+        if (isPrivate) fd.set("private", "1");
         fd.set("file", blob, name);
         return send("/api/upload", "POST", fd, setProgress);
       }
@@ -109,6 +111,10 @@ export function UploadForm({ familyId }: { familyId: string }) {
           <p><strong>Ready to add:</strong> {file.name}</p>
           <label htmlFor="caption">Caption <span className="muted small">(optional)</span></label>
           <input id="caption" value={caption} maxLength={200} onChange={e => setCaption(e.target.value)} placeholder="e.g. Grandma Rose, 1952" />
+          <label style={{ fontWeight: 400, display: "flex", gap: 12, alignItems: "center", minHeight: 48 }}>
+            <input type="checkbox" checked={isPrivate} onChange={e => setIsPrivate(e.target.checked)} style={{ width: 28, height: 28 }} />
+            Only for family members (not followers, not in update emails)
+          </label>
           {progress !== null ? (
             <>
               <label htmlFor="up-progress">Uploading… {progress}%</label>

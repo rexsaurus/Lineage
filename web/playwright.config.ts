@@ -35,6 +35,14 @@ export default defineConfig({
       ADMIN_EMAILS: "rex@example.org",
       KPI_EXPORT_TOKEN: "e2e-kpi-token-e2e-kpi-token-123",
       CRON_SECRET: "e2e-cron-secret-123",
+      // family subscriptions and referrals — TEST VALUES ONLY, not decisions: a fake $10 monthly invoice, a 20% share,
+      // no hold, so the whole referral → earning → payout path can be exercised in seconds
+      SUB_PRICE_TBD: "false",
+      SUB_PRICE_DISPLAY: "TEST-SUB-PRICE",
+      FAKE_SUB_AMOUNT_CENTS: "1000",
+      REV_SHARE_PCT: "20",
+      REFUND_HOLD_DAYS: "0",
+      CONNECT_DRIVER: "fake",
     },
   },
 });

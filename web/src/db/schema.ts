@@ -2,7 +2,7 @@ import { boolean, integer, pgTable, primaryKey, text, timestamp, uuid, uniqueInd
 
 // Spec §5. Emails are stored lower-cased in text columns with unique indexes (equivalent to citext for our use, and it
 // works the same on Postgres and on PGlite without an extension).
-const now = () => timestamp({ withTimezone: true }).defaultNow().notNull();
+const now = (name: string) => timestamp(name, { withTimezone: true }).defaultNow().notNull();
 
 export const users = pgTable("users", {
   id: uuid().primaryKey().defaultRandom(),
@@ -10,8 +10,11 @@ export const users = pgTable("users", {
   name: text(),
   role: text().notNull().default("archivist"), // 'archivist' | 'member' | 'admin'
   eventSource: text("event_source"), // slug from ?src at first touch
-  createdAt: now(),
+  createdAt: now("created_at"),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+  refCode: text("ref_code").unique(), // an archivist's referral code, made on first use
+  stripeConnectAccountId: text("stripe_connect_account_id"),
+  connectPayoutsEnabled: boolean("connect_payouts_enabled").notNull().default(false),
 });
 
 export const families = pgTable("families", {
@@ -20,7 +23,7 @@ export const families = pgTable("families", {
   createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
   eventSource: text("event_source"),
   isDemo: boolean("is_demo").notNull().default(false),
-  createdAt: now(),
+  createdAt: now("created_at"),
 });
 
 export const familyMembers = pgTable(
@@ -29,7 +32,7 @@ export const familyMembers = pgTable(
     familyId: uuid("family_id").notNull().references(() => families.id, { onDelete: "cascade" }),
     userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
     role: text().notNull(), // 'archivist' | 'member'
-    joinedAt: now(),
+    joinedAt: now("joined_at"),
   },
   t => [primaryKey({ columns: [t.familyId, t.userId] })],
 );
@@ -45,7 +48,8 @@ export const records = pgTable(
     sizeBytes: integer("size_bytes"),
     caption: text(),
     kind: text(), // 'photo' | 'document'
-    createdAt: now(),
+    isPrivate: boolean("is_private").notNull().default(false), // members only: never shown to subscribers or in digests
+    createdAt: now("created_at"),
   },
   t => [index("records_family_idx").on(t.familyId)],
 );
@@ -59,7 +63,7 @@ export const invites = pgTable("invites", {
   token: text().notNull().unique(),
   status: text().notNull().default("sent"), // 'sent' | 'accepted' | 'expired'
   eventSource: text("event_source"),
-  createdAt: now(),
+  createdAt: now("created_at"),
   acceptedAt: timestamp("accepted_at", { withTimezone: true }),
 });
 
@@ -76,7 +80,7 @@ export const payments = pgTable("payments", {
   eventSource: text("event_source"),
   livemode: boolean(),
   signinUsedAt: timestamp("signin_used_at", { withTimezone: true }), // the one on-device sign-in after paying (§3.1)
-  createdAt: now(),
+  createdAt: now("created_at"),
   paidAt: timestamp("paid_at", { withTimezone: true }),
 });
 
@@ -105,10 +109,93 @@ export const emails = pgTable(
     kind: text().notNull(), // 'magic-link' | 'invite' | 'followup' | 'nudge'
     dedupeKey: text("dedupe_key"),
     providerId: text("provider_id"),
-    sentAt: now(),
+    sentAt: now("sent_at"),
   },
   t => [uniqueIndex("emails_dedupe_idx").on(t.dedupeKey)],
 );
+
+// ---- family subscriptions, updates and referral earnings
+
+// A relative who follows (free) or subscribes (paid) to a family's Lineage: read access + regular updates.
+export const subscriptions = pgTable(
+  "subscriptions",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    familyId: uuid("family_id").notNull().references(() => families.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    kind: text().notNull(), // 'follow' (free) | 'paid'
+    status: text().notNull(), // 'active' | 'incomplete' | 'past_due' | 'canceled'
+    stripeSubscriptionId: text("stripe_subscription_id").unique(),
+    stripeCustomerId: text("stripe_customer_id"),
+    stripeCheckoutSessionId: text("stripe_checkout_session_id").unique(),
+    amountCents: integer("amount_cents"), // per interval, from Stripe (never set by the app)
+    currency: text(),
+    interval: text(), // 'month' | 'year' | 'week' | 'day'
+    referrerUserId: uuid("referrer_user_id").references(() => users.id, { onDelete: "set null" }),
+    refCode: text("ref_code"),
+    digestFreq: text("digest_freq").notNull().default("weekly"), // 'weekly' | 'monthly' | 'off'
+    lastDigestAt: timestamp("last_digest_at", { withTimezone: true }),
+    currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+    createdAt: now("created_at"),
+    canceledAt: timestamp("canceled_at", { withTimezone: true }),
+  },
+  t => [uniqueIndex("subscriptions_family_user_idx").on(t.familyId, t.userId)],
+);
+
+// Every change to a family, written as it happens; the digests are built from it.
+export const activity = pgTable(
+  "activity",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    familyId: uuid("family_id").notNull().references(() => families.id, { onDelete: "cascade" }),
+    kind: text().notNull(), // 'record_added' | 'caption_changed' | 'member_joined' | 'family_renamed' | 'post_published'
+    actorUserId: uuid("actor_user_id").references(() => users.id, { onDelete: "set null" }),
+    recordId: uuid("record_id").references(() => records.id, { onDelete: "cascade" }),
+    summary: text().notNull(),
+    isPrivate: boolean("is_private").notNull().default(false),
+    createdAt: now("created_at"),
+  },
+  t => [index("activity_family_time_idx").on(t.familyId, t.createdAt)],
+);
+
+// The referral ledger: one row per paid invoice of a referred subscription (plus clawback rows after a payout).
+export const earnings = pgTable(
+  "earnings",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    referrerUserId: uuid("referrer_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    subscriptionId: uuid("subscription_id").references(() => subscriptions.id, { onDelete: "set null" }),
+    stripeInvoiceId: text("stripe_invoice_id"),
+    stripeChargeId: text("stripe_charge_id"),
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
+    kind: text().notNull().default("share"), // 'share' | 'clawback'
+    invoiceNetCents: integer("invoice_net_cents").notNull(),
+    shareBps: integer("share_bps"), // revenue share in basis points at the time (null: program not open)
+    amountCents: integer("amount_cents").notNull(),
+    currency: text().notNull(),
+    status: text().notNull(), // 'pending' | 'available' | 'paid' | 'reversed'
+    paidAt: timestamp("paid_at", { withTimezone: true }), // when the subscriber's invoice was paid; the hold counts from here
+    availableAt: timestamp("available_at", { withTimezone: true }),
+    payoutId: uuid("payout_id"),
+    createdAt: now("created_at"),
+    reversedAt: timestamp("reversed_at", { withTimezone: true }),
+    note: text(),
+  },
+  t => [uniqueIndex("earnings_invoice_kind_idx").on(t.stripeInvoiceId, t.kind), index("earnings_referrer_idx").on(t.referrerUserId)],
+);
+
+export const payouts = pgTable("payouts", {
+  id: uuid().primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  amountCents: integer("amount_cents").notNull(),
+  currency: text().notNull(),
+  status: text().notNull(), // 'pending' | 'paid' | 'failed'
+  stripeTransferId: text("stripe_transfer_id"),
+  approvedBy: text("approved_by"),
+  failure: text(),
+  createdAt: now("created_at"),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+});
 
 // admin toggles, e.g. the Payment Link fallback (§6)
 export const settings = pgTable("settings", {

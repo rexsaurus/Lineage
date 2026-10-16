@@ -1,6 +1,6 @@
 import { and, eq, isNull } from "drizzle-orm";
 import type { Db } from "@/db";
-import { payments } from "@/db/schema";
+import { payments, users } from "@/db/schema";
 import { env } from "@/env";
 import { upsertUser, type User } from "./users";
 import { markPaid, paymentsProvider, recordPending, recordReserved } from "./payments";
@@ -21,6 +21,10 @@ export async function completeWelcome(db: Db, sessionId: string): Promise<{ stat
   if (!s.paid) return { status: "unpaid" };
   const row = await markPaid(db, s);
   if (!row?.userId) return { status: "unknown" };
+  // Typing someone else's email and paying must never sign you in as them: the on-device sign-in is only for an
+  // account that has never signed in. Anyone else gets the emailed link.
+  const [u] = await db.select({ lastLoginAt: users.lastLoginAt }).from(users).where(eq(users.id, row.userId)).limit(1);
+  if (!u || u.lastLoginAt) return { status: "paid", userId: row.userId, signIn: false };
   const claimed = await db
     .update(payments)
     .set({ signinUsedAt: new Date() })

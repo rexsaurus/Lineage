@@ -42,7 +42,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<Re
         <tr><th>Invites sent / accepted</th><td>{k.invites_sent} / {k.invites_accepted}</td></tr>
         <tr><th>Paid sign-ups</th><td>{k.paid_signups}</td></tr>
       </tbody></table></div>
-      <p className="small">Demo families and admin accounts are not counted. <a href="/api/admin/kpi.csv">kpi.csv</a> · <a href="/api/admin/kpi-by-event.csv">kpi-by-event.csv</a> · <Link href="/admin/qr">QR codes</Link></p>
+      <p className="small">Demo families and admin accounts are not counted. <a href="/api/admin/kpi.csv">kpi.csv</a> · <a href="/api/admin/kpi-by-event.csv">kpi-by-event.csv</a> · <Link href="/admin/qr">QR codes</Link> · <Link href="/admin/earnings">Subscriptions and referrals</Link></p>
 
       <h2>By event</h2>
       <div className="scroll"><table className="data">

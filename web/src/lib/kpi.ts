@@ -99,6 +99,42 @@ export async function kpisByEvent(db: Db): Promise<EventRow[]> {
   return [...out.values()].sort((a, b) => a.event_source.localeCompare(b.event_source));
 }
 
+// ---- subscriptions and referrals (all counted from the database)
+
+export type SubKpis = { followers: number; paid_subscribers: number; mrr_cents: { currency: string; cents: number }[] };
+
+export async function subscriptionKpis(db: Db): Promise<SubKpis> {
+  const admins = adminList();
+  const live = await rows<{ kind: string; amount: number | null; currency: string | null; interval: string | null }>(
+    db,
+    sql`select s.kind, s.amount_cents as amount, s.currency, s.interval from subscriptions s
+        join users u on u.id = s.user_id join families f on f.id = s.family_id and f.is_demo = false
+        where s.status in ('active', 'past_due') and u.email not in (${admins})`,
+  );
+  const { monthlyCents } = await import("./subscriptions");
+  const mrr = new Map<string, number>();
+  for (const r of live) if (r.kind === "paid" && r.currency) mrr.set(r.currency, (mrr.get(r.currency) || 0) + monthlyCents(r.amount, r.interval));
+  return {
+    followers: live.filter(r => r.kind === "follow").length,
+    paid_subscribers: live.filter(r => r.kind === "paid").length,
+    mrr_cents: [...mrr].map(([currency, cents]) => ({ currency, cents })),
+  };
+}
+
+export type ReferrerRow = { user_id: string; email: string; referred: number; active: number; paid_active: number };
+
+export async function referralCounts(db: Db): Promise<ReferrerRow[]> {
+  const r = await rows<ReferrerRow>(
+    db,
+    sql`select u.id as user_id, u.email, count(*) as referred,
+          count(*) filter (where s.status in ('active', 'past_due')) as active,
+          count(*) filter (where s.status in ('active', 'past_due') and s.kind = 'paid') as paid_active
+        from subscriptions s join users u on u.id = s.referrer_user_id
+        group by u.id, u.email order by referred desc`,
+  );
+  return r.map(x => ({ ...x, referred: n(x.referred), active: n(x.active), paid_active: n(x.paid_active) }));
+}
+
 export const today = (d = new Date()) => d.toISOString().slice(0, 10);
 
 /** The exact format of second-brain-fundraising/kpi-log.csv */

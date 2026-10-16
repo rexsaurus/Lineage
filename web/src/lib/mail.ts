@@ -6,7 +6,7 @@ import { emails } from "@/db/schema";
 
 // Email (spec §7). Development and tests never send anything: the "console" driver writes each message to
 // OUTBOX_DIR as JSON and logs only its kind. Production uses Resend's HTTP API (no SDK needed).
-export type Mail = { to: string; subject: string; text: string; kind: string; dedupeKey?: string };
+export type Mail = { to: string; subject: string; text: string; kind: string; dedupeKey?: string; headers?: Record<string, string> };
 
 export interface Mailer {
   send(m: Mail): Promise<{ id: string | null }>;
@@ -29,7 +29,7 @@ class ResendMailer implements Mailer {
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${this.key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: this.from, to: [m.to], subject: m.subject, text: m.text, reply_to: this.replyTo }),
+      body: JSON.stringify({ from: this.from, to: [m.to], subject: m.subject, text: m.text, reply_to: this.replyTo, headers: m.headers }),
     });
     if (!r.ok) throw new Error(`email provider HTTP ${r.status}`);
     const j = (await r.json()) as { id?: string };

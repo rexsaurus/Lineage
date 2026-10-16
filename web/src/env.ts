@@ -26,6 +26,25 @@ const schema = z
     STRIPE_PAYMENT_LINK_URL: z.string().url().optional(),
     ALLOW_LIVE_STRIPE: bool(false),
 
+    // family subscriptions (relatives following a family's Lineage)
+    SUB_PRICE_TBD: bool(true), // true: a free "follow" only, no price shown, no payment
+    SUB_PRICE_DISPLAY: z.string().max(60).optional(),
+    STRIPE_PRICE_ID_FAMILY_SUB: z.string().optional(),
+
+    // referral earnings — no defaults: unset means the program isn't open / not decided
+    REV_SHARE_PCT: z
+      .string()
+      .regex(/^\d{1,2}(\.\d{1,2})?$|^100$/, "a percentage like 20 or 12.5")
+      .optional(),
+    REFUND_HOLD_DAYS: z.string().regex(/^\d{1,3}$/).optional(),
+    MIN_PAYOUT_CENTS: z.string().regex(/^\d{1,9}$/).optional(),
+    PAYOUT_CRON_ENABLED: bool(false),
+    CONNECT_DRIVER: z.enum(["stripe", "fake"]).default("fake"),
+
+    // fake driver only (local runs and tests): what a fake subscription invoice charges. Never used with real Stripe.
+    FAKE_SUB_AMOUNT_CENTS: z.string().regex(/^\d{1,9}$/).optional(),
+    FAKE_SUB_CURRENCY: z.string().regex(/^[a-z]{3}$/).default("usd"),
+
     // email
     MAIL_DRIVER: z.enum(["console", "resend"]).default("console"),
     RESEND_API_KEY: z.string().optional(),
@@ -59,6 +78,11 @@ const schema = z
       if (e.STRIPE_SECRET_KEY?.startsWith("sk_live_") && !e.ALLOW_LIVE_STRIPE)
         ctx.addIssue({ code: "custom", path: ["STRIPE_SECRET_KEY"], message: "live Stripe key refused: set ALLOW_LIVE_STRIPE=true only after Rex confirms price and entity" });
     }
+    if (!e.SUB_PRICE_TBD) {
+      need("SUB_PRICE_DISPLAY", "when SUB_PRICE_TBD=false");
+      if (e.PAYMENTS_DRIVER === "stripe") need("STRIPE_PRICE_ID_FAMILY_SUB", "for paid subscriptions with Stripe");
+    }
+    if (e.CONNECT_DRIVER === "stripe") need("STRIPE_SECRET_KEY", "for CONNECT_DRIVER=stripe");
     if (e.MAIL_DRIVER === "resend") need("RESEND_API_KEY", "for MAIL_DRIVER=resend");
     if (e.STORAGE_DRIVER === "r2") {
       need("R2_ACCOUNT_ID", "for STORAGE_DRIVER=r2");
@@ -99,4 +123,21 @@ export function adminEmails(): string[] {
 export function priceDisplay(): string | null {
   const e = env();
   return e.PRICE_TBD ? null : e.PRICE_DISPLAY || null;
+}
+export function subPriceDisplay(): string | null {
+  const e = env();
+  return e.SUB_PRICE_TBD ? null : e.SUB_PRICE_DISPLAY || null;
+}
+/** The revenue share in basis points (20% → 2000), or null while the earnings program isn't open. */
+export function revShareBps(): number | null {
+  const p = env().REV_SHARE_PCT;
+  return p ? Math.round(parseFloat(p) * 100) : null;
+}
+/** Days a referral earning waits before it can be paid out, or null if not decided (earnings then stay pending). */
+export function refundHoldDays(): number | null {
+  const d = env().REFUND_HOLD_DAYS;
+  return d === undefined ? null : parseInt(d, 10);
+}
+export function minPayoutCents(): number {
+  return parseInt(env().MIN_PAYOUT_CENTS || "0", 10);
 }

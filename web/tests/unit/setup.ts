@@ -29,7 +29,7 @@ export const BASE_ENV = {
 };
 
 export function useEnv(over: Record<string, string | undefined> = {}) {
-  for (const k of Object.keys(process.env)) if (/^(PRICE_|PAYMENTS_|STRIPE_|MAIL_|STORAGE_|ADMIN_|KPI_|CRON_|SESSION_|ALLOW_|DATABASE_URL)/.test(k)) delete process.env[k];
+  for (const k of Object.keys(process.env)) if (/^(PRICE_|PAYMENTS_|STRIPE_|MAIL_|STORAGE_|ADMIN_|KPI_|CRON_|SESSION_|ALLOW_|DATABASE_URL|SUB_|REV_SHARE|REFUND_HOLD|MIN_PAYOUT|PAYOUT_|CONNECT_|FAKE_)/.test(k)) delete process.env[k];
   Object.assign(process.env, BASE_ENV, over);
   resetEnv();
 }

@@ -30,9 +30,11 @@ export async function startAction(form: FormData) {
   const db = await getDb();
   const r = await startSignup(db, { email, src });
   if (r.kind === "reserved") {
-    // price not set: no payment; signed in on this device, and a link by email for next time
-    await signIn(r.user.id);
+    // price not set: no payment. A brand-new account is signed in on this device (and gets a link for next time);
+    // an existing account must use the emailed link, so nobody can sign in as someone else by typing their email.
     await sendMagicLinkEmail(db, email, await createMagicLink(db, email, "/family/new"));
+    if (r.user.lastLoginAt) redirect("/login?sent=1");
+    await signIn(r.user.id);
     redirect(await nextStepFor(r.user.id));
   }
   redirect(r.url);

@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
     familyId: String(form.get("familyId") || ""),
     bytes: Buffer.from(await file.arrayBuffer()),
     caption: form.get("caption"),
+    isPrivate: form.get("private") === "1",
   });
   return r.ok ? NextResponse.json(r) : NextResponse.json({ ok: false, message: r.message }, { status: r.status });
 }

@@ -75,7 +75,8 @@ describe("Stripe webhook", () => {
 
 describe("start flow", () => {
   it("PRICE_TBD=true: reserved, no Stripe, src recorded", async () => {
-    setPayments({ createCheckout: () => { throw new Error("must not be called"); }, retrieveCheckout: async () => null, parseWebhook: () => { throw new Error(); } });
+    const never = () => { throw new Error("must not be called"); };
+    setPayments({ createCheckout: never, createSubscriptionCheckout: never, retrieveCheckout: async () => null, parseWebhook: never });
     const r = await startSignup(ctx.db, { email: "d@example.org", src: "smcgs-2026-10-17" });
     expect(r.kind).toBe("reserved");
     const [pay] = await ctx.db.select().from(payments);

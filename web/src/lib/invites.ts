@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import type { Db } from "@/db";
 import { families, familyMembers, invites, users } from "@/db/schema";
 import { randomToken } from "./crypto";
+import { logActivity } from "./activity";
 
 // Invites (spec §3.4): a token link by email or copied/shared by text. Each token joins one person, once.
 export const INVITE_TTL_DAYS = 30;
@@ -45,5 +46,8 @@ export async function acceptInvite(db: Db, token: string, userId: string): Promi
     .returning({ id: invites.id });
   if (!claimed.length) return { ok: false, reason: "This invitation has already been used. Ask for a new one." };
   await db.insert(familyMembers).values({ familyId: found.invite.familyId, userId, role: "member" }).onConflictDoNothing();
+  const [u] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+  const first = (u?.name || "").trim().split(/\s+/)[0];
+  await logActivity(db, { familyId: found.invite.familyId, kind: "member_joined", summary: first ? `${first} joined the family page` : "A relative joined the family page", actorUserId: userId });
   return { ok: true, familyId: found.invite.familyId };
 }

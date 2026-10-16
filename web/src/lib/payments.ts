@@ -18,10 +18,16 @@ export type CheckoutSession = {
   customerId: string | null;
   paymentIntentId: string | null;
   livemode: boolean;
+  mode?: "payment" | "subscription";
+  metadata?: Record<string, string>;
 };
+
+export type SubCheckoutArgs = { userId: string; email: string; successUrl: string; cancelUrl: string; metadata: Record<string, string> };
 
 export interface Payments {
   createCheckout(a: { userId: string; email: string; src: string; successUrl: string; cancelUrl: string }): Promise<{ id: string; url: string }>;
+  /** Checkout in subscription mode for a family subscription (STRIPE_PRICE_ID_FAMILY_SUB). */
+  createSubscriptionCheckout(a: SubCheckoutArgs): Promise<{ id: string; url: string }>;
   retrieveCheckout(id: string): Promise<CheckoutSession | null>;
   /** verifies the signature; throws on a bad one */
   parseWebhook(rawBody: string, signature: string | null): Stripe.Event;
@@ -40,6 +46,8 @@ function fromStripe(s: Stripe.Checkout.Session): CheckoutSession {
     customerId: typeof s.customer === "string" ? s.customer : s.customer?.id || null,
     paymentIntentId: typeof s.payment_intent === "string" ? s.payment_intent : s.payment_intent?.id || null,
     livemode: s.livemode,
+    mode: s.mode === "subscription" ? "subscription" : "payment",
+    metadata: (s.metadata || {}) as Record<string, string>,
   };
 }
 
@@ -58,6 +66,21 @@ export class StripePayments implements Payments {
       metadata: { user_id: a.userId, src: a.src },
       payment_intent_data: { metadata: { user_id: a.userId, src: a.src } },
       allow_promotion_codes: true,
+      success_url: a.successUrl,
+      cancel_url: a.cancelUrl,
+    });
+    return { id: s.id, url: s.url! };
+  }
+  async createSubscriptionCheckout(a: SubCheckoutArgs) {
+    const price = env().STRIPE_PRICE_ID_FAMILY_SUB;
+    if (!price) throw new Error("STRIPE_PRICE_ID_FAMILY_SUB is not set");
+    const s = await this.stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [{ price, quantity: 1 }],
+      customer_email: a.email,
+      client_reference_id: a.userId,
+      metadata: a.metadata,
+      subscription_data: { metadata: a.metadata },
       success_url: a.successUrl,
       cancel_url: a.cancelUrl,
     });
@@ -82,6 +105,14 @@ type FakeState = Map<string, CheckoutSession>;
 const g = globalThis as unknown as { __fakeCheckout?: FakeState };
 export const fakeSessions: FakeState = (g.__fakeCheckout ??= new Map());
 
+function fakeUrl(id: string, success: string, cancel: string) {
+  const u = new URL("/dev/fake-checkout", env().APP_URL);
+  u.searchParams.set("session", id);
+  u.searchParams.set("success", success);
+  u.searchParams.set("cancel", cancel);
+  return u.pathname + u.search;
+}
+
 export class FakePayments implements Payments {
   async createCheckout(a: { userId: string; email: string; src: string; successUrl: string; cancelUrl: string }) {
     const id = `cs_test_fake_${Math.random().toString(36).slice(2, 12)}`;
@@ -89,11 +120,15 @@ export class FakePayments implements Payments {
       id, url: null, paid: false, clientReferenceId: a.userId, userId: a.userId, src: a.src,
       amountCents: null, currency: null, customerId: null, paymentIntentId: `pi_fake_${id.slice(-10)}`, livemode: false,
     });
-    const u = new URL("/dev/fake-checkout", env().APP_URL);
-    u.searchParams.set("session", id);
-    u.searchParams.set("success", a.successUrl);
-    u.searchParams.set("cancel", a.cancelUrl);
-    return { id, url: u.pathname + u.search };
+    return { id, url: fakeUrl(id, a.successUrl, a.cancelUrl) };
+  }
+  async createSubscriptionCheckout(a: SubCheckoutArgs) {
+    const id = `cs_test_fake_${Math.random().toString(36).slice(2, 12)}`;
+    fakeSessions.set(id, {
+      id, url: null, paid: false, clientReferenceId: a.userId, userId: a.userId, src: null, amountCents: null, currency: null,
+      customerId: `cus_fake_${id.slice(-10)}`, paymentIntentId: null, livemode: false, mode: "subscription", metadata: a.metadata,
+    });
+    return { id, url: fakeUrl(id, a.successUrl, a.cancelUrl) };
   }
   async retrieveCheckout(id: string) {
     return fakeSessions.get(id) || null;
