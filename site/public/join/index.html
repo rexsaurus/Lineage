@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Join · Lineage</title>
+<meta name="description" content="Become a Founding Archivist: turn your family&#x27;s records into a family history.">
+<link rel="icon" href="../assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="site-top"><div class="wrap">
+  <a class="brand" href="../"><img src="../assets/logo.svg" alt="" width="26" height="26"><span>Lineage</span></a>
+  <nav class="site-nav" aria-label="Site"><a href="../">Home</a><a href="../start/">Get started</a><a href="../quickstart/">Quickstart</a><a href="../testdrive/">Test drive</a><a href="../tour/">Tour</a><a href="../demo/">Live demo</a><a href="../docs/">Docs</a><a href="../blog/">Blog</a><a href="https://github.com/rexsaurus/Lineage" class="gh">GitHub</a></nav>
+</div></header>
+<main>
+<article class="doc join">
+<h1>You keep your family's records. Lineage turns them into a family history your relatives will read.</h1>
+<p class="lede">I turned my dad's 3.5-hour interview into a 170-page book.</p>
+<p class="small">Rex, who made Lineage</p>
+
+<section class="j-card" id="j-offer" aria-labelledby="j-offer-h">
+  <h2 id="j-offer-h">Founding Archivist<span id="j-price"></span></h2>
+  <p>For the person in the family who keeps the photographs, letters and papers.</p>
+  <p id="j-reserve">Reserve your spot free. The price will be announced soon.</p>
+  <a class="j-btn" id="j-pay" href="#" hidden>Become a Founding Archivist</a>
+  <p class="small" id="j-pay-note" hidden>You'll pay securely with Stripe. Your card details never reach Lineage.</p>
+</section>
+
+<section class="j-card" aria-labelledby="j-lead-h">
+  <h2 id="j-lead-h"><span id="j-lead-title">Reserve your spot</span></h2>
+  <p id="j-lead-sub">Leave your email and I'll write to you, and only about Lineage.</p>
+  <form id="j-form" class="j-form" novalidate>
+    <label for="j-name">Your name</label>
+    <input id="j-name" name="name" autocomplete="name" maxlength="80">
+    <label for="j-email">Your email</label>
+    <input id="j-email" name="email" type="email" inputmode="email" autocomplete="email" required maxlength="120">
+    <label for="j-surname">Your family name <span class="small">(the surname you're researching)</span></label>
+    <input id="j-surname" name="surname" autocomplete="off" maxlength="60">
+    <div class="j-hp" aria-hidden="true"><label for="j-web">Leave this empty</label><input id="j-web" name="website" tabindex="-1" autocomplete="off"></div>
+    <button class="j-btn" type="submit">Send</button>
+  </form>
+  <p id="j-msg" class="j-msg" role="status" aria-live="polite"></p>
+</section>
+
+<p><a class="j-btn ghost" href="demo/">See what a family history looks like</a></p>
+<p class="small"><a href="privacy/">How your information is kept private</a></p>
+</article>
+
+<style>
+.join{font-size:19px;line-height:1.6;color:var(--ink)}
+.join h1{font-size:clamp(30px,6vw,42px)}
+.join h2{border:0;margin:0 0 8px;padding:0;font-size:28px}
+.join .lede{font-size:21px;color:var(--ink);margin:18px 0 4px}
+.join .small{font-size:17px;color:var(--ink-2)}
+.j-card{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:20px;margin:26px 0}
+.j-btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;padding:12px 20px;border-radius:12px;border:0;
+  background:#A4522F;color:#fff;font:600 20px var(--sans);text-decoration:none;cursor:pointer}
+.j-btn:focus-visible,.j-form input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.j-btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink-2)}
+.j-btn[hidden]{display:none}
+.j-form{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.j-form label{font-weight:600;margin-top:8px}
+.j-form input{font:inherit;font-size:19px;min-height:52px;padding:10px 14px;border:2px solid var(--ink-2);border-radius:10px;background:var(--card);color:var(--ink)}
+.j-form .j-btn{margin-top:16px}
+.j-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.j-msg{font-weight:600;margin:14px 0 0}
+</style>
+
+<script>
+(function () {
+  "use strict";
+  var SLUG = /^[a-z0-9-]{1,64}$/;
+  function readCookie(name) {
+    var m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+    return m ? decodeURIComponent(m[1]) : "";
+  }
+  var q = new URLSearchParams(location.search).get("src");
+  q = q ? q.toLowerCase() : "";
+  var src = SLUG.test(q) ? q : (SLUG.test(readCookie("lineage_src")) ? readCookie("lineage_src") : "direct");
+  if (SLUG.test(q)) {
+    document.cookie = "lineage_src=" + q + "; Max-Age=" + (30 * 24 * 3600) + "; Path=/; SameSite=Lax" + (location.protocol === "https:" ? "; Secure" : "");
+  }
+  var $ = function (id) { return document.getElementById(id); };
+  var payBase = "";
+
+  function payHref() {
+    var u = payBase + (payBase.indexOf("?") < 0 ? "?" : "&") + "client_reference_id=" + encodeURIComponent(src);
+    var email = $("j-email").value.trim();
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) u += "&prefilled_email=" + encodeURIComponent(email);
+    return u;
+  }
+
+  fetch("/api/join-config/", { headers: { Accept: "application/json" } })
+    .then(function (r) { return r.ok ? r.json() : {}; })
+    .then(function (c) {
+      if (!c || !c.ready) return;               // no price and no pay button unless BOTH are configured
+      payBase = c.paymentLink;
+      $("j-price").textContent = " — " + c.priceDisplay;
+      $("j-reserve").hidden = true;
+      $("j-pay").hidden = false;
+      $("j-pay-note").hidden = false;
+      $("j-pay").href = payHref();
+      $("j-lead-title").textContent = "Not ready? Get updates";
+      $("j-lead-sub").textContent = "Leave your email and I'll write when there's news. Only about Lineage.";
+    })
+    .catch(function () {});
+
+  $("j-email").addEventListener("input", function () { if (payBase) $("j-pay").href = payHref(); });
+
+  $("j-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var msg = $("j-msg");
+    var email = $("j-email").value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg.textContent = "Please check your email address."; $("j-email").focus(); return; }
+    msg.textContent = "Sending…";
+    fetch("/api/lead/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: $("j-name").value, email: email, surname: $("j-surname").value, website: $("j-web").value, src: src })
+    })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (d) {
+        msg.textContent = d.message || "Something went wrong. Please write your email on Rex's sheet.";
+        if (d.ok) $("j-form").reset();
+      })
+      .catch(function () { msg.textContent = "Something went wrong. Please write your email on Rex's sheet."; });
+  });
+})();
+</script>
+
+</main>
+<footer class="site-foot"><div class="wrap">
+  <p>Lineage is open source under the MIT license. <a href="https://github.com/rexsaurus/Lineage">github.com/rexsaurus/Lineage</a></p>
+  <p class="muted">Every family in the screenshots and the demo is invented. Your recordings, transcripts and photographs stay yours: the license does not cover them.</p>
+</div></footer>
+</body>
+</html>
