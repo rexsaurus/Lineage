@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Build the public website for Lineage into site/public/: the landing page, the README tour with its
 screenshots, the docs rendered to HTML, install instructions, the sample book PDF, and a
-READ-ONLY static snapshot of the dashboard running on the invented demo lineage.
+READ-ONLY static snapshot of the dashboard running on the invented demo lineage, and /changelog/
+(site/changelog.json, appended first on every build by plugins/lineage/scripts/site_changelog.py).
 
     make site                       (from the Lineage repo root; runs `make sample` first)
     python site/build_site.py [--no-browser] [--with-example-chapter]
@@ -43,6 +44,8 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "plugins" / "lineage" / "scripts"))
+import site_changelog  # noqa: E402  (the site changelog: site/changelog.json -> /changelog/)
 SITE = ROOT / "site" / "public"
 APP = ROOT / "app"
 FIXTURE = ROOT / "examples" / "demo-lineage"
@@ -113,7 +116,7 @@ def page(path, title, body, desc="", active=""):
 {body}
 </main>
 <footer class="site-foot"><div class="wrap">
-  <p>Lineage is open source under the MIT license. <a href="{GITHUB}">github.com/rexsaurus/Lineage</a></p>
+  <p>Lineage is open source under the MIT license. <a href="{GITHUB}">github.com/rexsaurus/Lineage</a> · <a href="{rel(path, 'changelog/')}">Site changelog</a></p>
   <p class="muted">Every family in the screenshots and the demo is invented. Your recordings, transcripts and photographs stay yours: the license does not cover them.</p>
 </div></footer>
 </body>
@@ -270,7 +273,7 @@ def build_pages(with_example):
 
     # assets
     (SITE / "assets").mkdir(parents=True, exist_ok=True)
-    (SITE / "assets" / "site.css").write_text(SITE_CSS.strip() + "\n")
+    (SITE / "assets" / "site.css").write_text(SITE_CSS.strip() + "\n" + site_changelog.CLOG_CSS + "\n")
     shutil.copy(APP / "static" / "logo.svg", SITE / "assets" / "logo.svg")
     (SITE / "images").mkdir(exist_ok=True)
     for img in sorted((ROOT / "docs" / "images").glob("*.png")):
@@ -443,11 +446,19 @@ make demo            # the dashboard, on a scratch copy of the demo lineage</cod
             f'<tbody>{"".join(releases)}</tbody></table><p><a href="../docs/changelog/">The full changelog</a></p></article>')
     write(SITE / "blog" / "index.html", page("blog", "Blog", blog, "Lineage news, release notes and project history.", "blog"))
 
+    # --- the site changelog (captured in main() before any page is rendered)
+    clog = site_changelog.load(site_changelog.platform_path(ROOT)) or {"entries": []}
+    cl = (f'<article class="doc"><h1>Site changelog</h1><p class="lede">Every change to Lineage and this site, newest first. '
+          f'An entry is added automatically each time the site is built (<code>make site</code>). Release notes in full are in the '
+          f'<a href="../docs/changelog/">changelog</a>; highlights on the <a href="../blog/">blog</a>.</p>'
+          + site_changelog.entries_html(clog, compare_url=GITHUB + "/compare") + "</article>")
+    write(SITE / "changelog" / "index.html", page("changelog", "Site changelog", cl, "Every change to Lineage and its website, newest first."))
+
     # --- 404
     nf = '<article class="doc"><h1>Not here</h1><p>That page doesn\'t exist. <a href="/">Back to Lineage</a>.</p></article>'
     write(SITE / "404.html", page("", "Not found", nf).replace('href="./"', 'href="/"').replace('="assets/', '="/assets/')
           .replace('="tour/', '="/tour/').replace('="demo/', '="/demo/').replace('="docs/', '="/docs/').replace('="install/', '="/install/')
-          .replace('="start/', '="/start/').replace('="quickstart/', '="/quickstart/').replace('="blog/', '="/blog/').replace('="testdrive/', '="/testdrive/'))
+          .replace('="start/', '="/start/').replace('="quickstart/', '="/quickstart/').replace('="blog/', '="/blog/').replace('="testdrive/', '="/testdrive/').replace('="changelog/', '="/changelog/'))
 
 
 def write(p, text):
@@ -987,6 +998,13 @@ def main():
             if p.name not in keep:
                 shutil.rmtree(p) if p.is_dir() else p.unlink()
     SITE.mkdir(parents=True, exist_ok=True)
+
+    # the site changelog first, so no build (and so no deploy) skips it; idempotent
+    entry, _ = site_changelog.capture_platform(
+        ROOT, withhold=(REAL_NAMES, LEAKS),
+        doc_titles={**{src: t for src, _, t in DOCS}, "README.md": "README", "docs/GETTING-STARTED.md": "Getting started",
+                    "docs/QUICKSTART.md": "Quickstart"})
+    log(f"changelog: {'entry ' + entry['id'] + ', ' + str(len(entry['changes'])) + ' changes' if entry else 'nothing new'} (site/changelog.json)")
 
     log("pages…")
     build_pages(a.with_example_chapter)
