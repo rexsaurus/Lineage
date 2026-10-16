@@ -71,7 +71,7 @@ def log(*a, **k):
 # =========================================================================================
 # page shell
 # =========================================================================================
-NAV = [("", "Home"), ("start", "Get started"), ("quickstart", "Quickstart"), ("tour", "Tour"), ("demo", "Live demo"),
+NAV = [("", "Home"), ("start", "Get started"), ("quickstart", "Quickstart"), ("testdrive", "Test drive"), ("tour", "Tour"), ("demo", "Live demo"),
        ("docs", "Docs"), ("blog", "Blog")]
 
 
@@ -402,6 +402,11 @@ make demo            # the dashboard, on a scratch copy of the demo lineage</cod
         body = body.replace("<img ", '<img loading="lazy" ')
         write(SITE / dst / "index.html", page(dst, title, f'<article class="doc">{body}</article>', desc, dst))
 
+    # --- test drive: searches public archives through api/testdrive.js (a Vercel function at the repo root)
+    td = (ROOT / "site" / "testdrive.html").read_text(encoding="utf-8")
+    write(SITE / "testdrive" / "index.html", page("testdrive", "Test drive", td,
+          "Type a family name and see what Lineage's research would start from: newspapers, books and notable people.", "testdrive"))
+
     # --- blog: posts, and the release history from CHANGELOG.md
     def nice(d):
         try:
@@ -433,7 +438,7 @@ make demo            # the dashboard, on a scratch copy of the demo lineage</cod
     nf = '<article class="doc"><h1>Not here</h1><p>That page doesn\'t exist. <a href="/">Back to Lineage</a>.</p></article>'
     write(SITE / "404.html", page("", "Not found", nf).replace('href="./"', 'href="/"').replace('="assets/', '="/assets/')
           .replace('="tour/', '="/tour/').replace('="demo/', '="/demo/').replace('="docs/', '="/docs/').replace('="install/', '="/install/')
-          .replace('="start/', '="/start/').replace('="quickstart/', '="/quickstart/').replace('="blog/', '="/blog/'))
+          .replace('="start/', '="/start/').replace('="quickstart/', '="/quickstart/').replace('="blog/', '="/blog/').replace('="testdrive/', '="/testdrive/'))
 
 
 def write(p, text):
