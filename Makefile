@@ -25,6 +25,9 @@
 #   make face-focus PROJECT=...                 data/image_focus.json (faces, for cropped pictures)
 #   make seo PROJECT=... SITE=dir               static /stories/, /family/, sitemap.xml, robots.txt into SITE
 #   make updates PROJECT=... SITE=dir           CHANGELOG.md as SITE/updates/index.html
+#   make changelog PROJECT=... [SITE=dir] [DRY=1]   append what changed to data/site_changelog.json (every
+#                                               site build does this itself); SITE: also write SITE/changelog/
+#   make changelog [DRY=1]                      the same for this website (site/changelog.json; make site runs it)
 #
 # Everything runs inside the project folder; nothing here edits your recordings.
 
@@ -41,7 +44,7 @@ override PROJECT := $(patsubst ~/%,$(HOME)/%,$(PROJECT))
 override SITE := $(patsubst ~/%,$(HOME)/%,$(SITE))
 
 .PHONY: install install-transcribe sample new status draft final clean check-project screenshots demo chapter site \
-        chapter-pdfs edition r2-sync face-focus seo updates check-lineage-project
+        chapter-pdfs edition r2-sync face-focus seo updates changelog check-lineage-project
 
 install:
 	@command -v python3 >/dev/null || { echo "python3 is required"; exit 1; }
@@ -136,6 +139,11 @@ seo: check-lineage-project
 updates: check-lineage-project
 	@test -n "$(SITE)" || { echo "usage: make updates PROJECT=path SITE=path/to/built/site"; exit 1; }
 	@$(PY) $(PUB)/updates_page.py --project "$(PROJECT)" "$(SITE)"
+
+changelog:
+	@test -x $(PY) || { echo "run 'make install' first"; exit 1; }
+	@if [ -n "$(PROJECT)" ]; then $(PY) $(PUB)/site_changelog.py --project "$(PROJECT)" $(if $(DRY),--dry-run) $(if $(SITE),--render "$(SITE)"); \
+	 else $(PY) $(PUB)/site_changelog.py --platform $(if $(DRY),--dry-run); fi
 
 screenshots: sample
 	@$(PY) -c "import playwright" 2>/dev/null || $(PY) -m pip install -q playwright

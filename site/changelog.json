@@ -1,0 +1,319 @@
+{
+ "format": 1,
+ "site": "Lineage",
+ "state": {
+  "commit": "b88d39f57cd0bb5dfa6cbbd42e5a6d1cf49d88fe",
+  "describe": "v0.9.1-6-gb88d39f",
+  "content": {
+   "blog": {
+    "2026-10-01-how-lineage-began.md": [
+     "How Lineage began",
+     "4a5673bca75484d2"
+    ],
+    "2026-10-13-lineage-0-9.md": [
+     "Lineage 0.9: publish a family site from the core",
+     "8a790cf4f0460b1a"
+    ],
+    "2026-10-15-getting-started-and-quickstart.md": [
+     "New: a Getting started guide and a Quickstart",
+     "306378c1e4c51ef4"
+    ]
+   },
+   "docs": {
+    "docs/HOWTO.md": [
+     "How to use Lineage",
+     "a67c12869493fdf6"
+    ],
+    "docs/FACTORY.md": [
+     "The Factory",
+     "3404c340d3f1e127"
+    ],
+    "app/README.md": [
+     "The dashboard",
+     "4292a639e7aa3a2d"
+    ],
+    "PRIVACY.md": [
+     "Privacy",
+     "b3f1aab28c61024a"
+    ],
+    "CHANGELOG.md": [
+     "Changelog",
+     "daa0e230b425b342"
+    ]
+   },
+   "releases": {
+    "0.9.1": [
+     "2026-10-13",
+     "Private passages that are never quoted or published; paragraphs kept under 130 words"
+    ],
+    "0.9.0": [
+     "2026-10-12",
+     "Publishing built in: chapter PDFs, versioned editions, image hosting, face-centred crops, photo restoration, search-engine pages"
+    ],
+    "0.8.0": [
+     "2026-10-12",
+     "Copyright checks for published books; open Internet Archive downloads; encyclopedia articles for any subject; a digitization work spec"
+    ],
+    "0.7.0": [
+     "2026-10-08",
+     "Whole-book index; document exhibits; readable editions of records; an image catalogue; publishing a family's dashboard"
+    ],
+    "0.6.0": [
+     "2026-10-05",
+     "Writing rules from a real book: sources on every chapter, marked illustrations, epigraphs; chapter research dossiers; the public website"
+    ],
+    "0.5.0": [
+     "2026-10-01",
+     "The invented demo family, the Calders; a tour built from real screenshots"
+    ],
+    "0.4.0": [
+     "2026-10-01",
+     "Projects track their Lineage version and update safely; a Makefile in every project"
+    ],
+    "0.3.2": [
+     "2026-10-01",
+     "Places on a route link back to the ships and voyages that passed them"
+    ],
+    "0.3.1": [
+     "2026-10-01",
+     "Merged Familypedia articles keep every name; links into the family tree"
+    ],
+    "0.3.0": [
+     "2026-10-01",
+     "The dashboard and the Familypedia's article types"
+    ]
+   }
+  }
+ },
+ "entries": [
+  {
+   "id": "2026-10-01.1",
+   "date": "2026-10-01",
+   "at": "2026-10-16T14:12:37-07:00",
+   "version": "v0.3.0",
+   "lineage": "v0.3.0",
+   "commits": {
+    "from": null,
+    "to": "2fac9e91e427e8800fdf45ad282a39a510026d31",
+    "count": 0
+   },
+   "changes": [
+    "Release 0.3.0: The dashboard and the Familypedia's article types"
+   ],
+   "noise": 0,
+   "backfill": true
+  },
+  {
+   "id": "2026-10-01.2",
+   "date": "2026-10-01",
+   "at": "2026-10-16T14:12:38-07:00",
+   "version": "v0.3.1",
+   "lineage": "v0.3.1",
+   "commits": {
+    "from": "2fac9e91e427e8800fdf45ad282a39a510026d31",
+    "to": "209de7728fb0c1833bd99282559b2f07176cf2a9",
+    "count": 1
+   },
+   "changes": [
+    "Release 0.3.1: Merged Familypedia articles keep every name; links into the family tree",
+    "Release 0.3.1: Familypedia merges carry names over; genealogy link; profile aliases"
+   ],
+   "noise": 0,
+   "backfill": true
+  },
+  {
+   "id": "2026-10-01.3",
+   "date": "2026-10-01",
+   "at": "2026-10-16T14:12:38-07:00",
+   "version": "v0.3.2",
+   "lineage": "v0.3.2",
+   "commits": {
+    "from": "209de7728fb0c1833bd99282559b2f07176cf2a9",
+    "to": "64be63c797eae7bb10e48c40c4f252d4c42087f2",
+    "count": 1
+   },
+   "changes": [
+    "Release 0.3.2: Places on a route link back to the ships and voyages that passed them",
+    "Release 0.3.2: ports link back to the ships and voyages whose route they are on"
+   ],
+   "noise": 0,
+   "backfill": true
+  },
+  {
+   "id": "2026-10-01.4",
+   "date": "2026-10-01",
+   "at": "2026-10-16T14:12:38-07:00",
+   "version": "v0.4.0",
+   "lineage": "v0.4.0",
+   "commits": {
+    "from": "64be63c797eae7bb10e48c40c4f252d4c42087f2",
+    "to": "e2ff262ed742debf21e56e923b817409d0866225",
+    "count": 1
+   },
+   "changes": [
+    "Release 0.4.0: Projects track their Lineage version and update safely; a Makefile in every project",
+    "Release 0.4.0: projects are consumers (lineage version/update/dashboard, project Makefile and lock); CLAUDE.md"
+   ],
+   "noise": 0,
+   "backfill": true
+  },
+  {
+   "id": "2026-10-01.5",
+   "date": "2026-10-01",
+   "at": "2026-10-16T14:12:38-07:00",
+   "version": "v0.5.0",
+   "lineage": "v0.5.0",
+   "commits": {
+    "from": "e2ff262ed742debf21e56e923b817409d0866225",
+    "to": "4517ea48e3745dd64aac86472fa958fddb083456",
+    "count": 1
+   },
+   "changes": [
+    "Release 0.5.0: The invented demo family, the Calders; a tour built from real screenshots",
+    "Docs: Lineage as a family record platform; demo lineage; dashboard tour with real screenshots (0.5.0)"
+   ],
+   "noise": 0,
+   "backfill": true
+  },
+  {
+   "id": "2026-10-05.1",
+   "date": "2026-10-05",
+   "at": "2026-10-16T14:12:38-07:00",
+   "version": "v0.6.0",
+   "lineage": "v0.6.0",
+   "commits": {
+    "from": "4517ea48e3745dd64aac86472fa958fddb083456",
+    "to": "062444f3c10c59ab21dc97ebb366314edd2c220c",
+    "count": 11
+   },
+   "changes": [
+    "Release 0.6.0: Writing rules from a real book: sources on every chapter, marked illustrations, epigraphs; chapter research dossiers; the public website",
+    "Dashboard: Sources gallery and lightbox; story citations and image toolbar; illustrations never a person's picture",
+    "Skills: generic improvements from a working project; make chapter (preview, page images); drop_word_runs",
+    "Template: two columns by default, archive thumbnails in drafts, #family-tree, #story-page; illustrations line, page minimum",
+    "Research: chapter dossiers (skill, dossier.py), polite fetch_records.py, manual-lookup and archive-request templates, access rules",
+    "Illustrations: generate_images.py (period presets, likeness lock, grayscale print copies); illustrations marked in the index and front matter",
+    "Writing rules from a working book: one epigraph, THE RECORDS on every chapter, no general-knowledge sources, page minimum, service records, gates and the book swarm",
+    "Release 0.6.0 (to be tagged): docs, changelog, version",
+    "Site: a static public website for Vercel (make site), with a read-only demo",
+    "Site: drop the random job id from the stored story renders",
+    "Docs: deploy guide without account-specific team names",
+    "Release 0.6.0"
+   ],
+   "noise": 0,
+   "backfill": true
+  },
+  {
+   "id": "2026-10-08.1",
+   "date": "2026-10-08",
+   "at": "2026-10-16T14:12:38-07:00",
+   "version": "v0.7.0",
+   "lineage": "v0.7.0",
+   "commits": {
+    "from": "062444f3c10c59ab21dc97ebb366314edd2c220c",
+    "to": "916a53d93a2321c6910bf0a20eacf328f6a743d3",
+    "count": 1
+   },
+   "changes": [
+    "Release 0.7.0: Whole-book index; document exhibits; readable editions of records; an image catalogue; publishing a family's dashboard",
+    "Release 0.7.0: auto-index, exhibits, image manager, research tools, real-family sites"
+   ],
+   "noise": 0,
+   "backfill": true
+  },
+  {
+   "id": "2026-10-12.1",
+   "date": "2026-10-12",
+   "at": "2026-10-16T14:12:38-07:00",
+   "version": "v0.8.0",
+   "lineage": "v0.8.0",
+   "commits": {
+    "from": "916a53d93a2321c6910bf0a20eacf328f6a743d3",
+    "to": "ab7d35c8713f0f4e841404af3ecc0410562ddbfc",
+    "count": 14
+   },
+   "changes": [
+    "Release 0.8.0: Copyright checks for published books; open Internet Archive downloads; encyclopedia articles for any subject; a digitization work spec",
+    "build_instance: --hide sources,settings for public snapshots (areas removed, not just hidden)",
+    "Familypedia: 'Sources from the book' (each story's #records list on every entry it touches); data/portraits.csv drives portrait slots, story cards and family-tree photos (illustrations allowed, labelled); site builds find Typst packages; key check no longer matches words like 'musk-ox'",
+    "Familypedia: the browse/search panel no longer stays pinned over the articles on narrow screens",
+    "No placeholders: where a person, thing or story has no image, show nothing (no initial, icon or ? box)",
+    "Public snapshots keep every image a page shows when Sources is hidden (the work/ folder was being deleted wholesale); a person's chosen image is their portrait even when it is also a chapter cover",
+    "Familypedia lists only family members when data/family_members.csv exists; story cards show the chapter's chosen image (no letter tiles)",
+    "Static snapshots can serve every image from Cloudflare R2 (--assets manifest): full size by path, ~480px thumbnails wherever a page shows images small; local copies dropped",
+    "Home: story of the day, stories, gallery (photographs first, no document scans), relatives index (one entry per family member, chosen portraits only); story openings skip layout code; recording citations in prose render as chips",
+    "Portrait chips everywhere (Familypedia lists, story and timeline links, tree, home); no type icons; family tree from the project's data/family_tree.csv when present (pill nodes with portraits, opens at reading size on the subject, click opens the Familypedia article); home lists everyone in the family tree",
+    "Curated encyclopedia articles (app/wiki.py: data/wiki/<name>.md with infobox, sections, numbered references) shown in Familypedia in place of the derived page; passages and book sources only when they name the subject; original-photos-only gallery (/api/engine/gallery: no illustrations, restorations, scans or near-duplicates); snapshot copies book-used images from skipped folders and waits longer for long chapters; readable citation excerpts",
+    "Familypedia: People, Events and Places tabs (portrait cards); article Contents box no longer pinned; encyclopedia articles use their own class (.encyc) so the old two-column .wiki grid no longer scrambles headings and paragraphs; every picture labelled (original), (illustration) or (digital restoration) on the gallery and Photographs; static snapshots centre cropped pictures on detected faces (data/image_focus.json)",
+    "Keep real names out of the open-source app's comments (the demo's privacy check caught them)",
+    "Familypedia: curated articles for any subject, and wiki links that open non-person subjects",
+    "0.8.0: published-sources and archive-open-book skills, curated Familypedia articles for any subject (documented), digitization work-spec template, LF line endings for CSV writers"
+   ],
+   "noise": 0,
+   "backfill": true
+  },
+  {
+   "id": "2026-10-12.2",
+   "date": "2026-10-12",
+   "at": "2026-10-16T14:12:38-07:00",
+   "version": "v0.9.0",
+   "lineage": "v0.9.0",
+   "commits": {
+    "from": "ab7d35c8713f0f4e841404af3ecc0410562ddbfc",
+    "to": "983b5a92f55be08ae528192f483217109972edc4",
+    "count": 4
+   },
+   "changes": [
+    "Release 0.9.0: Publishing built in: chapter PDFs, versioned editions, image hosting, face-centred crops, photo restoration, search-engine pages",
+    "Stories: the reader lists every paragraph with its own sources; a Download button for each chapter's PDF",
+    "Published snapshots: no 'Generate the remaining stories' or 'Download audio' buttons; chapter PDFs carried into the snapshot so Download buttons appear",
+    "Demo family: curated Familypedia articles (four people and an organization), a family tree, and a public-domain book record, so the demo shows what a full family site does",
+    "0.9.0: publish a family site from core Lineage — chapter PDFs, versioned editions, R2 image hosting, face focus, photo restoration, SEO pages, updates page, .no-drive rule"
+   ],
+   "noise": 0,
+   "backfill": true
+  },
+  {
+   "id": "2026-10-13.1",
+   "date": "2026-10-13",
+   "at": "2026-10-16T14:12:38-07:00",
+   "version": "v0.9.1",
+   "lineage": "v0.9.1",
+   "commits": {
+    "from": "983b5a92f55be08ae528192f483217109972edc4",
+    "to": "4ccc553172116b85f09f8c181d0f981bf0504915",
+    "count": 3
+   },
+   "changes": [
+    "Release 0.9.1: Private passages that are never quoted or published; paragraphs kept under 130 words",
+    "r2_sync: never upload anything in a folder marked .no-drive or .no-publish (private research copies), as drive-sync already does",
+    "Demo site rebuilt on 0.9.0: chapter PDFs with Download buttons, curated Familypedia articles, family tree; the story reader lists every paragraph",
+    "0.9.1: private story units (never quoted, indexed or published); paragraph-length rule and split_paragraphs.py"
+   ],
+   "noise": 0,
+   "backfill": true
+  },
+  {
+   "id": "2026-10-16.1",
+   "date": "2026-10-16",
+   "at": "2026-10-16T14:12:38-07:00",
+   "version": "v0.9.1-6-gb88d39f",
+   "lineage": "v0.9.1-6-gb88d39f",
+   "commits": {
+    "from": "4ccc553172116b85f09f8c181d0f981bf0504915",
+    "to": "b88d39f57cd0bb5dfa6cbbd42e5a6d1cf49d88fe",
+    "count": 6
+   },
+   "changes": [
+    "split_paragraphs.py: generic usage example",
+    "Keep real names out of an example comment",
+    "Private units also hide the transcript stretches they cover (their spans): not quoted in the Familypedia or citations, and deleted from published snapshots",
+    "Site: Getting started (newcomers), Quickstart (Claude Code setup and research prompts), and a Blog with release history; refreshed screenshots incl. curated articles and Download buttons",
+    "Test drive: type a family name, search newspapers (LOC), books (Internet Archive) and notable people (Wikidata) at once; no AI by default, edge-cached per query, rate-limited, records to 1949 and deceased people only",
+    "Test drive: deploy the api/ function (vercelignore), 40 s max duration, longer Library of Congress timeout, short cache when an archive fails"
+   ],
+   "noise": 114,
+   "backfill": false
+  }
+ ]
+}

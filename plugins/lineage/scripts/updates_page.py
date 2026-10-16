@@ -79,7 +79,7 @@ def render(cfg):
 <body><div class="wrap">
 <p class="kicker"><a href="/">{E(book)}</a></p>
 <h1>Updates</h1>
-<p>What changed in each edition of the book.{f' <a href="{E(ed)}">Read the latest edition</a>.' if ed else ''}</p>
+<p>What changed in each edition of the book.{f' <a href="{E(ed)}">Read the latest edition</a>.' if ed else ''} Every change to the website itself is on the <a href="/changelog/">changelog</a>.</p>
 {"".join(body)}
 </div></body></html>
 """

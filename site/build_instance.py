@@ -13,7 +13,9 @@ at a real project:
     accounts or local paths of whoever builds it can leak;
   - every GET the page makes is stored as a static file; writes, pipeline jobs and the terminal are
     switched off and say so;
-  - the book PDF (--pdf) is published at book/<name>.pdf and linked from the dashboard's book view.
+  - the book PDF (--pdf) is published at book/<name>.pdf and linked from the dashboard's book view;
+  - the site changelog: what changed since the last build is appended to <project>/data/site_changelog.json
+    (plugins/lineage/scripts/site_changelog.py) and rendered at changelog/, linked from the banner.
 
 Publishing a real family is a deliberate act: the build refuses unless --allow-real-names is given,
 and it always stops on local paths, emails, API keys and localhost links (the LEAKS check).
@@ -26,8 +28,10 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import build_site as bs  # noqa: E402
+sys.path.insert(0, str(HERE.parent / "plugins" / "lineage" / "scripts"))
+import site_changelog  # noqa: E402
 
-SKIP = [".git", ".venv", "venv", "node_modules", "__pycache__", ".claude", "output",
+SKIP = [".git", ".venv", "venv", "node_modules", "__pycache__", ".claude", "output", "data/site_changelog.json",
         "facts/records/_raw", "facts/records/sources", "audio/raw", "photos/archive"]
 
 VERCEL_JSON = {
@@ -324,6 +328,11 @@ def main():
     out.mkdir(parents=True)
     bs.SITE = out                               # build_site's helpers and checks write/scan here
 
+    # the site changelog: what changed since the last build is appended to <project>/data/site_changelog.json
+    # before anything is rendered, so no publish can skip it (idempotent: a second build adds nothing)
+    entry, clog = site_changelog.capture_instance(a.project.expanduser().resolve())
+    bs.log(f"  changelog: {'entry ' + entry['id'] + ', ' + str(len(entry['changes'])) + ' changes' if entry else 'nothing new'}")
+
     tmp = Path(tempfile.mkdtemp(prefix="lineage-instance-"))
     inst = Instance(tmp, a.project.expanduser().resolve(), out, name, a.pdf)
     inst.extra_skip = a.skip
@@ -354,7 +363,7 @@ def main():
         esc = lambda x: x.replace("\\", "\\\\").replace("'", "\\'")
         j = re.sub(r"bar\.innerHTML = '.*?';", (
             "bar.innerHTML = '<span><b>Read-only</b> snapshot of " + esc(a.title) + ". Nothing you change is saved.</span>'"
-            " + '<span><a href=\"" + esc(a.home_url) + "\">" + esc(a.home_label) + "</a> · Built with "
+            " + '<span><a href=\"" + esc(a.home_url) + "\">" + esc(a.home_label) + "</a> · <a href=\"changelog/\">Changelog</a> · Built with "
             "<a href=\"" + bs.GITHUB + "\">Lineage</a></span>';"), j, count=1, flags=re.S)
         j = j.replace('The terminal runs Claude Code on your own machine. Run it yourself with "make demo".',
                       "This is a read-only snapshot: the terminal is not available here.")
@@ -373,6 +382,7 @@ def main():
         (out / "book").mkdir(exist_ok=True)
         shutil.copy(a.pdf, out / "book" / f"{name}.pdf")
     (out / "vercel.json").write_text(json.dumps(VERCEL_JSON, indent=2) + "\n")
+    site_changelog.write_page(out, site_changelog.standalone_page(clog, a.title, a.home_url, a.home_label))
 
     bs.log(f"  scrubbed local paths in {scrub_paths(out)} published files")
     found = bs.check_text()

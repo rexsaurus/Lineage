@@ -16,6 +16,7 @@ A project's publish settings live in its lineage.json, under "settings" -> "publ
           "app_path": "/lineage/",                     # where the dashboard snapshot is published on the site
           "include_living": false,                     # SEO pages for people marked living (default: none)
           "hidden_aliases": [],                        # aliases never printed on public pages (nicknames)
+          "changelog_commit_messages": false,          # list the project's commit messages on /changelog/
           "r2": {
             "env_file": "~/.config/lineage/r2.env",    # R2 credentials (never in git)
             "prefix": "<slug of the title>",           # key prefix inside the bucket
@@ -48,6 +49,7 @@ DEFAULTS = {
     "app_path": "/lineage/",
     "include_living": False,
     "hidden_aliases": [],
+    "changelog_commit_messages": False,
     "r2": {
         "env_file": "~/.config/lineage/r2.env",
         "prefix": "",

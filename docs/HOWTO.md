@@ -1612,7 +1612,7 @@ first run as a trial. The story's text goes to ElevenLabs to be read aloud.
 
 A lineage can be published as a website: a landing page of your own, the dashboard as a read-only
 snapshot (usually at `/lineage/`), plain pages for every story and every person that search engines
-can index, an updates page, and every picture and PDF served from a Cloudflare R2 bucket. The tools
+can index, an updates page, a changelog that keeps itself, and every picture and PDF served from a Cloudflare R2 bucket. The tools
 live in Lineage; the project supplies only its content and these settings.
 
 #### The settings
@@ -1659,6 +1659,7 @@ that needs a missing value says so and is skipped.
 | `app_path` | `/lineage/` | where the dashboard snapshot is published on the site |
 | `include_living` | `false` | whether people marked living get public pages |
 | `hidden_aliases` | `[]` | aliases never printed on public pages (household nicknames) |
+| `changelog_commit_messages` | `false` | list the project's own commit messages on `/changelog/` (otherwise commits are summarised as file counts by area) |
 | `r2.env_file` | `~/.config/lineage/r2.env` | credentials: `R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_PUBLIC_BASE` once public access is on. Never in git |
 | `r2.prefix` | the slug of the title | key prefix in the bucket |
 | `r2.scan` | `["photos", "sources", "output/chapters"]` | folders searched for images |
@@ -1687,6 +1688,8 @@ $PY $S/seo_build.py --project $P <site>        # 5. /stories/, /family/, sitemap
 $PY $S/updates_page.py --project $P <site>     # 6. CHANGELOG.md as /updates/
 ```
 
+Steps 4 and 5 also record and render the site changelog (below); nothing to run for it.
+
 The same from the Lineage checkout: `make chapter-pdfs`, `make edition [BUMP=1]`, `make r2-sync
 [DRY=1]`, `make face-focus`, `make seo SITE=…` and `make updates SITE=…`, each with `PROJECT=…`.
 Run `r2_sync.py --dry-run` first: it needs no credentials and lists every key it would write.
@@ -1698,6 +1701,40 @@ the next `r2_sync.py` files the result under `restorations/` and the original un
 
 The SEO pages render a curated article (`data/wiki/<slug>.md`) exactly as the Familypedia does. A
 person marked living gets no page unless `include_living` is true.
+
+#### The site changelog
+
+Every published site keeps a changelog of its own at `/changelog/`, newest first, linked from the
+footer of the story and family pages, the updates page and the dashboard snapshot's banner. You
+never write it: each build appends one entry listing everything that changed since the last one.
+
+- **Where it lives.** A family site: `data/site_changelog.json` in the project (commit it with the
+  rest). The Lineage website: `site/changelog.json` in this repo (`make site` writes it; commit it).
+- **When it is written.** `site/build_instance.py` and `seo_build.py` (and `site/build_site.py`
+  for this website) call `plugins/lineage/scripts/site_changelog.py` before they render anything,
+  so no build, and so no deploy, can skip it. Running a build twice with nothing changed adds
+  nothing. `make changelog PROJECT=$P DRY=1` (or `site_changelog.py --project $P --dry-run`) shows
+  the entry the next build would add without writing it; leave out `PROJECT` for this website.
+- **What becomes a line.** For a family site: each new `## Version X.Y — date` section of the
+  book's `CHANGELOG.md`, bullet by bullet; stories new or revised; Familypedia articles new or
+  updated, by title; timeline events added or corrected; sources newly indexed (counted by kind,
+  never named); a new Lineage version in `lineage.lock` and the core changes the site was built
+  with; and the project's commits since the last entry, summarised as file counts by area. For
+  this website: every commit message since the last entry, new releases from
+  `docs/blog/releases.csv`, new blog posts and the docs pages that changed. Every line comes from
+  git, a file or a hash difference; nothing is invented. Lockfiles, caches, build output and
+  generated manifests are counted as "housekeeping files", never listed.
+- **Privacy.** Only what the site itself publishes is named: an article whose front matter says
+  `private: true`, a living person's article (unless `include_living`), and timeline events drawn
+  from a private unit's passages or about a living person never appear. Removals are counted, not
+  named. If something listed earlier is later made private, its old line disappears from the page.
+  Commit messages are free text, so a family site lists them only with
+  `changelog_commit_messages: true`; this website withholds any message that fails the real-names
+  or local-path checks.
+- **The first entry.** The first build creates the file with a backfill from history: one entry
+  per version in the book's `CHANGELOG.md` (for this website, one per release in
+  `docs/blog/releases.csv`, with the commits between its git tags), then a "changelog started"
+  baseline.
 
 #### Private folders: `.no-drive`
 

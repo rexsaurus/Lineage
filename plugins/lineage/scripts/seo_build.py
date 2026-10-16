@@ -7,6 +7,7 @@ its own title, description, canonical URL, Open Graph / Twitter card and schema.
     /stories/<slug>/          one story: summary, opening, lead picture, people in it, links to read it
     /family/                  the family, by line                  (schema.org ItemList of Person)
     /family/<slug>/           one person: relation, dates, parents/spouse/children, portrait, stories
+    /changelog/               every change to the site, newest first (data/site_changelog.json; site_changelog.py)
     /sitemap.xml, /robots.txt
 
     python seo_build.py --project DIR <site dir>       # after the site is assembled (site/build_instance.py)
@@ -34,6 +35,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _project import add_project_arg, enter_project  # noqa: E402
 import _publish  # noqa: E402
+import site_changelog  # noqa: E402
 
 sys.path.insert(0, str(_publish.lineage_home() / "app"))
 import server, familypedia, wiki  # noqa: E402,E401
@@ -119,9 +121,9 @@ def page(path, title, desc, body, image=None, jsonld=None, kind="article", crumb
 <meta name="twitter:card" content="{'summary_large_image' if img else 'summary'}"><meta name="twitter:title" content="{E(title)}">
 <meta name="twitter:description" content="{E(desc)}">{tw_img}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap">
-<style>{CSS}{wiki.CSS}</style>{ld}<script type="application/ld+json">{json.dumps(bc, ensure_ascii=False)}</script></head>
+<style>{CSS}{wiki.CSS}{site_changelog.CLOG_CSS}</style>{ld}<script type="application/ld+json">{json.dumps(bc, ensure_ascii=False)}</script></head>
 <body><main><nav class="crumbs">{crumb_html}</nav>{body}
-<footer><p><a href="/">{E(BOOK)}</a> · <a href="/stories/">The stories</a> · <a href="/family/">The family</a> · <a href="{E(APP)}">Explore in Lineage</a> · <a href="/updates/">Updates</a></p>
+<footer><p><a href="/">{E(BOOK)}</a> · <a href="/stories/">The stories</a> · <a href="/family/">The family</a> · <a href="{E(APP)}">Explore in Lineage</a> · <a href="/updates/">Updates</a> · <a href="/changelog/">Changelog</a></p>
 {by}</footer></main></body></html>
 """
 
@@ -237,7 +239,7 @@ def main():
     tree, members = family(P, gl)
     tree = [r for r in tree if include_living or not r["living"]]
     pslug = {r["name"]: slug(r["name"]) for r in tree}
-    urls = [("/", "1.0"), ("/stories/", "0.9"), ("/family/", "0.9"), (APP, "0.6"), ("/updates/", "0.5")]
+    urls = [("/", "1.0"), ("/stories/", "0.9"), ("/family/", "0.9"), (APP, "0.6"), ("/updates/", "0.5"), ("/changelog/", "0.4")]
 
     # ---------------------------------------------------------------- stories
     story_people, items = {}, []
@@ -425,6 +427,14 @@ def main():
                    + "".join(f'<li><a href="/family/{pslug[r["name"]]}/">{E(r["name"])}</a></li>' for r in tree) + "</ul></nav></noscript>")
             t = t.replace("<body>", "<body>" + nav, 1) if "<body>" in t else re.sub(r"(<body[^>]*>)", r"\1" + nav.replace("\\", "\\\\"), t, count=1)
             li.write_text(t, encoding="utf-8")
+
+    # ---------------------------------------------------------------- the site changelog
+    entry, clog = site_changelog.capture_instance(root)      # idempotent: build_instance.py has usually just run it
+    write(out, "/changelog/", page("/changelog/", "Changelog", f"Every change to {BOOK}, newest first.",
+                                   f'<p class="kicker">{E(BOOK)}</p><h1>Changelog</h1><p class="lede">Every change to the site, '
+                                   f'newest first. An entry is added automatically each time the site is rebuilt; what changed '
+                                   f'in each edition of the book is on <a href="/updates/">Updates</a>.</p>'
+                                   + site_changelog.entries_html(clog), kind="website"))
 
     # ---------------------------------------------------------------- sitemap, robots
     today = date.today().isoformat()

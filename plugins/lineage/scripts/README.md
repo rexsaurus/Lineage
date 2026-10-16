@@ -449,6 +449,7 @@ Scripts that publish a lineage as a website; settings in the project's `lineage.
 | `restore_photos.py [--halftone] <image>…` | classical restoration; originals in `_orig/`; `data/image_restorations.json` |
 | `seo_build.py <site>` | `/stories/`, `/family/`, sitemap and robots into a built site |
 | `updates_page.py [<site>]` | `CHANGELOG.md` as `<site>/updates/index.html` |
+| `site_changelog.py [--dry-run] [--render <site>]` | the site changelog: appends what changed since the last build to `data/site_changelog.json` (`--platform`: Lineage's `site/changelog.json`); every site build runs it |
 
 `image_manager.py drive-sync` never uploads a folder holding a `.no-drive` file, or anything below it.
 
