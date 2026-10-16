@@ -49,7 +49,7 @@ function snippet(text, word) {
 async function newspapers(surname, state, from, to) {
   const q = encodeURIComponent(surname);
   const fa = state ? `&fa=location_state:${encodeURIComponent(state)}` : "";
-  const d = await getJSON(`https://www.loc.gov/collections/chronicling-america/?q=${q}&dates=${from}/${to}${fa}&fo=json&c=8&at=results,pagination`, { timeout: 15000 });
+  const d = await getJSON(`https://www.loc.gov/collections/chronicling-america/?q=${q}&dates=${from}/${to}${fa}&fo=json&c=8&at=results,pagination`, { timeout: 25000 });
   return {
     total: d.pagination?.of || 0,
     more: `https://www.loc.gov/collections/chronicling-america/?q=${q}&dates=${from}/${to}${fa}`,
@@ -175,7 +175,9 @@ module.exports = async function handler(req, res) {
   const result = { surname, state, from, to, sources: { newspapers: n, books: b, people: p } };
   result.summary = await summary(result);
 
-  // the CDN keeps each distinct query for a week, so repeat searches cost nothing
-  res.setHeader("Cache-Control", "public, s-maxage=604800, stale-while-revalidate=86400");
+  // the CDN keeps each distinct query for a week, so repeat searches cost nothing; a result with an archive that
+  // didn't answer is kept only five minutes, so the next visitor gets a fresh try
+  const partial = [n, b, p].some(x => x.error);
+  res.setHeader("Cache-Control", partial ? "public, s-maxage=300" : "public, s-maxage=604800, stale-while-revalidate=86400");
   res.status(200).json(result);
 };
