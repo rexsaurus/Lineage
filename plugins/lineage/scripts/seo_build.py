@@ -7,7 +7,9 @@ its own title, description, canonical URL, Open Graph / Twitter card and schema.
     /stories/<slug>/          one story: summary, opening, lead picture, people in it, links to read it
     /family/                  the family, by line                  (schema.org ItemList of Person)
     /family/<slug>/           one person: relation, dates, parents/spouse/children, portrait, stories
-    /changelog/               every change to the site, newest first (data/site_changelog.json; site_changelog.py)
+    /changelog/               every change to the site, newest first (data/site_changelog.json; site_changelog.py),
+                              with the weekly-digest Subscribe form (posts.py)
+    /changelog.json           the same entries and lines, machine-readable (what api/digest.js emails)
     /sitemap.xml, /robots.txt
 
     python seo_build.py --project DIR <site dir>       # after the site is assembled (site/build_instance.py)
@@ -36,6 +38,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _project import add_project_arg, enter_project  # noqa: E402
 import _publish  # noqa: E402
 import site_changelog  # noqa: E402
+import posts as posts_mod  # noqa: E402
 
 sys.path.insert(0, str(_publish.lineage_home() / "app"))
 import server, familypedia, wiki  # noqa: E402,E401
@@ -96,7 +99,7 @@ ul.list{list-style:none;padding:0}ul.list li{padding:10px 0;border-bottom:1px so
 footer{clear:both;margin-top:48px;font:14px/1.5 system-ui,sans-serif;color:var(--ink2)}"""
 
 
-def page(path, title, desc, body, image=None, jsonld=None, kind="article", crumbs=()):
+def page(path, title, desc, body, image=None, jsonld=None, kind="article", crumbs=(), head_extra=""):
     SITE, BOOK, SUB, AUTHOR, APP = CFG["site_url"], CFG["book"], CFG["subtitle"], CFG["author"], CFG["app_path"]
     url = SITE + path
     img = image or CFG.get("image") or ""
@@ -121,7 +124,7 @@ def page(path, title, desc, body, image=None, jsonld=None, kind="article", crumb
 <meta name="twitter:card" content="{'summary_large_image' if img else 'summary'}"><meta name="twitter:title" content="{E(title)}">
 <meta name="twitter:description" content="{E(desc)}">{tw_img}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap">
-<style>{CSS}{wiki.CSS}{site_changelog.CLOG_CSS}</style>{ld}<script type="application/ld+json">{json.dumps(bc, ensure_ascii=False)}</script></head>
+<style>{CSS}{wiki.CSS}{site_changelog.CLOG_CSS}</style>{head_extra}{ld}<script type="application/ld+json">{json.dumps(bc, ensure_ascii=False)}</script></head>
 <body><main><nav class="crumbs">{crumb_html}</nav>{body}
 <footer><p><a href="/">{E(BOOK)}</a> · <a href="/stories/">The stories</a> · <a href="/family/">The family</a> · <a href="{E(APP)}">Explore in Lineage</a> · <a href="/updates/">Updates</a> · <a href="/changelog/">Changelog</a></p>
 {by}</footer></main></body></html>
@@ -434,7 +437,15 @@ def main():
                                    f'<p class="kicker">{E(BOOK)}</p><h1>Changelog</h1><p class="lede">Every change to the site, '
                                    f'newest first. An entry is added automatically each time the site is rebuilt; what changed '
                                    f'in each edition of the book is on <a href="/updates/">Updates</a>.</p>'
-                                   + site_changelog.entries_html(clog), kind="website"))
+                                   + posts_mod.subscribe_block() + site_changelog.entries_html(clog), kind="website",
+                                   head_extra=posts_mod.feed_link(cfg)))
+    cj = out / "changelog.json"                          # the same lines as the page, for the weekly digest
+    cj.write_text(json.dumps(posts_mod.changelog_json(clog), ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    posts_mod.leak_check([cj, out / "changelog" / "index.html"], out)
+    try:
+        urls += [(f"/updates/{p['slug']}/", "0.6") for p in posts_mod.load_posts(root, cfg)]
+    except SystemExit as e:                              # updates_page.py reports bad posts; the sitemap just skips them
+        print(f"sitemap: posts skipped ({e})")
 
     # ---------------------------------------------------------------- sitemap, robots
     today = date.today().isoformat()

@@ -44,7 +44,7 @@ override PROJECT := $(patsubst ~/%,$(HOME)/%,$(PROJECT))
 override SITE := $(patsubst ~/%,$(HOME)/%,$(SITE))
 
 .PHONY: install install-transcribe sample new status draft final clean check-project screenshots demo chapter site \
-        chapter-pdfs edition r2-sync face-focus seo updates changelog check-lineage-project
+        chapter-pdfs edition r2-sync face-focus seo updates posts test-subscribe changelog check-lineage-project
 
 install:
 	@command -v python3 >/dev/null || { echo "python3 is required"; exit 1; }
@@ -139,6 +139,13 @@ seo: check-lineage-project
 updates: check-lineage-project
 	@test -n "$(SITE)" || { echo "usage: make updates PROJECT=path SITE=path/to/built/site"; exit 1; }
 	@$(PY) $(PUB)/updates_page.py --project "$(PROJECT)" "$(SITE)"
+
+posts: check-lineage-project
+	@$(PY) $(PUB)/posts.py --project "$(PROJECT)"
+
+test-subscribe:
+	@test -n "$(SITE)" || { echo "usage: make test-subscribe SITE=path/to/built/site  (offline: fake Upstash and Resend)"; exit 1; }
+	@node plugins/lineage/publish/test_functions.js "$(SITE)"
 
 changelog:
 	@test -x $(PY) || { echo "run 'make install' first"; exit 1; }

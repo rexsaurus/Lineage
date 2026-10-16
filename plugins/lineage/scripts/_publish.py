@@ -17,6 +17,12 @@ A project's publish settings live in its lineage.json, under "settings" -> "publ
           "include_living": false,                     # SEO pages for people marked living (default: none)
           "hidden_aliases": [],                        # aliases never printed on public pages (nicknames)
           "changelog_commit_messages": false,          # list the project's commit messages on /changelog/
+          "posts_dir": "posts",                        # news posts (posts/*.md) published under /updates/<slug>/
+          "digest": {                                  # the weekly email digest (api/digest.js); off until configured
+            "sender_line": "",                         # who sends it and why the reader gets it (footer of every email)
+            "postal_address": "",                      # postal address for the footer (or env DIGEST_POSTAL_ADDRESS)
+            "schedule": "0 15 * * 1"                   # Vercel cron, UTC (default: Mondays 15:00)
+          },
           "r2": {
             "env_file": "~/.config/lineage/r2.env",    # R2 credentials (never in git)
             "prefix": "<slug of the title>",           # key prefix inside the bucket
@@ -50,6 +56,12 @@ DEFAULTS = {
     "include_living": False,
     "hidden_aliases": [],
     "changelog_commit_messages": False,
+    "posts_dir": "posts",
+    "digest": {
+        "sender_line": "",
+        "postal_address": "",
+        "schedule": "0 15 * * 1",
+    },
     "r2": {
         "env_file": "~/.config/lineage/r2.env",
         "prefix": "",
@@ -92,9 +104,9 @@ def settings(root="."):
     by = _book_yaml(root)
     out = {k: (dict(v) if isinstance(v, dict) else v) for k, v in DEFAULTS.items()}
     for k, v in pub.items():
-        if k == "r2" and isinstance(v, dict):
-            out["r2"].update({a: b for a, b in v.items() if b not in (None, "")})
-        elif k != "r2" and v not in (None, ""):
+        if k in ("r2", "digest") and isinstance(v, dict):
+            out[k].update({a: b for a, b in v.items() if b not in (None, "")})
+        elif k not in ("r2", "digest") and v not in (None, ""):
             out[k] = v
     out["site_url"] = (out["site_url"] or "").rstrip("/")
     out["title"] = out["title"] or lj.get("title") or by.get("title") or ""

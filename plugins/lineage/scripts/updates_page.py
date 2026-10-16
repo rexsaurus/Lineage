@@ -7,10 +7,20 @@
 Run on every republish. CHANGELOG.md sections are "## <version> — <date>" headings with "- " items; HTML comments
 are dropped and _text_ is set in italics. Title and canonical URL come from settings.publish (title, site_url);
 the "latest edition" link is the book PDF from data/r2_manifest.csv when it has a public URL.
+
+With a site folder it also publishes (see posts.py):
+  - the project's news posts (posts/*.md) at /updates/<slug>/, listed newest first above the edition notes;
+  - /updates/feed.xml (Atom: posts and editions) and /updates/posts.json (what the weekly digest reads);
+  - the Subscribe form (/updates/subscribe.js) and the site's subscription functions in api/ (subscribe, confirm,
+    unsubscribe, digest) with a weekly cron merged into the site's vercel.json. They stay closed (503, "opens
+    soon") until the Vercel project has every variable listed in docs/HOWTO.md; --no-subscribe leaves them out.
+Every file written is run through the instance build's leak check (local paths, localhost, keys, emails); a hit
+stops the build.
 """
 import argparse
 import csv
 import html
+import json
 import re
 import sys
 from pathlib import Path
@@ -18,6 +28,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _project import add_project_arg, enter_project  # noqa: E402
 import _publish  # noqa: E402
+import site_changelog  # noqa: E402
+import posts as P  # noqa: E402
 
 
 def esc(t):
@@ -35,7 +47,10 @@ def latest_edition_url(cfg):
     return ""
 
 
-def render(cfg):
+def editions():
+    """CHANGELOG.md's sections: [{id, title, when, date (ISO or ''), items}], newest first as written."""
+    if not Path("CHANGELOG.md").exists():
+        return []
     md = re.sub(r"<!--.*?-->", "", Path("CHANGELOG.md").read_text(encoding="utf-8"), flags=re.S)
     sections, cur = [], None
     for line in md.splitlines():
@@ -44,10 +59,19 @@ def render(cfg):
             sections.append(cur)
         elif line.startswith("- ") and cur:
             cur["items"].append(line[2:].strip())
-    body = []
+    out = []
     for s in sections:
         title, _, when = s["head"].partition(" — ")
-        body.append(f'<section><h2>{esc(title)}</h2><p class="date">{esc(when)}</p><ul>'
+        iso = site_changelog.iso_from_words(when) if when else ""
+        out.append({"id": _publish.slug(title) or "edition", "title": title.strip(), "when": when.strip(),
+                     "date": iso if re.fullmatch(r"\d{4}-\d{2}-\d{2}", iso or "") else "", "items": s["items"]})
+    return out
+
+
+def render(cfg, posts=(), subscribe=True):
+    body = []
+    for s in editions():
+        body.append(f'<section id="{esc(s["id"])}"><h2>{esc(s["title"])}</h2><p class="date">{esc(s["when"])}</p><ul>'
                     + "".join(f"<li>{esc(i)}</li>" for i in s["items"]) + "</ul></section>")
     book = cfg["title"] or "The book"
     site = cfg["site_url"]
@@ -60,50 +84,64 @@ def render(cfg):
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Updates · {E(book)}</title>
-{head_links}<meta name="description" content="Version history of {E(book)}: what changed in each published edition.">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
+{head_links}<meta name="description" content="News and version history of {E(book)}: posts, and what changed in each published edition.">
+{P.feed_link(cfg)}
+{P.FONTS}
 <style>
-  :root {{ --ink:#1d1a17; --paper:#f8f5ee; --rubric:#b3261e; --muted:#6b645b; --rule:#d9d2c4; }}
-  @media (prefers-color-scheme: dark) {{ :root:not([data-theme="light"]) {{ --ink:#ece6da; --paper:#171512; --rubric:#e0574d; --muted:#a59d90; --rule:#39342d; }} }}
-  :root[data-theme="dark"] {{ --ink:#ece6da; --paper:#171512; --rubric:#e0574d; --muted:#a59d90; --rule:#39342d; }}
-  body {{ margin:0; background:var(--paper); color:var(--ink); font:19px/1.6 "EB Garamond", Georgia, serif; }}
-  .wrap {{ max-width:760px; margin:0 auto; padding:48px 16px 64px; }}
-  a {{ color:var(--rubric); }}
-  .kicker {{ letter-spacing:.22em; text-transform:uppercase; font-size:13px; color:var(--muted); }}
-  h1 {{ font-weight:400; color:var(--rubric); font-size:clamp(34px,5vw,48px); margin:8px 0 6px; }}
-  section {{ border-top:1px solid var(--rule); padding-top:22px; margin-top:28px; }}
-  h2 {{ font-weight:500; font-size:24px; margin:0; }}
-  .date {{ color:var(--muted); margin:2px 0 10px; font-style:italic; }}
-  li {{ margin:0 0 10px; }}
-</style></head>
+{P.CSS}</style></head>
 <body><div class="wrap">
 <p class="kicker"><a href="/">{E(book)}</a></p>
 <h1>Updates</h1>
-<p>What changed in each edition of the book.{f' <a href="{E(ed)}">Read the latest edition</a>.' if ed else ''} Every change to the website itself is on the <a href="/changelog/">changelog</a>.</p>
+<p>{'News about the book, and w' if posts else 'W'}hat changed in each edition of it.{f' <a href="{E(ed)}">Read the latest edition</a>.' if ed else ''} Every change to the website itself is on the <a href="/changelog/">changelog</a>.</p>
+{P.posts_list_html(posts)}
+{P.subscribe_block() if subscribe else ''}
+{'<p class="kicker" style="margin-top:36px">Edition notes</p>' if posts and body else ''}
 {"".join(body)}
 </div></body></html>
 """
 
 
 def main():
-    ap = argparse.ArgumentParser(description="render CHANGELOG.md as <site>/updates/index.html")
+    ap = argparse.ArgumentParser(description="render CHANGELOG.md and posts/*.md as <site>/updates/")
     add_project_arg(ap)
     ap.add_argument("site", nargs="?", help="the built site folder (omit to print the page)")
+    ap.add_argument("--no-subscribe", action="store_true", help="leave out the Subscribe form and the api/ functions")
     a = ap.parse_args()
     site = Path(a.site).expanduser().resolve() if a.site else None      # relative to where it was run
     root = enter_project(a.project)
-    if not Path("CHANGELOG.md").exists():
-        print("no CHANGELOG.md in the project: skipping the updates page", file=sys.stderr)
-        return
     cfg = _publish.settings(root)
-    page = render(cfg)
+    posts = P.load_posts(root, cfg)
+    if not Path("CHANGELOG.md").exists():
+        if not posts:
+            print("no CHANGELOG.md and no posts in the project: skipping the updates page", file=sys.stderr)
+            return
+    page = render(cfg, posts, subscribe=not a.no_subscribe)
     if not site:
         sys.stdout.write(page)
         return
     out = site
-    (out / "updates").mkdir(parents=True, exist_ok=True)
-    (out / "updates" / "index.html").write_text(page, encoding="utf-8")
-    print(f"updates page: {out / 'updates' / 'index.html'}")
+    up = out / "updates"
+    up.mkdir(parents=True, exist_ok=True)
+    written = [up / "index.html"]
+    (up / "index.html").write_text(page, encoding="utf-8")
+    for p in posts:
+        f = up / p["slug"] / "index.html"
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(P.post_page(cfg, p), encoding="utf-8")
+        written.append(f)
+    eds = editions()
+    if cfg["site_url"]:
+        (up / "feed.xml").write_text(P.feed_xml(cfg, posts, eds), encoding="utf-8")
+        written.append(up / "feed.xml")
+    else:
+        print("settings.publish.site_url is not set: no feed (Atom needs absolute links)", file=sys.stderr)
+    (up / "posts.json").write_text(json.dumps(P.posts_json(posts), ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    written.append(up / "posts.json")
+    if not a.no_subscribe:
+        written += P.install_functions(out, cfg)
+    n = P.leak_check(written, out)
+    print(f"updates page: {up / 'index.html'} ({len(posts)} posts, {len(eds)} editions"
+          f"{', feed' if cfg['site_url'] else ''}{'' if a.no_subscribe else ', subscribe functions'}; leak check passed on {n} files)")
 
 
 if __name__ == "__main__":
