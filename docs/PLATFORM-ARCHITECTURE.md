@@ -275,6 +275,10 @@ Releases are semver: patch (prompt fixes), minor (new templates or workflows), m
 
 ### 5.1 Stack
 
+> **Update 18 Oct 2026:** the chosen stack is Vercel end to end (eve, Workflows, Sandbox, AI Gateway, Connect), with
+> DeepSeek V4.1 Flash as the default model. See [VERCEL-MIGRATION.md](VERCEL-MIGRATION.md). The table below is the
+> provider-neutral version.
+
 | Layer | Choice | Why |
 |---|---|---|
 | Orchestrator | **Inngest** (alternative: Temporal, self-hosted) | Durable steps, `sleepUntil`, `waitForEvent` for approvals, cron, concurrency and rate limits, idempotency; deploys beside the Vercel apps |
