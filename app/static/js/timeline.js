@@ -39,10 +39,11 @@ function evCard(e){
   const pl = p => e.person_slugs[p] ? entryChip(e.person_slugs[p], p, 'person') : `<span class="chiplink">${esc(p)}</span>`;
   return `<div class="ev tc-${esc(e.tier)}${e.highlight?' hl':''}${e.conflict?' conf':''}" id="ev-${esc(e.id)}">
     <button class="star${e.starred?' on':''}" data-star="${esc(e.id)}" aria-label="${e.starred?'Unstar':'Star'} this event" aria-pressed="${e.starred}">${e.starred?'★':'☆'}</button>
-    ${e.photo?`<img class="ph" src="${fileUrl(e.photo)}" alt="">`:''}
+    ${e.photo&&!((e.items||[]).length>1)?`<img class="ph" src="${fileUrl(e.photo)}" data-photo="${esc(e.photo)}" alt="">`:''}
     <div class="when"><span class="tierdot t-${esc(e.tier)}" title="${esc(TIER_LABEL[e.tier]||e.tier)}"></span>${esc(e.date)}${e.derived?` <span class="derived" title="${esc(e.summary)}">${esc(e.precision||'approximate')}</span>`:''} · ${esc(TIER_LABEL[e.tier]||e.tier)}${e.confidence?' · '+esc(e.confidence)+' confidence':''}</div>
     <h4>${e.slug?`<a class="wl" href="#familypedia/${encodeURIComponent(e.slug)}">${esc(e.title)}</a>`:esc(e.title)}</h4>
     ${e.quote?`<p class="quote" style="font-size:14px;margin:4px 0">“${esc(e.quote)}”</p>`:''}
+    ${(e.items||[]).length>1||(e.items||[]).some(i=>i.url)?`<ul class="tl-items" data-photo-set>${e.items.slice(0,12).map(i=>`<li>${i.photo?`<img src="${fileUrl(i.photo)}" data-photo="${esc(i.photo)}" alt="${esc(i.title)}" loading="lazy">`:''}${i.href?`<a href="${esc(i.href)}">${esc(i.title)}</a>`:esc(i.title)}${i.url?` <a class="derived" href="${esc(i.url)}" target="_blank" rel="noopener">catalogue</a>`:''}</li>`).join('')}${e.items.length>12?`<li class="derived">and ${e.items.length-12} more</li>`:''}</ul>`:''}
     ${e.conflict?`<div class="note" style="padding:7px 10px;margin:6px 0;font-size:12.8px;background:#FBF4E4"><b>The sources disagree:</b> ${esc(e.conflict)}</div>`:''}
     <div class="tags">${e.people.map(pl).join('')}${e.place?(e.place_slug?entryChip(e.place_slug, e.place, 'place'):`<span class="chiplink">${esc(e.place)}</span>`):''}
       ${e.cites.map(c=>`<a class="cite" data-cite="${esc(c)}">${esc(c)}</a>`).join('')}
