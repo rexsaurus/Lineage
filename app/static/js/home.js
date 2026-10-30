@@ -23,11 +23,8 @@ BUILDERS.home = async function(el, rest, q={}){
     <div class="card" id="h-story"></div>
     ${homeSubscribeBand()}
     <section class="hsec"><div class="row"><h3>${esc(L.Stories||'Stories')}</h3><span class="spacer"></span><a href="#stories">All ${esc((L.stories||'stories'))} →</a></div><div class="hstories" id="h-stories"><p class="empty">Loading…</p></div></section>
-    <section class="hsec"><div class="row"><h3>Gallery</h3><span class="spacer"></span><a href="#familypedia?view=photos">All photographs →</a></div><div class="hgal" id="h-gal"><p class="empty">Loading…</p></div></section>
-    <section class="hsec"><div class="row"><h3>Relatives</h3><span class="spacer"></span><a href="#familypedia">Familypedia →</a></div><div id="h-rels"><p class="empty">Loading…</p></div></section>
-    <footer class="hfoot${lsubOn()?'':' hidden'}" data-lsub-wrap><p>New ${esc(L.stories)} by email, only when there is something new.</p><div data-lineage-subscribe></div></footer>`;
-  lsubDraw();
-  if(q.to==='subscribe') homeToSubscribe();
+    <section class="hsec" data-photo-set><div class="row"><h3>Gallery</h3><span class="spacer"></span><a href="#familypedia?view=photos">All photographs →</a></div><div class="hgal" id="h-gal"><p class="empty">Loading…</p></div></section>
+    <section class="hsec"><div class="row"><h3>Relatives</h3><span class="spacer"></span><a href="#familypedia">Familypedia →</a></div><div id="h-rels"><p class="empty">Loading…</p></div></section>`;
   drawHomeStory(h);
   drawHomeStories(); drawHomeGallery(); drawHomeRelatives();
 };
@@ -149,10 +146,12 @@ async function drawHomeStories(){
 async function drawHomeGallery(){
   const box=$('#h-gal'); if(!box) return;
   // original photographs only, each once (the server drops illustrations, restorations, scans and near-duplicates)
-  const r=await api('/api/engine/gallery'); const items=(r.items||[]).filter(p=>p.thumb);
+  const [r] = await Promise.all([api('/api/engine/gallery'), pvLoad()]);
+  const items = onePerPhoto((r.items||[]).filter(p=>p.thumb)).map(({p, row})=>({...row, ph:p}));
   const day=Math.floor(Date.now()/864e5); const key=p=>{let x=0; for(const c of String(p.id)+day) x=(x*31+c.charCodeAt(0))|0; return x;};
   const pick=items.slice().sort((a,b)=>key(a)-key(b)).slice(0,24);
-  box.innerHTML = pick.map(p=>`<a href="${fileUrl(p.thumb)}" target="_blank" rel="noopener" title="${esc(p.caption||'')}"><img src="${fileUrl(p.thumb)}" alt="${esc(p.caption||'')}" loading="lazy"><span class="kindtag k-${(p.kind||'original').replace(/ /g,'-')}">(${esc(p.kind||'original')})</span></a>`).join('') || '<p class="empty">No photographs yet.</p>';
+  // a click opens the photo viewer (photoviewer.js); nothing here links to an image file
+  box.innerHTML = pick.map(({ph, thumb, caption})=>`<figure title="${esc(ph?ph.title:caption||'')}"><img src="${fileUrl(ph?ph.image:thumb)}" data-photo="${esc(ph?ph.image:thumb)}" alt="${esc(ph?ph.title:caption||'')}" loading="lazy">${pvBadgeSmall(ph)}</figure>`).join('') || '<p class="empty">No photographs yet.</p>';
 }
 async function drawHomeRelatives(){
   const box=$('#h-rels'); if(!box) return;

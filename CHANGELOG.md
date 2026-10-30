@@ -34,6 +34,27 @@ marks those stories stale rather than regenerating them.
   day ("New stories, when there are new stories", with the project's family name), the form again at the foot of
   Home, and a quiet **Subscribe** link in the header that jumps to the band. Nothing shows where the script is absent
   (the local app).
+- **One photo viewer, everywhere** (`app/static/js/photoviewer.js`): any photograph on the site — homepage gallery,
+  All photographs, Familypedia articles and their profile photos, updates, story images, timeline entries — opens the
+  same modal: the full-resolution image, a Restored | Original scan flip, badge, description, date, place, source
+  (institution and catalogue reference), people and places (three, then "+ N more"), and every article, chapter and
+  timeline entry it appears in. Previous/next with a counter, Open full size, a real Download, ←/→/Esc, focus trapped
+  and returned. No file path or file name is ever shown, and nothing links to an image file.
+- **The photo registry** (`app/photos.py`, `GET /api/engine/photos`, captured in the snapshot): one entry per
+  photograph. A row in the photo index, an image in Sources, a chosen portrait, a lineage-assets copy, the
+  unretouched original and its restoration collapse into one (`dedupKey`, `restorationOf`), so a photograph never
+  appears twice in a grid. Facts come from the project only; an optional `data/photo_details.csv` (photo, title,
+  description, date, place, institution, reference, url, kind) states them by hand.
+- **Low-resolution backfill** (`plugins/lineage/scripts/photo_backfill.py`): for every scan under 1200 px it looks for
+  the full-size file among the project's own files (mail attachments, archive downloads) and, where the source is the
+  Internet Archive or the Library of Congress, re-fetches the largest image (robots.txt, 2 s per host). Restorations,
+  print files and generated or stylised renderings never count. What can't be found is `not_located` and shows a red
+  Low resolution badge and a line in the viewer. Never upscaled.
+- **All photographs** (Familypedia · Photographs): cards with the badge on the image (Original, Restored, Low
+  resolution), a serif title, date · institution, two people/place pills and "+N" for the full grouped list; filters
+  for Portraits, Groups, Documents, Places, Restored and Low resolution; Select for bulk tagging. Illustrations are
+  not photographs and are left out.
+- **Familypedia** opens on People; tabs are People · Places · Photographs · Sources · Everything (then Events, Map).
 - **Subscribe and Weekly Update in the Updates tab:** the tab opens with a Weekly Update button (newest `weekly-` post)
   and a Subscribe button that jumps to the weekly-digest form at the foot of the list. The form is the site's own
   `/updates/subscribe.js`, so it appears only on a published site with subscriptions configured.
