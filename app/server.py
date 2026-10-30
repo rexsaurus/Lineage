@@ -1357,10 +1357,11 @@ def _transcript_line(project, cite):
 
 
 def _timeline_updated(project):
-    """The newest input the timeline reads (ISO time): its events, stars, sources (photos dated to events),
+    """The newest input the timeline reads (ISO time): its events, stars, sources, dated photographs and records,
     stories and the Familypedia's inputs. Nothing caches the timeline itself; it is rebuilt on every request,
     and the Familypedia index it borrows names from is keyed on these same file times."""
-    paths = [project.root / "facts" / "timeline.csv", project.root / "data" / "timeline_stars.json"]
+    paths = [project.root / "facts" / "timeline.csv", project.root / "data" / "timeline_stars.json"] + \
+            [project.root / "data" / n for n in ("photo_details.csv", "image_catalog.csv", "image_restorations.json")]
     newest = 0
     for p in paths:
         try:
@@ -1403,6 +1404,7 @@ def engine_timeline(project):
                            and x["title"] != (e.get("place") or "")]}
         ev["highlight"] = ev["starred"] or bool(PIVOTAL.search(e["event"]))
         (events if ev["year"] else undated).append(ev)
+    _timeline_from_material(project, events, slugs)
     events.sort(key=lambda x: (x["year"], x["id"]))
     gaps = []
     for a, b in zip(events, events[1:]):
@@ -1416,6 +1418,67 @@ def engine_timeline(project):
     return {"events": events, "undated": undated, "gaps": gaps, "subject_birth": birth,
             "subject_short": project.read()["settings"].get("subject_short") or (subject.split()[0] if subject else ""),
             "updatedAt": _timeline_updated(project)}
+
+
+def _timeline_from_material(project, events, slugs):
+    """Dated photographs and dated records reach the timeline without anyone writing facts/timeline.csv.
+    A dated photograph sharing a year and a person with an event illustrates that event; the rest, and every dated
+    record or source, are gathered into one entry per year (photographs) or per year and archive (records), so a
+    box of forty letters is one line, not forty. Rebuilt on every request, like the rest of the timeline."""
+    import photos as _ph
+    def year_of(d):
+        m = [int(y) for y in YEAR.findall(str(d or ""))]
+        return m[0] if m and max(m) - min(m) <= 15 else None      # a span of decades dates nothing
+    by_year = {}
+    for ev in events:
+        if ev["year"]:
+            by_year.setdefault(ev["year"], []).append(ev)
+    used = {_ph.key(ev["photo"]) for ev in events if ev.get("photo")}
+    loose = {}
+    try:
+        reg = _ph.registry(project)["photos"]
+    except Exception:
+        reg = []
+    for p in reg:
+        y = year_of(p["date"])
+        if p["illustration"] or not y or set(map(_ph.key, p["paths"])) & used:
+            continue
+        names = {t["title"] for t in p["tags"]["people"]}
+        match = next((ev for ev in by_year.get(y, []) if not ev.get("photo") and names & set(ev["people"])), None)
+        if match:
+            match["photo"] = p["image"]
+            used |= set(map(_ph.key, p["paths"]))
+        else:
+            loose.setdefault(y, []).append(p)
+    for y, ps in loose.items():
+        people = list(dict.fromkeys(t["title"] for p in ps for t in p["tags"]["people"]))[:6]
+        events.append({"id": f"photos-{y}", "year": y, "date": str(y), "precision": "year", "derived": False,
+                       "title": f"Photographs from {y}" if len(ps) > 1 else ps[0]["title"],
+                       "summary": "", "people": people, "place": "", "cites": [], "quote": "", "tier": "documented",
+                       "confidence": "", "conflict": "", "story": None, "story_id": None, "slug": None,
+                       "person_slugs": {n: slugs.get(n) for n in people}, "place_slug": None, "type": "photo",
+                       "starred": False, "highlight": False, "photo": ps[0]["image"], "subjects": [], "from": "photographs",
+                       "items": [{"title": p["title"], "photo": p["image"]} for p in ps]})
+    groups = {}
+    try:
+        recs = familypedia.catalogue(project, "records")
+    except Exception:
+        recs = []
+    for r in recs:
+        y = year_of(r.get("date"))
+        if y:
+            groups.setdefault((y, r.get("archive") or ""), []).append(r)
+    for (y, archive), rs in groups.items():
+        people = list(dict.fromkeys(x["title"] for r in rs for x in r.get("subjects") or [] if x["type"] == "person"))[:6]
+        kind = rs[0].get("type") or "record"
+        title = rs[0]["title"] if len(rs) == 1 else f"{len(rs)} {kind}s" + (f" in {archive}" if archive else "")
+        events.append({"id": f"records-{y}-{_slug(archive or 'x')[:40]}", "year": y, "date": str(y), "precision": "year",
+                       "derived": False, "title": title, "summary": "", "people": people, "place": "", "cites": [],
+                       "quote": "", "tier": "documented", "confidence": "", "conflict": "", "story": None, "story_id": None,
+                       "slug": None, "person_slugs": {n: slugs.get(n) for n in people}, "place_slug": None,
+                       "type": "record", "starred": False, "highlight": False, "photo": None, "subjects": [],
+                       "from": "records", "items": [{"title": r["title"], "url": r.get("url") or "",
+                                                     "href": "#familypedia?view=records&focus=" + r["id"]} for r in rs]})
 
 
 def engine_timeline_svg(project):

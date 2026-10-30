@@ -9,6 +9,10 @@ marks those stories stale rather than regenerating them.
 
 **Alters generated stories: no.** Dashboard and snapshot only.
 
+- **The timeline reads the material, not only `facts/timeline.csv`**: a dated photograph that shares a year and a person with
+  an event illustrates it; other dated photographs gather into one entry per year, and dated records into one entry
+  per year and archive (a box of letters is one line). Spans of more than 15 years date nothing. `updatedAt` now also
+  moves with photo details, the image catalogue and restorations.
 - **Chart PDFs split across Letter pages** (Genealogy and Timeline Download → PDF): portrait for a tall chart, landscape for
   a wide one, filling the width inside half-inch margins and running onto as many pages as the chart needs.
 - **Genealogy, full width.** The tree takes the whole page; the side panel is gone. Clicking anyone opens a card

@@ -592,3 +592,8 @@ body.pv-on{overflow:hidden}
 .ph-sel{position:absolute;top:8px;left:8px;z-index:1;background:rgba(255,253,248,.95);border-radius:5px;padding:2px 8px;font-size:12px}
 .pv-solo{z-index:210}.pv-small{display:block;width:min(420px,100%);height:auto;max-height:80vh;overflow:auto}
 .pv-small .pv-tags{position:static;width:auto;border:0}
+
+/* timeline: dated photographs and records gathered by year */
+.tl-items{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.tl-items li{display:flex;align-items:center;gap:8px}
+.tl-items img{width:44px;height:44px;object-fit:cover;border-radius:4px;flex:none}
