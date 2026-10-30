@@ -30,6 +30,9 @@ marks those stories stale rather than regenerating them.
   for Portraits, Groups, Documents, Places, Restored and Low resolution; Select for bulk tagging. Illustrations are
   not photographs and are left out.
 - **Familypedia** opens on People; tabs are People · Places · Photographs · Sources · Everything (then Events, Map).
+- **Re-running the daily loop adds to today's post** (`macros/lineage-macros.md` §4.7–4.8): one post per day; a second
+  run folds only the new findings into that day's post (title, summary and an `updated:` time cover the whole day),
+  keeps every published sentence, and appends a `Run N` block to the private report. Nothing new: no republish.
 - **Subscribe and Weekly Update in the Updates tab:** the tab opens with a Weekly Update button (newest `weekly-` post)
   and a Subscribe button that jumps to the weekly-digest form at the foot of the list. The form is the site's own
   `/updates/subscribe.js`, so it appears only on a published site with subscriptions configured.
