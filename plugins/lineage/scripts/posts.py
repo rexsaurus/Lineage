@@ -384,7 +384,8 @@ def install_functions(site, cfg):
     written.append(api / "_lineage-config.json")
     path = "/api/digest/" if slash else "/api/digest"
     crons = [c for c in conf.get("crons") or [] if c.get("path", "").rstrip("/") != "/api/digest"]
-    crons.append({"path": path, "schedule": d.get("schedule") or "0 15 * * 1"})
+    if d.get("enabled", True) not in (False, "false", "no", 0):   # settings.publish.digest.enabled: false = no emails
+        crons.append({"path": path, "schedule": d.get("schedule") or "0 15 * * 1"})
     conf["crons"] = crons
     hdrs = conf.setdefault("headers", [])
     if not any(h.get("source") == "/api/(.*)" for h in hdrs):

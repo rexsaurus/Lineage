@@ -14,6 +14,8 @@ marks those stories stale rather than regenerating them.
   `GET /api/engine/updates` through `posts.py` (same parsing, image resolution and privacy rules) and captured into the
   published snapshot, so a family site shows its news inside the Lineage view. Research reports written as posts
   (the daily update) appear here.
+- **Digest off switch.** `settings.publish.digest.enabled: false` publishes posts, the feed and the subscribe form
+  but leaves the weekly digest cron out of `vercel.json`, so no email goes to subscribers until it is turned back on.
 - **Header on narrow screens.** The tabs move to their own scrolling row under the title (they were squeezed to nothing
   beside the Terminal and Settings buttons); on wide screens tab labels never shrink, the project path gives way first.
 
