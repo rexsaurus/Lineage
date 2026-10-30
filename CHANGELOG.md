@@ -9,6 +9,9 @@ marks those stories stale rather than regenerating them.
 
 **Alters generated stories: no.** Dashboard and snapshot only.
 
+- **Subscribe and Weekly Update in the Updates tab:** the tab opens with a Weekly Update button (newest `weekly-` post)
+  and a Subscribe button that jumps to the weekly-digest form at the foot of the list. The form is the site's own
+  `/updates/subscribe.js`, so it appears only on a published site with subscriptions configured.
 - **The research loop as macros** (`macros/lineage-macros.md`): one readable file with the whole daily loop (scan mail,
   update each changed person, revise chapters and Familypedia pages by targeted edits, pursue leads, store, write a
   private report, publish a findings-only daily post, weekly digest), its rules and its privacy filter. Projects add a
