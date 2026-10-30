@@ -9,6 +9,8 @@ marks those stories stale rather than regenerating them.
 
 **Alters generated stories: no.** Dashboard and snapshot only.
 
+- **Chart PDFs split across Letter pages** (Genealogy and Timeline Download → PDF): portrait for a tall chart, landscape for
+  a wide one, filling the width inside half-inch margins and running onto as many pages as the chart needs.
 - **Genealogy, full width.** The tree takes the whole page; the side panel is gone. Clicking anyone opens a card
   under the tree: portrait, name, dates, each relationship inline with its evidence tier (documented, told, family
   lore, unconfirmed, my edit), and *Centre the tree here*, their sources, *In a story* and *Open Familypedia article*.

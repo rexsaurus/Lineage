@@ -1,7 +1,7 @@
 /* ================================================================== EXPORTS
    One Download menu for the chart pages (Genealogy, Timeline) and the writers behind it. Everything runs
    in the browser, so the published static site exports exactly as the local app does: the chart's SVG is
-   drawn to a canvas, which gives the PNG, and a JPEG of it wrapped in a one-page PDF (no library). */
+   drawn to a canvas, which gives the PNG, and a JPEG of it split across Letter pages in a PDF (no library). */
 const DL_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 19.5h14"/></svg>';
 /* items: [[key, label], …] with '-' for a rule. */
 function dlMenu(id, items){
@@ -42,30 +42,43 @@ async function svgToPng(svgText, name, scale=2){
   const {canvas}=await svgToCanvas(svgText, scale);
   canvas.toBlob(b=>download(name,b),'image/png');
 }
-/* A single-page PDF holding one JPEG (an Image XObject with /DCTDecode). The page takes the chart's
-   aspect at 72 dpi of its CSS size, so it opens at the size it was drawn and prints scaled to fit. */
-function jpegPdf(jpeg, pxW, pxH, pageW, pageH){
+/* A PDF of Letter pages, each holding one JPEG slice (an Image XObject with /DCTDecode). No library.
+   pages: [{jpeg, pxW, pxH, w, h}] where w, h are the slice's size on the page in points. */
+function jpegPdf(pages, pageW, pageH, margin){
   const enc=s=>{ const b=new Uint8Array(s.length); for(let i=0;i<s.length;i++) b[i]=s.charCodeAt(i)&255; return b; };
-  const W=+pageW.toFixed(2), H=+pageH.toFixed(2), draw=`q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`;
   const parts=[], offs=[]; let len=0;
   const put=x=>{ const b=typeof x==='string'?enc(x):x; parts.push(b); len+=b.length; };
   const obj=(n, body)=>{ offs[n]=len; put(`${n} 0 obj\n${body}\nendobj\n`); };
+  const n=pages.length, pageObj=i=>3+i*3;          // each page: page, image, contents
   put('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
   obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
-  obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
-  obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
-  offs[4]=len; put(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${pxW} /Height ${pxH} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`);
-  put(jpeg); put('\nendstream\nendobj\n');
-  obj(5, `<< /Length ${draw.length} >>\nstream\n${draw}\nendstream`);
-  const xref=len;
-  put(`xref\n0 6\n0000000000 65535 f \n${[1,2,3,4,5].map(n=>String(offs[n]).padStart(10,'0')+' 00000 n \n').join('')}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  obj(2, `<< /Type /Pages /Kids [${pages.map((_,i)=>pageObj(i)+' 0 R').join(' ')}] /Count ${n} >>`);
+  pages.forEach((pg,i)=>{
+    const o=pageObj(i), w=+pg.w.toFixed(2), h=+pg.h.toFixed(2), y=+(pageH-margin-h).toFixed(2);
+    const draw=`q ${w} 0 0 ${h} ${margin} ${y} cm /Im0 Do Q`;
+    obj(o, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /XObject << /Im0 ${o+1} 0 R >> >> /Contents ${o+2} 0 R >>`);
+    offs[o+1]=len; put(`${o+1} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${pg.pxW} /Height ${pg.pxH} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${pg.jpeg.length} >>\nstream\n`);
+    put(pg.jpeg); put('\nendstream\nendobj\n');
+    obj(o+2, `<< /Length ${draw.length} >>\nstream\n${draw}\nendstream`);
+  });
+  const total=3+n*3, xref=len;
+  put(`xref\n0 ${total}\n0000000000 65535 f \n${Array.from({length:total-1},(_,k)=>String(offs[k+1]).padStart(10,'0')+' 00000 n \n').join('')}trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
   return new Blob(parts,{type:'application/pdf'});
 }
+const canvasJpeg = c => { const bin=atob(c.toDataURL('image/jpeg', 0.92).split(',')[1]), b=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) b[i]=bin.charCodeAt(i); return b; };
+/* The chart across Letter pages: portrait for a tall chart (the timeline), landscape for a wide one (a tree).
+   It fills the width inside half-inch margins and runs onto as many pages as its height needs. */
 async function svgToPdf(svgText, name){
   const {canvas, w, h}=await svgToCanvas(svgText, 2);
-  const b64=canvas.toDataURL('image/jpeg', 0.92).split(',')[1], bin=atob(b64), jpeg=new Uint8Array(bin.length);
-  for(let i=0;i<bin.length;i++) jpeg[i]=bin.charCodeAt(i);
-  // CSS px → points (0.75); a page is at most 200 inches a side (PDF's own limit), so huge charts shrink to fit
-  const k=Math.min(0.75, 14400/w, 14400/h);
-  download(name, jpegPdf(jpeg, canvas.width, canvas.height, w*k, h*k));
+  const land = w > h, pageW = land ? 792 : 612, pageH = land ? 612 : 792, margin = 36;
+  const boxW = pageW-2*margin, boxH = pageH-2*margin;
+  const k = Math.min(boxW/w, 1.5);                         // points per CSS px; never blown up past 150%
+  const sliceCss = boxH/k, pxPerCss = canvas.width/w, sliceH = Math.max(1, Math.floor(sliceCss*pxPerCss));
+  const pages=[];
+  for(let y=0; y<canvas.height; y+=sliceH){
+    const hh=Math.min(sliceH, canvas.height-y), c=document.createElement('canvas'); c.width=canvas.width; c.height=hh;
+    const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,hh); g.drawImage(canvas, 0, y, canvas.width, hh, 0, 0, canvas.width, hh);
+    pages.push({jpeg:canvasJpeg(c), pxW:c.width, pxH:hh, w:w*k, h:hh/pxPerCss*k});
+  }
+  download(name, jpegPdf(pages, pageW, pageH, margin));
 }
