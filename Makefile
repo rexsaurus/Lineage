@@ -11,6 +11,7 @@
 #                                    then runs preflight
 #   make chapter PROJECT=... CHAPTER=chapters/NN-x.typ [FINAL=1] [PAGES=1]
 #                                    one story as a preview PDF (PAGES=1: one image per page)
+#   make test-timeline               check the timeline rebuilds from its inputs (scratch copy of the demo)
 #   make screenshots                 rebuild the invented demo lineage and capture the dashboard
 #                                    into docs/images/ (needs: pip install playwright, and Chrome)
 #   make demo                        the dashboard on the demo lineage (a scratch copy)
@@ -44,7 +45,7 @@ override PROJECT := $(patsubst ~/%,$(HOME)/%,$(PROJECT))
 override SITE := $(patsubst ~/%,$(HOME)/%,$(SITE))
 
 .PHONY: install install-transcribe sample new status draft final clean check-project screenshots demo chapter site \
-        chapter-pdfs edition r2-sync face-focus seo updates posts test-subscribe changelog check-lineage-project
+        chapter-pdfs edition r2-sync face-focus seo updates posts test-subscribe test-timeline changelog check-lineage-project
 
 install:
 	@command -v python3 >/dev/null || { echo "python3 is required"; exit 1; }
@@ -142,6 +143,9 @@ updates: check-lineage-project
 
 posts: check-lineage-project
 	@$(PY) $(PUB)/posts.py --project "$(PROJECT)"
+
+test-timeline:
+	@$(PY) $(BA)/app/tests/check_timeline.py
 
 test-subscribe:
 	@test -n "$(SITE)" || { echo "usage: make test-subscribe SITE=path/to/built/site  (offline: fake Upstash and Resend)"; exit 1; }

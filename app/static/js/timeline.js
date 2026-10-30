@@ -12,23 +12,20 @@ BUILDERS.timeline = async function(el, rest, q={}){
       <select id="tl-person" style="max-width:200px" aria-label="Person"><option value="">Everyone</option></select>
       <select id="tl-type" style="max-width:160px" aria-label="Kind"><option value="">Every kind</option></select>
       <select id="tl-tier" style="max-width:160px" aria-label="Tier"><option value="">Every tier</option>${Object.entries(TIER_LABEL).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join('')}</select>
-      <label class="toggle" style="padding:0;margin:0"><input type="checkbox" id="tl-hl"><div><b>Highlights</b></div></label>
-      <label class="toggle" style="padding:0;margin:0"><input type="checkbox" id="tl-conf" ${q.filter==='conflicts'?'checked':''}><div><b>Conflicts</b></div></label>
-      <span class="spacer"></span><button class="btn ghost sm" id="tl-undated">Undated</button>
-      <button class="btn ghost sm" id="tl-svg">SVG</button><button class="btn ghost sm" id="tl-png">PNG</button><button class="btn ghost sm" id="tl-print">Printable appendix</button></div>
-      <div class="legend">${Object.entries(TIER_LABEL).map(([k,v])=>`<span><span class="tierdot t-${k}"></span>${esc(v)}</span>`).join('')}<span>★ highlight</span></div></div>
+      <span id="tl-only"></span><span class="spacer"></span>${dlMenu('tl-dl', [['pdf','PDF'],['png','PNG image'],['svg','SVG vector']])}</div>
+      <div class="legend">${Object.entries(TIER_LABEL).map(([k,v])=>`<span><span class="tierdot t-${k}"></span>${esc(v)}</span>`).join('')}<span>★ highlight</span><span id="tl-upd" style="margin-left:auto"></span></div></div>
     <div class="tl"><nav class="tlrail" id="tl-rail" aria-label="Years"></nav><div class="spine" id="tl-spine"><p class="empty">Loading…</p></div></div>`);
   const d = await api('/api/engine/timeline'); S.timeline = d;
+  if(d.updatedAt) $('#tl-upd').innerHTML=`<time datetime="${esc(d.updatedAt)}" title="${esc(d.updatedAt)}">Material last changed ${esc(ago(d.updatedAt))}</time>`;
+  S.tlConflicts = q.filter==='conflicts';           // reached from Home's "conflicting sources"; there is no toggle for it
   const people=[...new Set(d.events.flatMap(e=>e.people))].sort(), types=[...new Set(d.events.map(e=>e.type))].sort();
   $('#tl-person').insertAdjacentHTML('beforeend', people.map(p=>`<option ${q.person===p?'selected':''}>${esc(p)}</option>`).join(''));
   $('#tl-type').insertAdjacentHTML('beforeend', types.map(t=>`<option>${esc(t)}</option>`).join(''));
   let t=null; $('#tl-q').oninput=()=>{ clearTimeout(t); t=setTimeout(drawTimeline,200); };
-  ['tl-person','tl-type','tl-tier','tl-hl','tl-conf'].forEach(id=>$('#'+id).oninput=drawTimeline);
-  $('#tl-undated').onclick=showUndated;
-  $('#tl-svg').onclick=async()=>{ const svg=await (await fetch('/api/engine/timeline.svg',{headers:{'X-Lineage-Token':TOKEN}})).text(); download('timeline.svg', new Blob([svg],{type:'image/svg+xml'})); };
-  $('#tl-png').onclick=async()=>{ const svg=await (await fetch('/api/engine/timeline.svg',{headers:{'X-Lineage-Token':TOKEN}})).text(); svgToPng(svg,'timeline.png'); };
-  $('#tl-print').onclick=printTimeline;
-  $('#tl-undated').textContent = `Undated · ${d.undated.length}`;
+  ['tl-person','tl-type','tl-tier'].forEach(id=>$('#'+id).oninput=drawTimeline);
+  const chart=async()=>(await fetch('/api/engine/timeline.svg',{headers:{'X-Lineage-Token':TOKEN}})).text();
+  bindDlMenu('tl-dl', {pdf:async()=>svgToPdf(await chart(),'timeline.pdf'), png:async()=>svgToPng(await chart(),'timeline.png'),
+    svg:async()=>download('timeline.svg', new Blob([await chart()],{type:'image/svg+xml'}))});
   drawTimeline();
   if(q.focus) setTimeout(()=>{ const c=document.getElementById('ev-'+q.focus); if(c){ c.scrollIntoView({block:'center'}); c.style.boxShadow='0 0 0 3px rgba(201,111,74,.35)'; } },60);
 };
@@ -36,7 +33,7 @@ function tlFiltered(){
   const d=S.timeline, q=($('#tl-q').value||'').toLowerCase(), person=$('#tl-person').value, type=$('#tl-type').value, tier=$('#tl-tier').value;
   return d.events.filter(e=>(!q || (e.title+' '+e.people.join(' ')+' '+e.place+' '+e.quote).toLowerCase().includes(q))
     && (!person || e.people.includes(person)) && (!type || e.type===type) && (!tier || e.tier===tier)
-    && (!$('#tl-hl').checked || e.highlight) && (!$('#tl-conf').checked || e.conflict));
+    && (!S.tlConflicts || e.conflict));
 }
 function evCard(e){
   const pl = p => e.person_slugs[p] ? entryChip(e.person_slugs[p], p, 'person') : `<span class="chiplink">${esc(p)}</span>`;
@@ -55,6 +52,8 @@ function evCard(e){
 }
 function drawTimeline(){
   const d=S.timeline, list=tlFiltered(), spine=$('#tl-spine');
+  $('#tl-only').innerHTML = S.tlConflicts ? '<span class="pill warn">only events whose sources disagree</span> <button class="btn ghost sm" id="tl-all">Show all</button>' : '';
+  if(S.tlConflicts) $('#tl-all').onclick=()=>{ S.tlConflicts=false; drawTimeline(); };
   if(!d.events.length && !d.undated.length){ spine.innerHTML='<div class="card"><p class="empty">No events yet. The timeline is built from transcripts and records: ask the Genealogist (Terminal) to build it once there is material.</p></div>'; $('#tl-rail').innerHTML=''; return; }
   if(!list.length){ spine.innerHTML='<p class="empty">Nothing matches these filters.</p>'; $('#tl-rail').innerHTML=''; return; }
   const filtered = list.length!==d.events.length;
@@ -81,17 +80,4 @@ function drawTimeline(){
   // the rail follows the scroll
   const io=new IntersectionObserver(es=>es.forEach(x=>{ if(x.isIntersecting){ $$('#tl-rail a').forEach(a=>a.classList.toggle('on', 'band-'+a.dataset.band===x.target.id)); } }),{rootMargin:'-80px 0px -70% 0px'});
   $$('.band',spine).forEach(b=>io.observe(b));
-}
-function showUndated(){
-  const u=S.timeline.undated;
-  openDrawer(`Undated · ${u.length}`, u.length ? `<p class="sub">Events the material mentions without a date. They stay off the spine until something dates them.</p>${u.map(evCard).join('')}` : '<p class="empty">Everything is dated.</p>');
-  $$('.drawer [data-cite]').forEach(c=>c.onclick=e=>{ e.preventDefault(); openCitation(c.dataset.cite); });
-  $$('.drawer .star').forEach(b=>b.remove());
-}
-function printTimeline(){
-  const d=S.timeline, I=S.data.identity;
-  printable(`Timeline · ${I.display_title}`, `<h1>Timeline</h1><p><small>${esc(I.display_title)}${I.covers?' · '+esc(I.covers):''}</small></p>
-    ${d.events.map(e=>`<p><b>${esc(e.date)}</b> — ${esc(e.title)}${e.place?', '+esc(e.place):''} <small>(${esc(TIER_LABEL[e.tier]||e.tier)}; ${esc(e.cites.join('; '))})</small>${e.conflict?`<br><small>Sources disagree: ${esc(e.conflict)}</small>`:''}</p>`).join('')}
-    ${d.undated.length?`<h2>Undated</h2>${d.undated.map(e=>`<p>${esc(e.title)} <small>(${esc(e.cites.join('; '))})</small></p>`).join('')}`:''}
-    <p><small>Tiers: documented (a record says so), witnessed, told, family lore, unconfirmed.</small></p>`);
 }
