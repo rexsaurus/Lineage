@@ -9,6 +9,31 @@ marks those stories stale rather than regenerating them.
 
 **Alters generated stories: no.** Dashboard and snapshot only.
 
+- **Genealogy, full width.** The tree takes the whole page; the side panel is gone. Clicking anyone opens a card
+  under the tree: portrait, name, dates, each relationship inline with its evidence tier (documented, told, family
+  lore, unconfirmed, my edit), and *Centre the tree here*, their sources, *In a story* and *Open Familypedia article*.
+  The evidence quotes and my edits (tiers, remove, name and dates, add a relationship, merge, split, note) fold open
+  under the card. The card closes with ×. Clicking a person in the tree now opens the card rather than jumping to the
+  article.
+- **Unplaced** replaces the "Not in this view" card: people no evidenced link reaches, each with the reason (no
+  evidenced link yet, or linked only outside this tree).
+- **Genealogy toolbar:** Tree / Cast are a pair of icon buttons; the layout select is **Tree shape** (Hourglass,
+  Ancestors only, Descendants only, Everyone); GEDCOM, SVG and PNG are one **Download** menu (PDF, PNG image, SVG
+  vector, GEDCOM · for other software) beside **Print**. Zoom stays inside the tree frame, top right.
+- **PDF downloads, with no library:** the chart is drawn to a canvas and written as a one-page PDF holding a JPEG
+  (`app/static/js/exports.js`, shared by Genealogy and Timeline; the PNG export moved there too). Works in the
+  published static snapshot. Very large charts are drawn at a lower scale rather than failing.
+- **Timeline, simpler:** Highlights, Conflicts, Undated, SVG, PNG and Printable appendix are gone from the page (the
+  data stays in the API); a **Download** menu (PDF, PNG image, SVG vector) takes their place. Home's "conflicting
+  sources" link still opens the timeline filtered to conflicts, with a Show all button.
+- **Timeline `updatedAt`:** `GET /api/engine/timeline` reports the newest input it read (events, stars, sources with
+  photographs dated to events, stories, Familypedia inputs), shown as "Material last changed …". The timeline itself
+  is never cached; `make test-timeline` (`app/tests/check_timeline.py`) adds a dated fact, a dated photograph and a
+  star to a scratch copy of the demo and checks each appears and moves `updatedAt`.
+- **Subscribe on Home** (published site only, using the existing `/updates/subscribe.js`): a band after Story of the
+  day ("New stories, when there are new stories", with the project's family name), the form again at the foot of
+  Home, and a quiet **Subscribe** link in the header that jumps to the band. Nothing shows where the script is absent
+  (the local app).
 - **Subscribe and Weekly Update in the Updates tab:** the tab opens with a Weekly Update button (newest `weekly-` post)
   and a Subscribe button that jumps to the weekly-digest form at the foot of the list. The form is the site's own
   `/updates/subscribe.js`, so it appears only on a published site with subscriptions configured.

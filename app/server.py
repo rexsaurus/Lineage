@@ -1356,6 +1356,22 @@ def _transcript_line(project, cite):
     return None
 
 
+def _timeline_updated(project):
+    """The newest input the timeline reads (ISO time): its events, stars, sources (photos dated to events),
+    stories and the Familypedia's inputs. Nothing caches the timeline itself; it is rebuilt on every request,
+    and the Familypedia index it borrows names from is keyed on these same file times."""
+    paths = [project.root / "facts" / "timeline.csv", project.root / "data" / "timeline_stars.json"]
+    newest = 0
+    for p in paths:
+        try:
+            newest = max(newest, p.stat().st_mtime_ns)
+        except OSError:
+            pass
+    for _, ns in familypedia._inputs(project):
+        newest = max(newest, ns)
+    return datetime.fromtimestamp(newest / 1e9, timezone.utc).isoformat(timespec="milliseconds") if newest else None
+
+
 def engine_timeline(project):
     """Every event, oldest first, with tier, people, places, citations, stories, highlights, conflicts and gaps."""
     stars = set(json.loads((project.root / "data" / "timeline_stars.json").read_text())) \
@@ -1398,7 +1414,8 @@ def engine_timeline(project):
         if subject and subject in ev["people"] and ev["type"] == "birth":
             birth = ev["year"]
     return {"events": events, "undated": undated, "gaps": gaps, "subject_birth": birth,
-            "subject_short": project.read()["settings"].get("subject_short") or (subject.split()[0] if subject else "")}
+            "subject_short": project.read()["settings"].get("subject_short") or (subject.split()[0] if subject else ""),
+            "updatedAt": _timeline_updated(project)}
 
 
 def engine_timeline_svg(project):

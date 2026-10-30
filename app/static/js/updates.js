@@ -25,12 +25,25 @@ BUILDERS.updates = async function(el, rest){
   updSubscribe(el);
 };
 /* The weekly-digest form. The published site serves it at /updates/subscribe.js; the form stays closed until the
-   site's /api/subscribe says subscriptions are configured. Locally the script is absent and the box stays empty. */
+   site's /api/subscribe says subscriptions are configured. Locally the script is absent: every box that would hold
+   the form ([data-lsub-wrap]) is removed, and the header's Subscribe link stays hidden. */
+const LSUB = {state:null};                        // null → 'loading' → 'ok' | 'off'
+const lsubOn = () => LSUB.state==='ok';
+function lsubLoad(){
+  if(LSUB.state) return; LSUB.state='loading';
+  const s=document.createElement('script'); s.id='lsub-js'; s.src='/updates/subscribe.js'; s.defer=true;
+  s.onload=()=>{ LSUB.state='ok'; $$('[data-lsub-wrap]').forEach(b=>b.classList.remove('hidden')); const h=$('#hdr-sub'); if(h) h.classList.remove('hidden');
+    if(S.tab==='home' && S.q.to==='subscribe') homeToSubscribe(); };
+  s.onerror=()=>{ LSUB.state='off'; $$('[data-lsub-wrap]').forEach(b=>b.remove()); };
+  document.head.appendChild(s);
+}
+/* after drawing a box: fill it now if the script is here, or let the script's own start-up find it */
+function lsubDraw(){
+  if(LSUB.state==='ok'){ if(window.LineageSubscribe) window.LineageSubscribe(); }
+  else if(LSUB.state==='off') $$('[data-lsub-wrap]').forEach(b=>b.remove());
+  else lsubLoad();
+}
 function updSubscribe(el){
-  el.insertAdjacentHTML('beforeend','<div id="upd-subscribe" data-lineage-subscribe></div>');
-  if(!document.getElementById('lsub-js')){
-    const s=document.createElement('script'); s.id='lsub-js'; s.src='/updates/subscribe.js'; s.defer=true;
-    s.onerror=()=>{ const b=document.getElementById('upd-subscribe'); if(b) b.remove(); };
-    document.head.appendChild(s);
-  } else if(window.LineageSubscribe) window.LineageSubscribe();
+  el.insertAdjacentHTML('beforeend',`<div id="upd-subscribe" data-lineage-subscribe data-lsub-wrap${lsubOn()?'':' class="hidden"'}></div>`);
+  lsubDraw();
 }

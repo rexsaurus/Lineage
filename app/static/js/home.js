@@ -2,7 +2,7 @@
    Answers "what is in here, and what should I do next". It surfaces what the project already
    holds; it never writes prose of its own. An empty project gets one card: what to add first. */
 S.home = {story:0, relative:0, allNeeds:false};
-BUILDERS.home = async function(el){
+BUILDERS.home = async function(el, rest, q={}){
   el.innerHTML = '<p class="empty">Loading…</p>';
   const h = await api(`/api/engine/home?story=${S.home.story}&relative=${S.home.relative}`);
   S.homeData = h;
@@ -21,12 +21,26 @@ BUILDERS.home = async function(el){
       <h2 style="margin:0">${esc(S.data.identity.display_title)}</h2></div><span class="spacer"></span>
       <span class="pill" title="${esc(h.updated||'')}">${h.updated?'Last updated '+esc(ago(h.updated)):'Nothing recorded yet'}</span></div>
     <div class="card" id="h-story"></div>
+    ${homeSubscribeBand()}
     <section class="hsec"><div class="row"><h3>${esc(L.Stories||'Stories')}</h3><span class="spacer"></span><a href="#stories">All ${esc((L.stories||'stories'))} →</a></div><div class="hstories" id="h-stories"><p class="empty">Loading…</p></div></section>
     <section class="hsec"><div class="row"><h3>Gallery</h3><span class="spacer"></span><a href="#familypedia?view=photos">All photographs →</a></div><div class="hgal" id="h-gal"><p class="empty">Loading…</p></div></section>
-    <section class="hsec"><div class="row"><h3>Relatives</h3><span class="spacer"></span><a href="#familypedia">Familypedia →</a></div><div id="h-rels"><p class="empty">Loading…</p></div></section>`;
+    <section class="hsec"><div class="row"><h3>Relatives</h3><span class="spacer"></span><a href="#familypedia">Familypedia →</a></div><div id="h-rels"><p class="empty">Loading…</p></div></section>
+    <footer class="hfoot${lsubOn()?'':' hidden'}" data-lsub-wrap><p>New ${esc(L.stories)} by email, only when there is something new.</p><div data-lineage-subscribe></div></footer>`;
+  lsubDraw();
+  if(q.to==='subscribe') homeToSubscribe();
   drawHomeStory(h);
   drawHomeStories(); drawHomeGallery(); drawHomeRelatives();
 };
+/* Subscribe: the published site's own form (/updates/subscribe.js, see updates.js), in a band under the Story
+   of the day and again at the foot. It shows only where that script loads, so never in the local app. */
+function homeSubscribeBand(){
+  const I=S.data.identity, fam=I.family_name||I.display_title||'This family';
+  return `<section class="hsub${lsubOn()?'':' hidden'}" id="home-subscribe" data-lsub-wrap aria-labelledby="hsub-h">
+    <div><h3 id="hsub-h">New ${esc(L.stories)}, when there are new ${esc(L.stories)}</h3>
+      <p>${esc(fam)} is still being researched. Subscribe and you'll get an email when a new ${esc(L.story)} is finished or a new record turns up — and nothing in the weeks when neither happens.</p></div>
+    <div data-lineage-subscribe></div></section>`;
+}
+function homeToSubscribe(){ const b=$('#home-subscribe'); if(b && !b.classList.contains('hidden')){ b.scrollIntoView({behavior:'smooth', block:'center'}); const i=$('input[type=email]',b); if(i) setTimeout(()=>i.focus({preventScroll:true}),400); } }
 function drawHomeStory(h){
   const box=$('#h-story'), s=h.story;
   if(!s){ box.innerHTML = `<div class="kicker">Story of the day</div><p class="empty">No ${L.stories} drafted yet. ${L.Stories} come from transcribed recordings: add one in <a href="#sources">Sources</a>, then ask the Genealogist (Terminal) to propose the ${L.storyMap.toLowerCase()}.</p>`; return; }

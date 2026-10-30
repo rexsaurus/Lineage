@@ -250,11 +250,11 @@ body.docked .page{padding-bottom:calc(var(--dockh,0px) + 90px)}
 .chiplink{font-size:12px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);background:#F7F2E9;color:var(--ink-2);text-decoration:none;cursor:pointer}
 .chiplink:hover{border-color:var(--clay);color:var(--clay-dark)}
 /* ---------- genealogy ---------- */
-.gwrap{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start}
-.gcanvas{background:var(--card);border:1px solid var(--line);border-radius:14px;height:calc(100vh - 250px);min-height:460px;overflow:hidden;position:relative;cursor:grab;touch-action:none}
+.gcanvas{background:var(--card);border:1px solid var(--line);border-radius:14px;height:calc(100vh - 290px);min-height:440px;overflow:hidden;position:relative;cursor:grab;touch-action:none}
 .gcanvas.drag{cursor:grabbing}
 .gcanvas svg{width:100%;height:100%;display:block;user-select:none}
-.gcanvas .zoom{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:4px}
+.gcanvas .zoom{position:absolute;right:10px;top:10px;display:flex;gap:4px;z-index:2}
+.gcanvas .zoom .btn{background:var(--card);min-width:16px}
 .gnode rect{fill:#FFFDF8;stroke:#C9BFAE;stroke-width:1.2}
 .gnode.focus rect{stroke:var(--clay);stroke-width:2.4}
 .gnode.sel rect{fill:#FBF2EC}
@@ -272,7 +272,7 @@ body.docked .page{padding-bottom:calc(var(--dockh,0px) + 90px)}
 .cast{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
 .cast .card{margin:0;display:flex;flex-direction:column;gap:6px}
 .float{display:flex;gap:6px;flex-wrap:wrap}
-@media (max-width:1000px){.homegrid,.hero,.setwrap,.gwrap,.tl{grid-template-columns:1fr}.setnav,.tlrail{position:static;flex-direction:row;flex-wrap:wrap}.tdrawer{grid-template-columns:1fr}.tdrawer .tside{display:none}}
+@media (max-width:1000px){.homegrid,.hero,.setwrap,.tl{grid-template-columns:1fr}.setnav,.tlrail{position:static;flex-direction:row;flex-wrap:wrap}.tdrawer{grid-template-columns:1fr}.tdrawer .tside{display:none}}
 
 /* ---- Familypedia: types, browse, records, photographs, tagging, map */
 .fp-views .chiplink[aria-current="page"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
@@ -462,3 +462,59 @@ sup.wref{font-size:.72em;line-height:0}sup.wref a{text-decoration:none}
 .upd-actions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
 .upd-btn{display:inline-block;padding:8px 16px;border:1px solid var(--accent,#b3261e);border-radius:6px;color:var(--accent,#b3261e);text-decoration:none}
 .upd-btn:hover{background:var(--accent,#b3261e);color:#fff}
+
+/* ---- chart pages: the Download menu (exports.js), Genealogy's view switch, person card and Unplaced tray */
+.dl{position:relative;display:inline-block}
+.dl-btn{display:inline-flex;align-items:center;gap:6px}
+.dl-caret{font-size:10px;color:var(--ink-3)}
+.dl-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:230px;background:var(--card);border:1px solid #DED8CA;border-radius:5px;box-shadow:0 10px 28px rgba(26,24,20,.14);padding:5px}
+.dl-menu button{all:unset;box-sizing:border-box;display:block;width:100%;padding:8px 12px;border-radius:4px;font-size:14px;color:#1A1814;cursor:pointer}
+.dl-menu button:hover,.dl-menu button:focus-visible{background:#F3EEE4;outline:none}
+.dl-menu hr{border:0;border-top:1px solid #DED8CA;margin:5px 4px}
+.seg{display:inline-flex;border:1px solid #DED8CA;border-radius:7px;overflow:hidden;flex:none}
+.seg button{all:unset;cursor:pointer;display:grid;place-items:center;width:36px;height:32px;color:#6B6459;background:var(--card)}
+.seg button+button{border-left:1px solid #DED8CA}
+.seg button:hover{color:#1A1814;background:#F3EEE4}
+.seg button[aria-pressed="true"]{background:#1A1814;color:#F7F3EC}
+.seg button:focus-visible{outline:2px solid #B5531F;outline-offset:-2px}
+.gshape{display:inline-flex;align-items:center;gap:7px}
+.gshape label{margin:0;white-space:nowrap;font-size:13px;color:#6B6459}
+.gcard{position:relative;display:flex;gap:18px;align-items:flex-start;background:#FBF8F2;border:1px solid #DED8CA;border-radius:5px;padding:16px 46px 16px 18px;margin:12px 0}
+.gcard .portrait{width:72px;height:72px;font-size:28px}
+.gcard-main{flex:1;min-width:0}
+.gcard h3{font-family:var(--serif);font-size:21px;margin:0;color:#1A1814}
+.gcard-dates{font-size:13px;color:#6B6459;margin:1px 0 8px}
+.gcard-rels{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:13.4px;color:#6B6459}
+.grel{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.gtier{font-size:11px;letter-spacing:.6px;text-transform:uppercase;padding:1px 7px;border-radius:20px;border:1px solid #DED8CA;color:#6B6459;background:#fff;white-space:nowrap}
+.gtier.g-documented{color:#1A1814;border-color:#3D3A35}.gtier.g-told{color:#8E3F16;border-color:#B5531F}.gtier.g-lore{color:#7E527E;border-style:dashed;border-color:#B07BB0}
+.gtier.g-unconfirmed{border-style:dotted}.gtier.g-mine{color:var(--green);border-color:var(--green)}
+.gcard-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.gcard-acts a.btn{text-decoration:none}
+.gcard-x{all:unset;cursor:pointer;position:absolute;top:8px;right:10px;width:30px;height:30px;display:grid;place-items:center;border-radius:5px;font-size:20px;color:#6B6459}
+.gcard-x:hover{background:#F3EEE4;color:#1A1814}
+.gcard-more{margin-top:12px;border-top:1px solid #DED8CA;padding-top:8px}
+.gcard-more summary{cursor:pointer;font-size:13.4px;color:#1A1814}
+.gev{border-top:1px solid var(--line);padding:8px 0}
+.gtray{margin:12px 0;padding:12px 14px;border:1px dashed #DED8CA;border-radius:5px}
+.gtray h4{margin:0 0 8px;font-size:13.5px;color:#1A1814}
+.gtray-p{display:inline-flex;align-items:center;gap:6px;margin:0 12px 4px 0}
+@media (max-width:700px){.gcard{flex-direction:column;padding-right:18px}}
+
+/* ---- Home: Subscribe (the published site's /updates/subscribe.js form, restyled inside these boxes) */
+.top .hsub-link{color:#D9D2C6;font-size:12.5px;text-decoration:none;flex:none}
+.top .hsub-link:hover{color:#fff;text-decoration:underline}
+.hsub{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px 28px;align-items:center;background:#FBF8F2;border:1px solid #DED8CA;border-radius:5px;padding:22px 24px;margin:26px 0 0}
+.hsub h3{font-family:var(--serif);font-size:21px;margin:0 0 6px;color:#1A1814}
+.hsub p{margin:0;color:#6B6459;font-size:15px;line-height:1.55}
+.hsub .lsub,.hfoot .lsub{border:0;padding:0;margin:0;border-radius:0}
+.hsub .lsub .lsub-h,.hsub .lsub .lsub-note,.hfoot .lsub .lsub-h,.hfoot .lsub .lsub-note{display:none}
+.hsub .lsub form,.hfoot .lsub form{margin:0 0 4px}
+.hsub .lsub input[type=email],.hfoot .lsub input[type=email]{min-height:44px;font-size:16px;border:1px solid #DED8CA;border-radius:5px;background:#fff;color:#1A1814}
+.hsub .lsub button,.hfoot .lsub button{min-height:44px;padding:0 20px;font-size:15px;font-weight:500;border-radius:5px;background:#1A1814;color:#F7F3EC}
+.hsub .lsub button:hover,.hfoot .lsub button:hover{background:#312C26}
+.hsub .lsub .lsub-msg,.hsub .lsub .lsub-rss,.hfoot .lsub .lsub-msg,.hfoot .lsub .lsub-rss{font-size:13.4px;color:#6B6459}
+.hsub .lsub a,.hfoot .lsub a{color:#8E3F16}
+.hfoot{margin-top:40px;padding-top:18px;border-top:1px solid #DED8CA;max-width:560px}
+.hfoot p{margin:0 0 6px;color:#6B6459;font-size:13.6px}
+@media (max-width:700px){.hsub{grid-template-columns:1fr;padding:18px 16px}}
