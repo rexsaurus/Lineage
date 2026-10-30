@@ -458,3 +458,7 @@ sup.wref{font-size:.72em;line-height:0}sup.wref a{text-decoration:none}
 /* narrow screens: the tabs get their own scrolling row under the title (they were squeezed to nothing) */
 @media (max-width:900px){.top{flex-wrap:wrap;height:auto;padding-top:10px;column-gap:12px}.top .proj{display:none}
   .top .brand{margin-right:auto}.top .hbtn span{display:none}.top .tabs{order:10;flex:1 0 100%;height:44px;min-width:0}}
+
+.upd-actions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.upd-btn{display:inline-block;padding:8px 16px;border:1px solid var(--accent,#b3261e);border-radius:6px;color:var(--accent,#b3261e);text-decoration:none}
+.upd-btn:hover{background:var(--accent,#b3261e);color:#fff}

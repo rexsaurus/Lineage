@@ -60,5 +60,6 @@
       .catch(function () { return { open: false }; })
       .then(function (j) { for (var k = 0; k < boxes.length; k++) setup(boxes[k], !!(j && j.open)); });
   }
+  window.LineageSubscribe = init;            // pages that draw the box later (the Lineage app's Updates tab) call it again
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();
