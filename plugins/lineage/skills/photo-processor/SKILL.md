@@ -28,6 +28,12 @@ evidence; check whether it belongs to the photo above or below). Re-running appe
 never reused or renumbered, because chapters cite them. Scans of a photo's **back** are
 linked to the front (`needs_attention: back: P017`) and read.
 
+**Intake.** New images arrive in `photos/inbox/` (prefix `01-`, `02-` to fix their order);
+extract from there. Afterwards move the originals to `photos/archive/originals/<date>-<set>/`,
+download duplicates ("photo (1).jpg") to `photos/archive/duplicates/`, and a set that a newer
+one replaces to `photos/archive/superseded/`. When the author supplies the same set more than
+once, use the **newest** files. `photos/inbox/` and `photos/archive/` stay out of git.
+
 ## 2. Catalogue every image
 Set `kind`: **photograph**, **illustration** (AI-generated or artist's rendering),
 **map**, or **placeholder** (a stand-in box until the real photograph is found; never in a final
@@ -35,7 +41,9 @@ build). Then fill the row. Every identification carries its **basis**, strongest
 1. **inscription**: writing on the photo or its back, a printed lab date
 2. **document**: a caption in the photos document, an archive catalogue, the author/owner
 3. **transcript**: the subject describes this scene (cite `[S2 00:31:05]`)
-4. **visual estimate**: clothing, cars, print format, signage, landscape
+4. **visual estimate**: clothing, hairstyles, cars (model years), print format (deckled
+   edges ≈ 1940s–50s, square rounded-corner prints ≈ 1960s–70s, dated lab stamps on
+   borders), signage, landscape
 
 | Column | Rule |
 |---|---|
@@ -67,20 +75,44 @@ python .claude/skills/photo-processor/scripts/prepare_print.py --only P007 --cro
 
 ## 4. Illustrations (AI-generated or artist's) — strict
 Allowed **only if all of these hold**:
-- **(a) The caption itself marks it**, e.g. "as the family told it" or an explicit
-  "illustration" line, so a reader in fifty years cannot mistake it for a photograph.
-- **(b) A note in the chapter** (in the photographs page note or a closing line) states that
-  the illustrations are renderings and what likeness or source each was based on.
+- **(a) It is recorded as an illustration**: `kind: illustration` in `photo_index.csv`, with
+  `rendering_basis` (the scene's citation, the style, any likeness reference). Its caption
+  stays short like any other (§5); the author's caption is used word for word.
+- **(b) The book says so in print**: the copyright page carries the line "The illustrations
+  in this book are artist's renderings, not photographs." (build_book.py writes it whenever a
+  placed image is an illustration; `book.yaml` → `front.illustrations_note`), and the chapter
+  says what likeness or source they were based on (in the photographs page note, a closing
+  line, or a `#story-page` note).
 - **(c) It depicts a scene described in the material**, never an invented event, and
   matches its details (season, place, animal, clothing). Flag mismatches.
-- **(d) The distinction survives in the printed book**, not just in drafts or the index.
+- **(d) The distinction survives outside the book too**: pages shared as images say in the
+  post that the illustrations are renderings; the dashboard never shows an illustration as a
+  person's picture.
 
 Also: no image that poses as an archival document (fake contact sheets, fake stamps or
-labels); no caricature of any people; nothing graphic. Real photographs may be used as
-likeness references for a rendering (say so per (b)) but are never altered themselves.
-Keep a project style file (`photos/IMAGE-STYLE.md`: a style prefix, a likeness lock, a
-one-line lock appended to every prompt) so a set looks consistent. API keys go in an
-environment variable for the one command; never write them to disk.
+labels); no caricature of any people; nothing graphic; no rank, insignia or uniform detail
+the record doesn't support. Real photographs may be used as likeness references for a
+rendering (say so per (b)) but are never altered themselves.
+
+### Generating them
+Keep a project style file (`photos/IMAGE-STYLE.md`: the look per period, the likeness rules,
+a one-line lock appended to every prompt; example in `$LINEAGE/templates/images/`) so a set
+looks like one book, and plan every image in `photos/images-plan.yaml` (id, size, period
+style preset, optional likeness set, the scene's citation, the prompt):
+```bash
+python $LINEAGE/scripts/generate_images.py --dry-run     # read every full prompt first
+python $LINEAGE/scripts/generate_images.py IMG-03-1      # photos/generated/IMG-03-1.png + print/IMG-03-1.jpg (grayscale)
+```
+- **Period style presets** describe the photographs of the time (a 1910s silver-gelatin
+  print, a 1940s snapshot), never the people.
+- **Likeness lock:** with `likeness:` set, the generator runs in edit mode with the family's
+  real photographs (`photos/reference/<name>/`) as references, so a relative looks like
+  themselves across a set; without a reference, keep figures small, turned away or in shadow.
+- The originals in `photos/generated/` are never edited; the print copy is grayscale for a
+  B&W book. Index each one (§2, `kind: illustration`) before placing it.
+- The OpenAI key comes from `OPENAI_API_KEY` for the one command, or from a file outside
+  every repo (`~/.openai_api_key`, chmod 600). Never in the project, never printed, never
+  committed.
 
 ## 5. Placing and captioning
 - **Few, and only where they belong**: a portrait near where a key person is introduced;
@@ -89,7 +121,8 @@ environment variable for the one command; never write them to disk.
 - Anchor each image **after** the paragraph it belongs to, never mid-paragraph:
   ```
   #plate("/photos/print/P014.jpg", caption: "Tobias Calder, about 1890", id: "P014")
-  #plate("/photos/print/P021.jpg", caption: "The flood, as the family told it (illustration)", id: "P021")
+  #plate("/photos/print/P021.jpg", caption: "The water came up to the porch", id: "P021")
+  // photo: P021 — illustration (photo_index.csv), after [S1 00:31:05]
   ```
   `width:` about 3.9in for portraits, 4.4in for landscapes; `span: false` keeps it in one
   column of a two-column chapter; `#plate-pair` for two side by side; `#photo(...)` for an
@@ -101,14 +134,23 @@ environment variable for the one command; never write them to disk.
   `// REVIEW:`.
 - An author may place an image on a given page; floats land on or after their anchor's
   page, so move the call to a paragraph on (or just before) that page and re-render.
-- Images with no matching story go on a candidates list, not into random chapters.
+- **An illustrated story** (family-history-chapters §8): eight panels over two facing pages,
+  `#story-page(title: …, story-panel(path, 1)[“the subject's words”], …)`, each caption the
+  subject's exact words, cited; the second page's `note:` says they are renderings.
+- If a chapter has more good photos than text, propose an **album** section at its end (a
+  grid of two: `#grid(columns: 2, gutter: 0.8em, photo(...), photo(...))`) rather than
+  crowding the running text.
+- Images with no matching story go on a candidates list, not into random chapters; the
+  author may want them as an album chapter in the back matter, or cut.
 - Record each placement as `chapter`, `placement_anchor` ("ch 03, after ¶ citing [S1 00:22:10]").
 
 ## 6. The photographs page (`#photo-addendum`)
 At the end of each family-history chapter (after THE RECORDS), list the **real photographs
 held by an archive**: catalogue number, date, title, description and record link, plus a
-note on what permission is needed to print them. Thumbnails print only once the holder has
-given permission (`show-images: true`).
+note on what permission is needed to print them. **Thumbnails print in drafts** (so the
+family sees what exists) **and in the final book only once the holder has given permission**:
+the template's default is `show-images: draft`; pass `show-images: true` after permission is
+recorded (`print_permission: yes`).
 ```
 #photo-addendum(note: [Held by the Millbrook Historical Society; reproduction needs the
   Society's written permission. The illustrations in this chapter are renderings based on
@@ -136,5 +178,7 @@ batched questions.
 
 ## Consistency
 - When a chapter moves, update `chapter` and anchors. When a caption is corrected, fix the
-  CSV first, then the call. A replaced image keeps a new ID; the old one becomes a candidate.
+  CSV first, then the call. A replaced image keeps a new ID; the old one becomes a candidate
+  and its file goes to `photos/archive/superseded/`. An image removed from a chapter becomes
+  a candidate too.
 - People named in confirmed captions get `#idx` entries next to the call.

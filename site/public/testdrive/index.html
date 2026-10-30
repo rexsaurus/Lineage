@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test drive · Lineage</title>
+<meta name="description" content="Type a family name and see what Lineage&#x27;s research would start from: newspapers, books and notable people.">
+<link rel="icon" href="../assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="site-top"><div class="wrap">
+  <a class="brand" href="../"><img src="../assets/logo.svg" alt="" width="26" height="26"><span>Lineage</span></a>
+  <nav class="site-nav" aria-label="Site"><a href="../">Home</a><a href="../start/">Get started</a><a href="../quickstart/">Quickstart</a><a href="./" aria-current=page>Test drive</a><a href="../tour/">Tour</a><a href="../demo/">Live demo</a><a href="../docs/">Docs</a><a href="../blog/">Blog</a><a href="https://github.com/rexsaurus/Lineage" class="gh">GitHub</a></nav>
+</div></header>
+<main>
+<article class="doc td">
+<h1>Test drive</h1>
+<p class="lede">Type a family name and see what Lineage's research would start from. It searches three free public archives at
+once: historic American newspapers at the Library of Congress, books and local histories at the Internet Archive, and
+notable people in Wikidata.</p>
+
+<form id="td-form" class="td-form" autocomplete="off">
+  <label>Family name<input id="td-surname" name="surname" required minlength="2" maxlength="40" placeholder="e.g. Calder"></label>
+  <label>US state <span class="muted">(optional, for newspapers)</span>
+    <select id="td-state" name="state"><option value="">Anywhere</option></select></label>
+  <label>From<input id="td-from" name="from" type="number" min="1600" max="1949" value="1800"></label>
+  <label>To<input id="td-to" name="to" type="number" min="1600" max="1949" value="1949"></label>
+  <button class="btn" type="submit">Search the archives</button>
+</form>
+<p class="muted small">Records up to 1949 only, and only people known to have died, so this can't be used to look up living people.
+Nothing you type is stored. Searches are free.</p>
+
+<div id="td-status" class="td-status" aria-live="polite"></div>
+<div id="td-summary"></div>
+<div id="td-results"></div>
+
+<section class="td-next" id="td-next" hidden>
+  <h2>What Lineage would do next</h2>
+  <p>These are only public starting points. With your own family's recordings, letters and photographs, Lineage reads every
+  page, matches the right people to the right records, writes a sourced article for each relative, and drafts the
+  requests to archives for what isn't online. Every email waits for your approval.</p>
+  <p><a class="btn" href="../start/">Get started</a> <a class="btn ghost" href="../quickstart/">Quickstart</a>
+     <a class="btn ghost" href="../demo/">See a finished record</a></p>
+</section>
+</article>
+
+<style>
+.td-form{display:grid;grid-template-columns:2fr 1.4fr .8fr .8fr auto;gap:12px;align-items:end;margin:20px 0 6px}
+.td-form label{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--ink-2)}
+.td-form input,.td-form select{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+.td-form .btn{height:44px}
+.small{font-size:14px}
+.td-status{margin:18px 0;color:var(--ink-2)}
+.td-sec{margin:28px 0}
+.td-sec h2{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.td-sec h2 a{font:500 14px var(--sans)}
+.td-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.td-card{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);
+  text-decoration:none;color:var(--ink)}
+.td-card:hover{border-color:var(--accent)}
+.td-card img{width:100%;height:150px;object-fit:cover;object-position:top;border-radius:8px;background:var(--paper-2)}
+.td-card b{font-size:15px;line-height:1.3}
+.td-card .muted{font-size:13px}
+.td-card q{font-size:13px;color:var(--ink-2)}
+.td-summary{padding:14px 16px;border-left:3px solid var(--accent);background:var(--card);border-radius:8px}
+@media (max-width:760px){.td-form{grid-template-columns:1fr 1fr}.td-form label:first-child{grid-column:1/-1}.td-form .btn{grid-column:1/-1}}
+</style>
+
+<script>
+(function () {
+  const STATES = ["Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","District of Columbia",
+    "Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland",
+    "Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey",
+    "New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Puerto Rico","Rhode Island",
+    "South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"];
+  const sel = document.getElementById("td-state");
+  for (const s of STATES) { const o = document.createElement("option"); o.value = s.toLowerCase(); o.textContent = s; sel.appendChild(o); }
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const num = n => Number(n || 0).toLocaleString();
+
+  function section(title, total, more, cards, empty) {
+    const link = more && total ? `<a href="${esc(more)}" target="_blank" rel="noopener">See all ${num(total)} →</a>` : "";
+    const body = cards.length ? `<div class="td-grid">${cards.join("")}</div>` : `<p class="muted">${esc(empty)}</p>`;
+    return `<section class="td-sec"><h2><span>${esc(title)} <span class="muted">· ${num(total)}</span></span>${link}</h2>${body}</section>`;
+  }
+
+  function render(d) {
+    const n = d.sources.newspapers, b = d.sources.books, p = d.sources.people;
+    const news = n.items.map(i => `<a class="td-card" href="${esc(i.url)}" target="_blank" rel="noopener">
+      ${i.image ? `<img loading="lazy" src="${esc(i.image)}" alt="">` : ""}<b>${esc(i.title)}</b>
+      <span class="muted">${esc(i.date)}</span>${i.snippet ? `<q>${esc(i.snippet)}</q>` : ""}</a>`);
+    const bks = b.items.map(i => `<a class="td-card" href="${esc(i.url)}" target="_blank" rel="noopener">
+      <img loading="lazy" src="${esc(i.image)}" alt=""><b>${esc(i.title)}</b>
+      <span class="muted">${esc([i.creator, i.year].filter(Boolean).join(" · "))}</span></a>`);
+    const ppl = p.items.map(i => `<a class="td-card" href="${esc(i.url)}" target="_blank" rel="noopener">
+      ${i.image ? `<img loading="lazy" src="${esc(i.image)}" alt="">` : ""}<b>${esc(i.name)}</b>
+      <span class="muted">${esc(i.born)}–${esc(i.died)}${i.about ? " · " + esc(i.about) : ""}</span></a>`);
+    $("td-summary").innerHTML = d.summary ? `<p class="td-summary">${esc(d.summary)}</p>` : "";
+    $("td-results").innerHTML =
+      section("Newspaper pages", n.total, n.more, news, n.error || "No newspaper pages found for these years.") +
+      section("Books, histories and directories", b.total, b.more, bks, b.error || "No books with this name in the title.") +
+      section("Notable people with this name", p.total, null, ppl, p.error || "No notable people found in Wikidata.");
+    $("td-next").hidden = false;
+  }
+
+  $("td-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const q = new URLSearchParams({ surname: $("td-surname").value.trim(), state: $("td-state").value,
+                                    from: $("td-from").value, to: $("td-to").value });
+    $("td-status").textContent = "Searching the Library of Congress, the Internet Archive and Wikidata…";
+    $("td-results").innerHTML = ""; $("td-summary").innerHTML = ""; $("td-next").hidden = true;
+    history.replaceState(null, "", "?" + q.toString());
+    try {
+      const r = await fetch("/api/testdrive/?" + q.toString());
+      const d = await r.json();
+      if (!r.ok) { $("td-status").textContent = d.error || "Something went wrong."; return; }
+      const found = d.sources.newspapers.total + d.sources.books.total + d.sources.people.total;
+      $("td-status").textContent = `Found ${num(found)} public records mentioning “${d.surname}”, ${d.from}–${d.to}.`;
+      render(d);
+    } catch (err) {
+      $("td-status").textContent = "The archives didn't answer. Please try again in a moment.";
+    }
+  });
+
+  // a shared link (?surname=…) runs the search straight away
+  const qs = new URLSearchParams(location.search);
+  if (qs.get("surname")) {
+    $("td-surname").value = qs.get("surname");
+    if (qs.get("state")) $("td-state").value = qs.get("state");
+    if (qs.get("from")) $("td-from").value = qs.get("from");
+    if (qs.get("to")) $("td-to").value = qs.get("to");
+    $("td-form").requestSubmit();
+  }
+})();
+</script>
+
+</main>
+<footer class="site-foot"><div class="wrap">
+  <p>Lineage is open source under the MIT license. <a href="https://github.com/rexsaurus/Lineage">github.com/rexsaurus/Lineage</a> · <a href="../changelog/">Site changelog</a></p>
+  <p class="muted">Every family in the screenshots and the demo is invented. Your recordings, transcripts and photographs stay yours: the license does not cover them.</p>
+</div></footer>
+</body>
+</html>

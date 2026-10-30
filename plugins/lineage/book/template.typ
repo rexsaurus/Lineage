@@ -121,9 +121,11 @@
 //     dates: "1840–1911", summary: [On Ships, Farms and Such],
 //     epigraphs: (([Call me Ishmael.], "Herman Melville, Moby-Dick"),), columns: 2)
 // Openers always start on a recto, carry no running head, and span both columns.
-// columns: 1 for narrative chapters, 2 for research-dense ones (a per-chapter choice).
+// columns: 2 (the default) sets two justified columns in the manner of a fine-press Bible;
+// columns: 1 is the per-chapter choice for a chapter that reads better in one measure.
+// One epigraph per chapter is the default (style guide §2b); a family-history chapter may carry two.
 #let chapter(title, number: none, setting: none, dates: none, summary: none,
-             epigraphs: (), contents: none, columns: 1, body) = {
+             epigraphs: (), contents: none, columns: 2, body) = {
   // The chapter-end marker goes at the END of the body, inside this page run: a marker
   // emitted after the run would land on the next (blank) page and spoil blank-verso detection.
   pagebreak(to: "odd", weak: true)
@@ -221,8 +223,10 @@
 
 // ---- Images ------------------------------------------------------------------------
 // A plate floated to the top or bottom of a page, framed, captioned in spaced caps.
-// span: true crosses both columns of a two-column chapter. Captions of illustrations
-// must say so ("as the family told it", "illustration"); see the photo-processor skill.
+// span: true crosses both columns of a two-column chapter. Captions are short: a person's
+// name, or a scene title in the text's own words; the author's own caption word for word.
+// Illustrations are recorded as such in photos/photo_index.csv (kind: illustration), named in
+// the chapter's note and in the front-matter line build_book.py writes (photo-processor §4).
 #let plate(path, caption: none, width: 3.9in, span: true, id: none) = place(auto, float: true,
   scope: if span { "parent" } else { "column" }, clearance: 1.4em,
   align(center, block({
@@ -284,21 +288,119 @@
     align(center, stack(dir: ttb, spacing: 1.5pt, ..rows.map(r => align(center, r))))
   }))
 
+// A small family tree of three generations, floated to the foot of the page where it is
+// called (put the call right after the opening paragraph). It can stand in for #descent or
+// sit beside it. Built only from documented facts and names the author has confirmed; mark
+// unconfirmed links in the content ("(link unproven)") and approximate years with "c.".
+//   #family-tree(title: "The Family of Tobias Calder",
+//     parents: ([Josiah Calder], [Mary Calder]),
+//     couple: ([Tobias Calder (c.1840–1911)], [Hannah Pratt (1844–1920)]),
+//     note: [Hannah was the daughter of a Millbrook miller],
+//     children: ([Walter (b. 1868)], [Mary (b. c.1870)], [Eliza (1873–1879)]),
+//     line: 0, descent: [and so to Ruth])
+// parents/couple: (person, spouse), either may be none. line: index of the child the line
+// of descent continues through; descent: the line printed under that child.
+#let tree-ink = luma(45%)
+#let family-tree(title: none, parents: none, couple: none, note: none, children: (),
+                 line: none, descent: none) = place(bottom + center, float: true,
+  scope: "parent", clearance: 1.1em, block(width: 100%, inset: (top: 0.5em), breakable: false, {
+    // Connectors are inline boxes in centred paragraphs: lines placed with place() inside
+    // fixed-height blocks do not lay out reliably.
+    let tick = align(center, box(width: 0.6pt, height: 8pt, fill: tree-ink))
+    let eq = text(fill: luma(35%))[#h(0.3em)=#h(0.3em)]
+    let pair(p) = if p == none { none } else {
+      let (a, b) = p
+      if a != none and b != none [#a #eq #b] else if a != none { a } else { b }
+    }
+    set par(first-line-indent: 0pt, justify: false, leading: 0.42em, spacing: 0.25em)
+    set text(size: 8.5pt)
+    std.line(length: 100%, stroke: 0.3pt)
+    v(0.3em)
+    if title != none { align(center, spaced-caps(title, size: 7.5pt, tracking: 0.2em)); v(0.45em) }
+    if parents != none { align(center, pair(parents)); tick }
+    if couple != none { align(center, pair(couple)) }
+    if note != none { align(center, text(size: 7.5pt, style: "italic", note)) }
+    let n = children.len()
+    if n > 0 {
+      tick
+      if n > 1 { align(center, box(width: 100% * (n - 1) / n, height: 0.6pt, fill: tree-ink)) }
+      let cells = range(n).map(_ => tick) + children
+      if line != none and descent != none {
+        cells += range(n).map(i => if i == line { tick } else { [] })
+        cells += range(n).map(i => if i == line { emph(descent) } else { [] })
+      }
+      grid(columns: (1fr,) * n, align: center + top, row-gutter: 0.25em, column-gutter: 0.4em, ..cells)
+    }
+  }))
+
+// ---- The illustrated story -------------------------------------------------------------
+// A scene the subject told, drawn as a numbered sequence of panels (two pages of four make
+// a spread), each captioned with the subject's own words, verbatim, cited with // src:.
+// The panels are illustrations: the note line says so on the page, and photo_index.csv
+// records each as kind: illustration. Never invents a scene the material does not hold.
+//   #story-page(title: "The Night of the Storm",
+//     story-panel("/photos/print/IMG-03-1.jpg", 1)[“The wind took the barn roof clean off.”],
+//     story-panel("/photos/print/IMG-03-2.jpg", 2)[“We sat in the cellar all night.”], ...)
+//   // src: panel 1 [S2 00:14:05]; panel 2 [S2 00:14:40]
+//   #story-page(note: [Illustrations after Ruth's account; artist's renderings, not photographs.], ...)
+#let story-panel(path, number, caption, height: 3in) = block(width: 100%, breakable: false, {
+  box(width: 100%, height: height, stroke: 0.4pt, clip: true,
+    image(path, width: 100%, height: height, fit: "cover"))
+  v(0.4em)
+  if number != none { align(center, spaced-caps(str(number), size: 7pt, tracking: 0.2em)); v(0.15em) }
+  set par(justify: false, first-line-indent: 0pt, leading: 0.42em)
+  align(center, text(size: 8.5pt, style: "italic", caption))
+})
+
+// A full page of panels (a 2-column grid), floated to the top of the next page that can
+// hold it so no stray line of text slips under it. height: the text block's height
+// (8.3in on 7x10; 6.9in on 6x9). Put the two pages of a spread one after the other, and
+// check in the assembled book that they face each other (verso, then recto).
+#let story-page(title: none, note: none, height: 8.29in, ..panels) = place(top + center,
+  float: true, scope: "parent", clearance: 0.05in, block(width: 100%, height: height, breakable: false, {
+    if title != none { align(center, spaced-caps(title, size: 9pt, tracking: 0.22em)); v(0.7em) }
+    grid(columns: (1fr, 1fr), column-gutter: 0.28in, row-gutter: 0.32in, ..panels.pos())
+    if note != none { v(1fr); align(center, text(size: 7.5pt, style: "italic", note)) }
+  }))
+
 // "The Records": where every documented claim in the chapter came from, with links.
 // Small type, after the closing paragraph.
-#let records(title: "The Records", ..items) = block(width: 100%, above: 1.4em, breakable: true, {
+// in-records: true while a records list is being set, so the automatic index (auto-index, below)
+// does not index the names in source titles.
+#let in-records = state("in-records", false)
+#let records(title: "The Records", ..items) = { in-records.update(true); block(width: 100%, above: 1.4em, breakable: true, {
   align(center, spaced-caps(title, size: 7.5pt, tracking: 0.2em))
   v(0.3em)
   set par(justify: false, first-line-indent: 0pt, leading: 0.42em, spacing: 0.5em)
   set text(size: 8pt)
   show link: it => underline(offset: 1.5pt, stroke: 0.3pt, it)
   for it in items.pos() { block(above: 0.55em, below: 0pt, par(hanging-indent: 1em, it)) }
-})
+}); in-records.update(false) }
 
-// An index of real photographs held by an archive, with links. Thumbnails print only
-// when show-images is true, i.e. once the holder has given permission to reproduce them.
+// An exhibit: a document's scanned pages reproduced whole after a chapter (a court file, a
+// service record, a deed). Two pages per row, captioned and numbered, opening on a fresh page.
+// pages: ((path, [caption]), ...). note: where the document came from and what is left out.
+#let exhibit(title: "Exhibit", note: none, height: 3.55in, ..pages) = {
+  pagebreak(weak: true)
+  let cells = pages.pos().enumerate().map(((i, pc)) => stack(spacing: 4pt,
+    box(stroke: 0.4pt, image(pc.at(0), width: 100%, height: height, fit: "contain")),
+    align(center, text(size: 7.5pt, style: "italic")[#(i + 1). #pc.at(1)])))
+  place(top + center, float: true, scope: "parent", block(width: 100%, {
+    align(center, spaced-caps(title, size: 11pt, tracking: 0.22em))
+    if note != none {
+      v(0.3em)
+      align(center, block(width: 85%, text(size: 8.5pt, style: "italic", note)))
+    }
+    v(0.6em)
+    grid(columns: (1fr, 1fr), column-gutter: 0.2in, row-gutter: 0.25in, ..cells)
+  }))
+}
+
+// An index of real photographs held by an archive, with links. Thumbnails print in drafts
+// (for the family to see what exists) and in the final book only once the holder has given
+// permission: pass show-images: true then. The default is the draft flag.
 // items: ((thumb-path or none, [catalogue line], [description], url), ...)
-#let photo-addendum(title: "The Photographs", note: none, show-images: false, ..items) = {
+#let photo-addendum(title: "The Photographs", note: none, show-images: draft, ..items) = {
   block(width: 100%, above: 1.6em, below: 0.9em, breakable: false, {
     align(center, text(size: 9pt, fill: rubric, "❧"))
     v(0.3em)
@@ -327,6 +429,26 @@
 // #idx("Calder, Tobias!at sea"). Cross-reference: #idx-see("Toby", "Calder, Tobias")
 #let idx(..terms) = for t in terms.pos() { [#metadata(t)<idx>] }
 #let idx-see(from, to) = [#metadata((see: from, to: to))<idx-see>]
+
+// An automatic index, for books whose chapters carry no #idx marks (or as well as them): name the
+// headings and the spellings that count for each, and every occurrence in the text is marked as the
+// book is set, without touching a chapter. Names inside a records list are skipped.
+//   #show: auto-index.with((
+//     "Calder, Tobias": ("Tobias Calder", "Toby"),
+//     "Harrow Bay": ("Harrow Bay",),
+//   ))
+// Matching is whole-word and longest-first ("Mount Holyoke" before "Holyoke").
+#let auto-index(terms, body) = {
+  let to-heading = (:)
+  for (h, names) in terms { for n in names { to-heading.insert(n, h) } }
+  let pattern = "\\b(" + to-heading.keys().sorted(key: k => -k.len())
+    .map(k => k.replace(".", "\\.")).join("|") + ")\\b"
+  show regex(pattern): it => {
+    it
+    context if not in-records.get() { [#metadata(to-heading.at(it.text, default: it.text))<idx>] }
+  }
+  body
+}
 
 #let make-index(title: "Index") = {
   pagebreak(to: "odd", weak: true)

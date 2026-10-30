@@ -27,7 +27,7 @@ took four summers. Walt#idx("Calder, Walt!the cabin") did the walls and Ruth did
 heights. "Nobody believes that," she said.
 // src: [S2 00:00:36]-[S2 00:00:49]
 
-#plate("/photos/print/P002.png", caption: "Placeholder: the cabin on Pike Lake", width: 3.6in, id: "P002")
+#plate("/sources/pike-lake-cabin-illustration.jpg", caption: "Illustration (generated): the cabin half built, about 1965", width: 3.6in, id: "P002")
 
 What she valued most about it was simple. "The lake was always there. Whatever else
 happened, the lake was always there."

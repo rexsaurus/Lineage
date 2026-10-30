@@ -16,7 +16,7 @@ This guide follows the work in the order a family usually does it:
 | [3. Add sources](#3-add-sources) | intake of every file; transcription of recordings; photographs catalogued |
 | [4. Research records](#4-research-records) | the family's own papers and public records, catalogued by type and snapshotted |
 | [5. Build the record](#5-build-the-record-timeline-genealogy-familypedia) | the timeline, the genealogy and the Familypedia |
-| [6. Make stories and a book](#6-make-stories-and-a-book) | story units, the chapter map, writing, building, printing, narration |
+| [6. Make stories and a book](#6-make-stories-and-a-book) | story units, the chapter map, writing, building, printing, narration, publishing a site |
 | [7. Troubleshooting](#7-troubleshooting) · [8. Honest limits](#8-honest-limits) | |
 
 It uses the sample project throughout: an invented family, the Calders. **Ruth Calder** (born
@@ -375,6 +375,7 @@ few surnames and unusual place names, and fix every other misspelling afterwards
 After every run, search the output for your prompt text. If an echo slips through, cut it at
 render time in `transcript/corrections.json`:
 - `drop_segments.patterns` drops a whole raw segment that is nothing but echo;
+- `drop_word_runs.runs` removes an echoed phrase word by word from inside a real segment;
 - `scrub_inline.patterns` strips an echo embedded inside a real paragraph.
 
 #### Long recordings: chunked diarization
@@ -531,9 +532,29 @@ records first**, because archives often hold the person.
   HathiTrust for period books, Chronicling America for newspapers, free census indexes,
   museum catalogues. Note any paywalled source as such, and give the free route if there is
   one.
-- **Fetch politely.** Respect robots.txt and site terms, make at most one request every
-  couple of seconds per site, and use no logins or CAPTCHA tricks. **Never put anyone's
-  name, email or credentials in a request.**
+- **Fetch politely.** Automated fetching respects robots.txt and site terms, waits at least
+  2 seconds between requests to a site, and uses no logins or CAPTCHA tricks. **Never put
+  anyone's name, email or credentials in a request**; the User-Agent names the project only
+  (`research.user_agent` in `book.yaml`). `fetch_records.py` does this for a short list of
+  record URLs and logs each one in the chapter's dossier:
+
+  ```sh
+  python $LINEAGE/scripts/fetch_records.py anders-calder https://example.org/roster/page-214
+  ```
+- **What only a person can reach.** A page behind a login, a bot check, or a robots.txt that
+  bars automated crawlers goes on `research/MANUAL-LOOKUPS.md` (the template is in
+  `$LINEAGE/templates/research/`): what to find, where, the search terms, why it matters.
+  You do those lookups yourself, in your own browser and your own accounts, one record at a
+  time; if you choose, a browser assistant can do them inside your own logged-in session at
+  your direction. Never CAPTCHA solving, bot-check workarounds, anyone else's credentials, or
+  bulk downloading. Results go in `research/manual-lookups-results.csv`, transcribed exactly.
+  Letters and forms to archives are logged in `research/REQUESTS.md` with their replies.
+- **A dossier per chapter.** Each chapter with research keeps `dossiers/<slug>/`: your
+  requests for that chapter, a log of every search (blocked ones too), **every** source found
+  or scraped (`SOURCES.csv`), the evidence and whether it confirms or contradicts the family,
+  and lessons learned. `dossier.py new <slug>` makes one; `dossier.py records <slug>` writes
+  the chapter's THE RECORDS from it; `dossier.py check <slug> <chapter>` proves nothing is
+  missing (the chapter-dossier skill).
 - **Fact sheets before prose.** For an episode worth building out (a voyage, a regiment, a
   mill town), the research goes first into `facts/records/<person>/context_<topic>.md`, one
   fact per bullet with URL, page and a confidence note. Anything written later is written
@@ -697,6 +718,15 @@ project with less material simply has fewer articles. The main inputs:
 | `facts/**/*track*.csv`, `*route*.csv` | ports, positions and map coordinates (section 4.3) |
 | `photos/photo_index.csv` | photographs, with illustrations marked (section 3.3) |
 | `facts/gaps.md`, `facts/records/**/context_*.md` | open questions; public background for "Beyond the family" |
+| `data/wiki/<slug>.md` | a curated encyclopedia article (front matter, infobox, `[^n]` footnotes) shown above the derived material: for a person, named by their family-tree name; for any other subject — a company, a regiment, a theatre troupe, a ship — named by the subject's title |
+| `content/units/*.md` with `private: true` in the front matter | nothing: a private unit stays in the project as the raw record but is never quoted, indexed, or published (the family asked for it to be kept out) |
+| `data/familypedia/subjects.json` | subjects you add by hand ("New subject…"), e.g. an organization that has a curated article but appears in no passage |
+
+**Curated articles link across types.** `[[Name]]` in a curated article opens the person with that
+family-tree name, or else the Familypedia subject with that title, and only then falls back to the
+genealogy view. A published book that the article draws on belongs in the records catalogue as a
+`book` (see the `published-sources` skill), with the people it covers in its title so it attaches to
+their pages.
 
 `app/README.md` has the full table, including where map coastlines come from. **No map tiles
 are ever fetched**: the map is drawn from the records' own coordinates, with unrecorded legs
@@ -828,6 +858,13 @@ not from the order things were said. It writes the map to `data/chapters.csv`.
 - **The life part**: the subject's own life, **chronological**, one stage or place per
   chapter. A theme that spans decades can be its own chapter, placed where it peaks.
 
+**Chapters are at least ten pages** by default (`chapters.min_pages` in `book.yaml`, measured
+by building; `make chapter` tells you when one is short). A chapter gets there with real
+material: the subject's full stories in their own words, the records, built-out sourced
+context. Never with padding. Where the material is thin, **chapters are combined** (a relative
+with one story joins "Others in the Family"; two thin stages of life become one) rather than
+printed thin. Every chapter ends with **THE RECORDS**, listing every source found and used.
+
 **Sizing.** Aim for roughly 1,000–2,500 words of the subject's speech per life chapter.
 Under about 600, merge with a neighbour; over about 3,000, split at a natural turn. A
 relative's chapter can be a single page.
@@ -839,8 +876,8 @@ relative's chapter can be a single page.
 | `chapter`, `file`, `title`, `part` | order, file name, title, part name | `2`, `chapters/02-the-ore-dock.typ`, `The Ore Dock`, `Her Life` |
 | `setting`, `dates` | the place-and-years line under the title | `Duluth, Minnesota`, `1938–1950` |
 | `summary_line` | a short line in the old-book manner, never a list | `On Tin Pails and Tunnels` |
-| `epigraph`, `epigraph_source` | optional, public-domain, verified (section 6.4) | |
-| `columns` | `1` for narrative chapters, `2` for research-dense ones | `1` |
+| `epigraph`, `epigraph_source` | the chapter's one epigraph: public-domain, verified (section 6.4) | |
+| `columns` | `2` (two justified columns) by default; `1` for a chapter in one measure | `2` |
 | `summary` | 2–4 neutral sentences, for you and the introduction | |
 | `status` | `proposed` → `approved` → `drafted` → `reviewed` → `final` | `approved` |
 
@@ -915,8 +952,8 @@ every other writing skill defers to it. Here are the rules that matter most.
 
 **Context about the world** (what Duluth was like then, what a nurse earned) is welcome, but:
 it describes the world, never the subject. It stays local to the chapter's place and years.
-Every fact is sourced on a `// context:` line and listed in the chapter's THE RECORDS, and it
-takes up no more than about a quarter of a chapter. Juxtaposition is allowed and causation is
+Every fact is sourced on a `// context:` line (a real source, never "general knowledge") and
+listed in the chapter's THE RECORDS, and it takes up no more than about a quarter of a chapter. Juxtaposition is allowed and causation is
 not: "That spring the mill cut its hours" is fine, but "so she left" is not unless she said
 so. For a real example, see section 7 of [EXAMPLE-CHAPTER.md](EXAMPLE-CHAPTER.md):
 
@@ -925,8 +962,8 @@ so. For a real example, see section 7 of [EXAMPLE-CHAPTER.md](EXAMPLE-CHAPTER.md
 // p. 240 (about 20¢ a day vs about 90¢ for unskilled labor ashore)
 ```
 
-**Epigraphs** are optional: at most one per chapter (two for a family-history chapter),
-from public-domain literature only, never quoted from memory, and checked with
+**Epigraphs**: each chapter opens with one (two allowed in a family-history chapter; none if
+you ask), from a writer of the chapter's place and time, public-domain literature only, never quoted from memory, and checked with
 `verify_quotes.py` against a saved copy of the text listed in `facts/sources/works.csv`.
 
 #### Before and after: one story, three ways
@@ -1082,6 +1119,31 @@ confirmed, and unconfirmed links are marked. From the sample:
 )
 ```
 
+#### A small family tree
+
+When you'd like a picture of the family around an ancestor rather than a single line, the
+chapter can carry a three-generation tree at the foot of its first page instead of (or beside)
+the line of descent: parents, the ancestor and spouse, their children, and the line continued
+under the right child. Same rules: documents and confirmed names only.
+
+```typst
+#family-tree(title: "The Family of Anders Calder",
+  couple: ([Anders Calder (c.1875–?)], none),
+  children: ([Ruth's father], [a sister (name not recorded)]), line: 0, descent: [and so to Ruth])
+```
+
+#### Anyone who served
+
+For an ancestor who served in a war, the official service record comes first and is the
+spine, and the chapter is built out around it in time order: the town they grew up in and the
+country then; how the war drew their countrymen in, and those soldiers' reputation; how a
+young soldier enlisted, was examined, trained and shipped; what their unit met when they got
+there (its battles, weapons, generals); being sent home; and what veterans came home to.
+First-hand accounts from soldiers in or near the unit (diaries, letters, memoirs, unit
+histories) are quoted briefly and exactly, and saved so the quote check can verify them. A
+sensitive entry in a record (a punishment, a court case) stays out of the prose until you
+decide. Details: family-history-chapters skill, §6a.
+
 #### THE RECORDS
 
 Every family-history chapter, and any chapter with `// context:` lines, ends with a
@@ -1164,7 +1226,7 @@ Caption conventions:
 | a scene | a short title in the text's own words: `The cabin on Pike Lake` |
 | date and place confirmed | `Ruth and Walt at Pike Lake, 1966`. Add a date or place **only** if confirmed. |
 | identification uncertain | `Probably Pete, about 1950` or `Believed to be the Duluth ore dock`, or no caption until you ask |
-| an illustration | `The tunnel to the street, as the family told it (illustration)` |
+| an illustration | short like any other: `The tunnel to the street`. It is marked as an illustration in the photo index, the chapter note and the copyright page (below) |
 | a map | `Positions from the logbook; lines between them are approximate.` |
 
 If you supply a caption, it's used word for word, and any mismatch with the text gets a
@@ -1175,18 +1237,22 @@ chapter.
 
 Often no photograph of an ancestor exists. A rendering is allowed **only if all four hold**:
 
-- **(a)** **The caption itself marks it**, with "as the family told it" or an explicit
-  "illustration", so a reader in fifty years cannot mistake it for a photograph.
-- **(b)** **A note in the chapter** says the illustrations are renderings and what likeness or
-  source each was based on. This can go in the photographs page note or a closing line.
+- **(a)** **It is recorded as an illustration**: `kind: illustration` in
+  `photos/photo_index.csv`, with what it was based on. Its caption stays short; yours is used
+  word for word.
+- **(b)** **The book says so in print**: the copyright page carries "The illustrations in this
+  book are artist's renderings, not photographs." (written automatically whenever a placed
+  image is an illustration; change the words with `front.illustrations_note` in `book.yaml`),
+  and a note in the chapter says what likeness or source they were based on.
 - **(c)** **It depicts a scene described in the material**, never an invented event, and
   matches its details: season, place, clothing.
-- **(d)** **The distinction survives in the printed book**, not just in drafts or the index.
+- **(d)** **The distinction survives outside the book**: pages shared as images say the
+  illustrations are renderings, and the dashboard never shows one as a person's picture.
 
 Also: nothing that poses as an archival document, no caricature, nothing graphic. A real
 photograph may serve as the likeness reference (say so under (b)), but the photograph itself
-is never altered. The worked example admits that some of its illustration captions break
-rule (a); see section 10 of [EXAMPLE-CHAPTER.md](EXAMPLE-CHAPTER.md).
+is never altered. To make illustrations in a consistent period style, with a relative's
+likeness locked from their real photographs, see "Generating illustrations" below.
 
 #### Maps: drawn from data, never generated
 
@@ -1214,7 +1280,8 @@ lists the label and extent options.
 At the end of each family-history chapter, after THE RECORDS, the **photographs page**
 (`#photo-addendum`) lists real photographs held by archives: catalogue number, date,
 description, link, and a note on what permission printing them would need. **Thumbnails
-print only once the holder has given permission** (`show-images: true`).
+print in drafts, and in the final book only once the holder has given permission**
+(`show-images: true`).
 
 ```typst
 #photo-addendum(note: [Held by <the archive>; reproduction needs its written permission.],
@@ -1226,6 +1293,36 @@ The first item in each row is a thumbnail path, or `none` until permission arriv
 
 Family photographs need permission too: ask whoever holds the original before it prints, and
 record it in the index (`print_permission`).
+
+#### Generating illustrations
+
+Plan every illustration in `photos/images-plan.yaml` (example in
+`$LINEAGE/templates/images/`): a period **style preset** (how photographs of that time looked),
+the scene's citation, the prompt, and optionally a **likeness** set: real photographs of a
+relative in `photos/reference/<name>/`, used as references so the person looks like themselves
+across a set. Then:
+
+```sh
+python $LINEAGE/scripts/generate_images.py --dry-run     # read every prompt first
+python $LINEAGE/scripts/generate_images.py               # photos/generated/<id>.png + grayscale print copy
+```
+
+The key comes from `OPENAI_API_KEY` for the one command or from `~/.openai_api_key` (chmod 600,
+outside every repo), and is never written into the project. Index each result as
+`kind: illustration` before placing it.
+
+#### An illustrated story
+
+For one scene the subject told in vivid detail, the chapter can carry an eight-panel sequence
+over two facing pages, each panel captioned with the subject's exact words:
+
+```typst
+#story-page(title: "The Night of the Storm",
+  story-panel("/photos/generated/print/IMG-03-1.jpg", 1)[“The wind took the barn roof clean off.”],
+  …)
+// src: panel 1 [S2 00:14:05]; …
+#story-page(note: [Illustrations after Ruth's account; artist's renderings, not photographs.], …)
+```
 
 ### 6.7 Assembling and building
 
@@ -1274,6 +1371,10 @@ Drafts show bridges highlighted, editor notes in red and image IDs. Afterwards, 
 at the title page, the contents, a part page, two chapter openers, a spread with a plate, and
 the index. Fix anything wrong at its source (a unit, `chapters.csv`, `book.yaml`), never in a
 generated file.
+
+To look at one chapter without building the whole book, run `build_book.py chapter
+chapters/NN-x.typ` (→ `output/preview-NN-x.pdf`); add `--final --pages` for one image per page
+in `output/pages/` to share outside the PDF.
 
 #### Front matter
 
@@ -1352,6 +1453,20 @@ leftover draft markers. A clean result ends with `No blocking problems found.`
 Before you call it final: every bridge decided, every `// REVIEW:` read
 (`grep -rn "REVIEW" content chapters`), every question in `facts/gaps.md` answered or
 consciously left open. Then you, the author, sign off.
+
+#### Where work stops, and the full first pass
+
+By default work stops for you at three gates (speakers, the chapter map, the final build);
+between them it runs straight through and saves its questions for the next gate. You choose
+where it stops: add gates in `book.yaml` (`workflow.gates`) or in your project's CLAUDE.md
+("one chapter at a time"), and the stricter rule wins.
+
+When you'd rather see the whole book at once, ask for **a full first pass**. Claude runs the
+**book swarm** ([BOOK-SWARM.md](BOOK-SWARM.md)): for every chapter, two researchers, a writer,
+three editors (fidelity, your taste, layout), two independent judges with revisions, and a
+100% sources pass; then front matter, an images plan, the index, the assembled draft and a
+whole-book continuity review. It works on a branch of your project, and nothing is final until
+you've read it.
 
 ### 6.8 Reviewing with the subject across a distance
 
@@ -1492,6 +1607,258 @@ narrated**: decide the bridges first (section 6.4).
 
 Narration is written but has **not been tested end to end** with a real key; treat the
 first run as a trial. The story's text goes to ElevenLabs to be read aloud.
+
+### 6.11 Publishing a family site
+
+A lineage can be published as a website: a landing page of your own, the dashboard as a read-only
+snapshot (usually at `/lineage/`), plain pages for every story and every person that search engines
+can index, an updates page, a changelog that keeps itself, and every picture and PDF served from a Cloudflare R2 bucket. The tools
+live in Lineage; the project supplies only its content and these settings.
+
+#### The settings
+
+In the project's `lineage.json`, under `"settings"` → `"publish"`. Every key is optional; a step
+that needs a missing value says so and is skipped.
+
+```json
+"settings": {
+  "publish": {
+    "site_url": "https://family.example.org",
+    "title": "The Book of the Family",
+    "subtitle": "An oral history",
+    "author": "A. Compiler",
+    "chapters_dir": "output/chapters",
+    "book_entry": "book/main.typ",
+    "chapter_entry": "",
+    "image": "https://family.example.org/assets/cover.jpg",
+    "app_path": "/lineage/",
+    "include_living": false,
+    "hidden_aliases": [],
+    "r2": {
+      "env_file": "~/.config/lineage/r2.env",
+      "prefix": "the-book-of-the-family",
+      "scan": ["photos", "sources", "output/chapters"],
+      "extra_documents": [{"path": "records/court/record.pdf", "key": "records/record.pdf"}],
+      "illustration_globs": [],
+      "skip": []
+    }
+  }
+}
+```
+
+| Key | Default | What it does |
+|---|---|---|
+| `site_url` | none | the site's address; canonical URLs, sitemap. Without it the SEO step is skipped |
+| `title` | `lineage.json` title, then `book.yaml` title | page titles; its slug names the edition PDF and the R2 prefix |
+| `subtitle` | `settings.subtitle`, then `book.yaml` subtitle | shown under the title and in descriptions |
+| `author` | `book.yaml` interviewer name | author meta and schema.org author |
+| `chapters_dir` | `output/chapters` | where `chapter_pdfs.py` writes one PDF per story |
+| `book_entry` | `book/main.typ` when it exists | the whole book. Anything else is compiled directly with `--input updated=<date> --input version=<VERSION>`; `book/main.typ` goes through Lineage's normal build |
+| `chapter_entry` | none | a Typst file that typesets one story from `--input chapter=<file> --input title=<title>`; without it a wrapper around Lineage's book template is generated |
+| `image` | none | the default share (Open Graph) image, an absolute URL |
+| `app_path` | `/lineage/` | where the dashboard snapshot is published on the site |
+| `include_living` | `false` | whether people marked living get public pages |
+| `hidden_aliases` | `[]` | aliases never printed on public pages (household nicknames) |
+| `changelog_commit_messages` | `false` | list the project's own commit messages on `/changelog/` (otherwise commits are summarised as file counts by area) |
+| `posts_dir` | `posts` | news posts published under `/updates/<slug>/` (see "Posts, the feed and subscriptions" below) |
+| `digest.sender_line` | none | the footer line of every digest email: who sends it and why the reader gets it |
+| `digest.postal_address` | none | the footer's postal address (required by anti-spam law). It is published in `api/_lineage-config.json`, so prefer the `DIGEST_POSTAL_ADDRESS` env var |
+| `digest.schedule` | `0 15 * * 1` | the weekly digest's Vercel cron, in UTC (Mondays 15:00) |
+| `r2.env_file` | `~/.config/lineage/r2.env` | credentials: `R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_PUBLIC_BASE` once public access is on. Never in git |
+| `r2.prefix` | the slug of the title | key prefix in the bucket |
+| `r2.scan` | `["photos", "sources", "output/chapters"]` | folders searched for images |
+| `r2.extra_documents` | `[]` | other files to publish: `{"path": project path, "key": key under the prefix}` |
+| `r2.illustration_globs` | `[]` | extra globs whose images are illustrations |
+| `r2.skip` | `[]` | path fragments never uploaded |
+
+In the bucket, under the prefix: `originals/`, `restorations/` and `illustrations/` (each keeping the
+file's project path), `thumbnails/` (~480 px copies), `chapters/` and `book/`. What counts as an
+illustration comes from the data, not from folder names: `photos/photo_index.csv` rows of kind
+`illustration` (or a subject starting "Illustration"), `data/image_catalog.csv` kinds `generated` and
+`artwork`, `data/image_prompts.json`, files named `IMG-*`, and `r2.illustration_globs`. A restoration is
+a file logged in `data/image_restorations.json` or with an `_orig/` copy beside it.
+
+#### The steps, in order
+
+```bash
+S=$LINEAGE/plugins/lineage/scripts; PY=$LINEAGE/.venv/bin/python; P=~/books/grandma
+$PY $S/book_edition.py --project $P [--bump]   # VERSION, compressed edition output/<slug>-v<VERSION>.pdf
+$PY $S/chapter_pdfs.py --project $P            # 1. one compressed PDF per story
+$PY $S/r2_sync.py --project $P [--dry-run]     # 2. pictures and PDFs to R2; data/r2_manifest.csv
+$PY $S/face_focus.py --project $P              # 3. data/image_focus.json (needs opencv-python-headless)
+$PY $LINEAGE/site/build_instance.py --project $P --out <site>/lineage --title "…" \
+    --assets $P/data/r2_manifest.csv --allow-real-names   # 4. the dashboard snapshot, pictures from R2
+$PY $S/seo_build.py --project $P <site>        # 5. /stories/, /family/, sitemap.xml, robots.txt
+$PY $S/updates_page.py --project $P <site>     # 6. /updates/: posts, CHANGELOG.md, feed, Subscribe, api/
+```
+
+Steps 4 and 5 also record and render the site changelog (below); nothing to run for it.
+
+The same from the Lineage checkout: `make chapter-pdfs`, `make edition [BUMP=1]`, `make r2-sync
+[DRY=1]`, `make face-focus`, `make seo SITE=…` and `make updates SITE=…`, each with `PROJECT=…`.
+Run `r2_sync.py --dry-run` first: it needs no credentials and lists every key it would write.
+
+`restore_photos.py --project $P <image> …` (or `--halftone` for printed newspaper pictures) is a
+classical restoration (dust and scratches, noise, contrast; nothing generated). It keeps the
+untouched original at `<folder>/_orig/<name>` and logs every run in `data/image_restorations.json`;
+the next `r2_sync.py` files the result under `restorations/` and the original under `originals/`.
+
+The SEO pages render a curated article (`data/wiki/<slug>.md`) exactly as the Familypedia does. A
+person marked living gets no page unless `include_living` is true.
+
+#### The site changelog
+
+Every published site keeps a changelog of its own at `/changelog/`, newest first, linked from the
+footer of the story and family pages, the updates page and the dashboard snapshot's banner. You
+never write it: each build appends one entry listing everything that changed since the last one.
+
+- **Where it lives.** A family site: `data/site_changelog.json` in the project (commit it with the
+  rest). The Lineage website: `site/changelog.json` in this repo (`make site` writes it; commit it).
+- **When it is written.** `site/build_instance.py` and `seo_build.py` (and `site/build_site.py`
+  for this website) call `plugins/lineage/scripts/site_changelog.py` before they render anything,
+  so no build, and so no deploy, can skip it. Running a build twice with nothing changed adds
+  nothing. `make changelog PROJECT=$P DRY=1` (or `site_changelog.py --project $P --dry-run`) shows
+  the entry the next build would add without writing it; leave out `PROJECT` for this website.
+- **What becomes a line.** For a family site: each new `## Version X.Y — date` section of the
+  book's `CHANGELOG.md`, bullet by bullet; stories new or revised; Familypedia articles new or
+  updated, by title; timeline events added or corrected; sources newly indexed (counted by kind,
+  never named); a new Lineage version in `lineage.lock` and the core changes the site was built
+  with; and the project's commits since the last entry, summarised as file counts by area. For
+  this website: every commit message since the last entry, new releases from
+  `docs/blog/releases.csv`, new blog posts and the docs pages that changed. Every line comes from
+  git, a file or a hash difference; nothing is invented. Lockfiles, caches, build output and
+  generated manifests are counted as "housekeeping files", never listed.
+- **Privacy.** Only what the site itself publishes is named: an article whose front matter says
+  `private: true`, a living person's article (unless `include_living`), and timeline events drawn
+  from a private unit's passages or about a living person never appear. Removals are counted, not
+  named. If something listed earlier is later made private, its old line disappears from the page.
+  Commit messages are free text, so a family site lists them only with
+  `changelog_commit_messages: true`; this website withholds any message that fails the real-names
+  or local-path checks.
+- **The first entry.** The first build creates the file with a backfill from history: one entry
+  per version in the book's `CHANGELOG.md` (for this website, one per release in
+  `docs/blog/releases.csv`, with the commits between its git tags), then a "changelog started"
+  baseline.
+
+#### Posts, the feed and subscriptions
+
+**Posts.** News for the family goes in `posts/<name>.md` in the project, one file per post:
+
+```markdown
+---
+title: A Week of Letters from the Archives
+date: 2026-10-16
+summary: One line for the list, the feed, the digest and the share card.
+image: photos/print/cover.jpg        # optional hero: a project path or a URL
+author: A. Compiler                  # optional
+slug: a-week-of-letters              # optional; default: the file name without a leading YYYY-MM-DD-
+draft: true                          # optional: leaves the post out
+---
+Markdown: **bold**, [links](/stories/homer/), tables.
+
+![Alt text](photos/a.jpg "Caption") ![Alt text](photos/b.jpg "Caption")
+```
+
+- An image or link that is a **project path** (no `https:`, not starting with `/`) is looked up in
+  `data/r2_manifest.csv` and replaced by its R2 address, so `r2_sync.py` must run first (the
+  publish steps above do). A path that is not in the manifest **stops the build** and is listed.
+  Site links (`/stories/…`, `/family/…`, `/lineage/…`, `/book/…`, `/records/…`) pass through.
+- A paragraph made only of images is a **gallery**: a grid of thumbnails, each linking to the full
+  picture, captioned from the image's title (the quoted text). One image alone is a figure.
+- Each post is published at `/updates/<slug>/` with its own title, description, Open Graph image and
+  canonical URL; `/updates/` lists the posts newest first above the edition notes, and the sitemap
+  lists them. `posts.py --project $P` (or `make posts PROJECT=$P`) checks every post and writes nothing.
+- **Privacy check.** Everything the updates step writes (posts, list, feed, functions) and
+  `/changelog/` + `/changelog.json` go through the same leak check as the dashboard snapshot: local
+  paths, `localhost` links, API keys and real email addresses stop the build.
+
+**The feed.** `/updates/feed.xml` (Atom) carries the posts and every edition from `CHANGELOG.md`;
+every updates page links it with `<link rel="alternate">`. It needs `site_url` and nothing else: no
+account, no service.
+
+**Subscriptions and the weekly digest.** Every `/updates/` page, each post and `/changelog/` carry a
+Subscribe form (email only) and "or follow the RSS feed". The updates step also copies four Vercel
+functions into the site's `api/` folder and adds a weekly cron to the site's `vercel.json` (merged
+into what is there, never replacing it):
+
+| Function | What it does |
+|---|---|
+| `api/subscribe` | `GET`: is it open, and is Google sign-in on? `POST {email}`: double opt-in. Stores the address as *pending* (forgotten after 7 days) and emails a signed confirmation link. A honeypot field and a per-visitor hourly limit stop bots |
+| `api/google` | Continue with Google. Redirects to Google, then stores a verified address as *confirmed* and emails an unsubscribe link. Off until the Google variables below are set |
+| `api/confirm` | the confirmation link: *pending* becomes *confirmed* |
+| `api/unsubscribe` | the one-click link in every digest (and RFC 8058 `List-Unsubscribe-Post`): deletes the record |
+| `api/digest` | the cron, Mondays 15:00 UTC. Reads the site's own `/changelog.json` and `/updates/posts.json`, takes what no earlier digest carried, and emails every confirmed subscriber with an unsubscribe link and the sender/postal footer. Once per ISO week; a run that failed part way resumes without re-sending. Refuses any caller without `Authorization: Bearer $CRON_SECRET` |
+
+**It is closed until configured.** Until *every* variable in the first table below is set, the form says
+"Subscriptions are not open yet. Follow the RSS feed meanwhile." and every function answers 503: nothing
+is stored, nothing is sent. Nothing needs npm: storage is Upstash Redis over its REST API and email
+is Resend's REST API, both with plain `fetch`. An address is never logged; a record holds only the
+email, its status, created/confirmed times and the hash of the pending confirmation token.
+Google sign-in is separate: email subscription opens without it, and the Google button appears only
+when both Google variables are set.
+
+| Vercel env var | Value |
+|---|---|
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | set for you by the Upstash integration (step 1) |
+| `RESEND_API_KEY` | a Resend API key with *sending access* only (step 2) |
+| `DIGEST_FROM` | e.g. `The Book of the Family <updates@example.org>`, on the domain verified in Resend |
+| `DIGEST_REPLY_TO` | where replies go (your own address) |
+| `DIGEST_POSTAL_ADDRESS` | a postal address for the footer (a P.O. box is fine) |
+| `CRON_SECRET` | 32+ random characters (`openssl rand -hex 32`); Vercel sends it to the cron |
+| `SUBSCRIBE_SECRET` | 32+ random characters (`openssl rand -hex 32`); signs confirm/unsubscribe links. Changing it invalidates every unsubscribe link already sent, so set it once |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | optional. From a Google Cloud OAuth client (Web application). Both must be set or the Google button stays hidden. Do not commit them |
+
+Setting it up (once per site, in the Vercel project the site deploys to):
+
+1. **Upstash.** Vercel dashboard → the site's project → **Storage** → **Create Database** →
+   **Upstash for Redis** (the free plan is plenty) → connect it to the project for Production. That
+   adds `KV_REST_API_URL` and `KV_REST_API_TOKEN`. One database can serve several family sites:
+   keys are prefixed with the site's slug.
+2. **Resend.** Make an account at resend.com → **Domains** → add a sending subdomain you own (e.g.
+   `mail.family.example.org`) and add the DNS records it shows (SPF, DKIM; DMARC recommended) where
+   the domain's DNS lives; wait for *Verified*. **API Keys** → create one with *Sending access*.
+3. **The variables.** Project → **Settings** → **Environment Variables**, for Production:
+   `RESEND_API_KEY`, `DIGEST_FROM`, `DIGEST_REPLY_TO`, `DIGEST_POSTAL_ADDRESS`, `CRON_SECRET`,
+   `SUBSCRIBE_SECRET` (or `vercel env add NAME production` in the site folder).
+4. Optionally set `digest.sender_line` in `lineage.json` (e.g. "Sent by A. Compiler, who is writing
+   the family book. You subscribed at family.example.org.").
+5. **Google sign-in (optional).** Google Cloud Console, APIs & Services, Credentials, Create
+   credentials, OAuth client ID, Application type **Web application**. Authorized redirect URI:
+   `https://family.example.org/api/google/` if the site's `vercel.json` has `"trailingSlash": true`,
+   otherwise `https://family.example.org/api/google` (no slash). The URI has to match exactly,
+   including the slash. OAuth consent screen: External is fine for a public family site; scopes are
+   `openid` and `email` only (the code asks for those, not a profile photo or contacts). Put
+   `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in the same Production environment. A verified
+   Google address is stored as confirmed. Resend still sends the note that carries the unsubscribe
+   link. Email double opt-in keeps working beside it.
+6. **Republish** (the variables are read at request time, but the cron is registered by a
+   deploy). The form opens by itself. Subscribe yourself, confirm, then run the digest once by hand:
+   `curl -H "Authorization: Bearer $CRON_SECRET" https://family.example.org/api/digest/`.
+   The cron then runs every Monday; its runs are under the project's **Settings → Cron Jobs**.
+
+**The form on other pages.** Any page of the site (the family's own landing page, for one) can carry
+the form with two lines; the script fills in the form and keeps it closed until the functions are
+configured:
+
+```html
+<div data-lineage-subscribe></div>
+<script src="/updates/subscribe.js" defer></script>
+```
+
+**Testing without accounts.** `make test-subscribe SITE=<built site>` (or
+`node plugins/lineage/publish/test_functions.js <built site>`) runs the functions against a fake
+Upstash and a fake Resend on your machine: closed (503) when unconfigured, honeypot, subscribe →
+pending, confirm, `CRON_SECRET` required, the digest sent once per week and resumed after a failure,
+one-click unsubscribe, and no address in any log. Nothing is sent.
+
+`updates_page.py --no-subscribe` leaves out the form and the functions (the feed stays).
+
+#### Private folders: `.no-drive`
+
+Put an empty file named `.no-drive` in any folder that must never leave the computer (in-copyright
+books read for research, a relative's private papers). `image_manager.py drive-sync` then never
+uploads anything in that folder or below it, images or documents. Keep such folders out of
+`r2.scan` too, or list them in `r2.skip`.
 
 ---
 

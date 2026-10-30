@@ -1,0 +1,10 @@
+{
+  "duluth-ore-dock-company": {
+    "title": "Duluth Ore Dock Company",
+    "type": "organization",
+    "kind": "iron-ore dock operator (invented, demo)",
+    "aliases": ["Dock No. 6", "the ore dock"],
+    "created": "2026-10-12T00:00:00Z",
+    "by": "me"
+  }
+}

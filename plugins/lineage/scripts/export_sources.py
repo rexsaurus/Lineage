@@ -173,7 +173,7 @@ def main():
     else:
         out.mkdir(parents=True, exist_ok=True)
         with open(out / "MANIFEST.csv", "w", newline="", encoding="utf-8") as fh:
-            w = csv.writer(fh)
+            w = csv.writer(fh, lineterminator="\n")
             w.writerow(["raw_path", "bytes", "sha256", "exported", "note"])
             w.writerows(rows)
     done = sum(r[3] != "no" for r in rows)

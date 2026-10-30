@@ -2,7 +2,7 @@
    Answers "what is in here, and what should I do next". It surfaces what the project already
    holds; it never writes prose of its own. An empty project gets one card: what to add first. */
 S.home = {story:0, relative:0, allNeeds:false};
-BUILDERS.home = async function(el){
+BUILDERS.home = async function(el, rest, q={}){
   el.innerHTML = '<p class="empty">Loading…</p>';
   const h = await api(`/api/engine/home?story=${S.home.story}&relative=${S.home.relative}`);
   S.homeData = h;
@@ -16,25 +16,41 @@ BUILDERS.home = async function(el){
         <a class="btn ghost" href="#/settings/connectors" style="text-decoration:none">Connect a model</a></div></div>`;
     return;
   }
+  // Home = Story of the day, Stories, Gallery, Relatives
   el.innerHTML = `<div class="row" style="margin-bottom:16px"><div><div class="kicker">${esc(S.data.identity.family_name||'Home')}</div>
       <h2 style="margin:0">${esc(S.data.identity.display_title)}</h2></div><span class="spacer"></span>
       <span class="pill" title="${esc(h.updated||'')}">${h.updated?'Last updated '+esc(ago(h.updated)):'Nothing recorded yet'}</span></div>
-    <div class="homegrid">
-      <div class="card" id="h-story"></div>
-      <div class="card" id="h-rel"></div>
-      <div class="card" id="h-needs"></div>
-      <div class="card" id="h-ask"></div>
-      <div class="card" id="h-glance" style="grid-column:1/-1"></div>
-      <div class="card" id="h-feed" style="grid-column:1/-1"></div>
-    </div>`;
-  drawHomeStory(h); drawHomeRelative(h); drawNeeds(h); drawAsk(h); drawGlance(h); drawFeed(h);
+    <div class="card" id="h-story"></div>
+    ${homeSubscribeBand()}
+    <section class="hsec"><div class="row"><h3>${esc(L.Stories||'Stories')}</h3><span class="spacer"></span><a href="#stories">All ${esc((L.stories||'stories'))} →</a></div><div class="hstories" id="h-stories"><p class="empty">Loading…</p></div></section>
+    <section class="hsec" data-photo-set><div class="row"><h3>Gallery</h3><span class="spacer"></span><a href="#familypedia?view=photos">All photographs →</a></div><div class="hgal" id="h-gal"><p class="empty">Loading…</p></div></section>
+    <section class="hsec"><div class="row"><h3>Relatives</h3><span class="spacer"></span><a href="#familypedia">Familypedia →</a></div><div id="h-rels"><p class="empty">Loading…</p></div></section>`;
+  drawHomeStory(h);
+  drawHomeStories(); drawHomeGallery(); drawHomeRelatives();
 };
+/* Subscribe: the published site's own form (/updates/subscribe.js, see updates.js), in a band under the Story
+   of the day and again at the foot. It shows only where that script loads, so never in the local app. */
+function homeSubscribeBand(){
+  const I=S.data.identity, fam=I.family_name||I.display_title||'This family';
+  return `<section class="hsub${lsubOn()?'':' hidden'}" id="home-subscribe" data-lsub-wrap aria-labelledby="hsub-h">
+    <div><h3 id="hsub-h">New ${esc(L.stories)}, when there are new ${esc(L.stories)}</h3>
+      <p>${esc(fam)} is still being researched. Subscribe and you'll get an email when a new ${esc(L.story)} is finished or a new record turns up — and nothing in the weeks when neither happens.</p></div>
+    <div data-lineage-subscribe></div></section>`;
+}
+function homeToSubscribe(){
+  if(window.LineageSubscribe && typeof window.LineageSubscribe.open==='function'){
+    const t=document.getElementById('hdr-sub')||document.activeElement;
+    window.LineageSubscribe.open(t);
+    return;
+  }
+  const b=$('#home-subscribe'); if(b && !b.classList.contains('hidden')){ b.scrollIntoView({behavior:'smooth', block:'center'}); const i=$('input[type=email]',b); if(i) setTimeout(()=>i.focus({preventScroll:true}),400); }
+}
 function drawHomeStory(h){
   const box=$('#h-story'), s=h.story;
   if(!s){ box.innerHTML = `<div class="kicker">Story of the day</div><p class="empty">No ${L.stories} drafted yet. ${L.Stories} come from transcribed recordings: add one in <a href="#sources">Sources</a>, then ask the Genealogist (Terminal) to propose the ${L.storyMap.toLowerCase()}.</p>`; return; }
   box.innerHTML = `<div class="row"><div class="kicker">Story of the day</div><span class="spacer"></span>
       ${s.of>1?`<button class="btn ghost sm" id="h-reroll" title="Another story">Another</button>`:''}</div>
-    <div class="hero">${s.photo?`<img src="${fileUrl(s.photo)}" alt="">`:`<div class="ph">${esc(s.title[0])}</div>`}
+    <div class="hero">${s.photo?`<img src="${fileUrl(s.photo)}" alt="">`:''}
       <div><h3>${esc(s.title)}</h3><div class="meta" style="color:var(--ink-3);font-size:13px">${esc(s.dates||'undated')} · ${s.reading_minutes} min read</div>
         <p class="open">${esc(s.opening)}</p>
         <div class="row"><a class="btn" href="#stories?read=${encodeURIComponent(s.id)}" style="text-decoration:none">Read</a>
@@ -101,7 +117,7 @@ function drawRequests(reqs){
 async function draftRequest(spec){
   const d = await api('/api/engine/request/draft',{method:'POST',body:spec});
   if(d.error){ alertNote(d.error); return; }
-  const intro = d.to_name ? `Hi ${d.to_name},\n\nFor the family book, could you help with any of these?\n\n` : 'For the family book, could you help with any of these?\n\n';
+  const intro = d.to_name ? `Hi ${d.to_name},\n\nFor the family record, could you help with any of these?\n\n` : 'For the family record, could you help with any of these?\n\n';
   const text = intro + (d.questions.length ? d.questions.map((q,i)=>`${i+1}. ${q}`).join('\n') : '(nothing is flagged as open here yet)') + '\n\nAnything at all helps: a sentence, a photo, a name.\n';
   openModal(d.title + (d.to_name?` · to ${d.to_name}`:''), `
     <p class="sub">Assembled from open questions, timeline gaps, unconfirmed links and missing photographs. Edit before you send it.</p>
@@ -110,7 +126,7 @@ async function draftRequest(spec){
       ${d.to_email?`<a class="btn ghost" id="rq-mail" style="text-decoration:none">Open in email</a>`:`<a class="btn ghost" id="rq-mail" style="text-decoration:none">Open in email</a>`}
       <span class="spacer"></span><button class="btn go" id="rq-save">Save as asked</button></div>
     <p class="sub" style="margin-top:8px;font-size:12.4px">"Save as asked" records it with today's date${d.to_name?` on ${esc(d.to_name)}'s page`:''}, so Home can remind you what's outstanding. Lineage never sends it for you.</p>`);
-  const mail=()=>`mailto:${encodeURIComponent(d.to_email||'')}?subject=${encodeURIComponent(d.title+' — for the family book')}&body=${encodeURIComponent($('#rq-text').value)}`;
+  const mail=()=>`mailto:${encodeURIComponent(d.to_email||'')}?subject=${encodeURIComponent(d.title+' — for the family record')}&body=${encodeURIComponent($('#rq-text').value)}`;
   $('#rq-mail').onclick=e=>{ e.currentTarget.href=mail(); };
   $('#rq-copy').onclick=()=>copyText($('#rq-text').value);
   $('#rq-save').onclick=async()=>{ await api('/api/engine/request/save',{method:'POST',body:{...d, text:$('#rq-text').value}}); closeOverlay(); alertNote('Saved as asked.'); if(S.tab==='home') BUILDERS.home($('#tab-home')); };
@@ -126,4 +142,40 @@ function drawGlance(h){
 function drawFeed(h){
   $('#h-feed').innerHTML = `<h3>Recently</h3><ul class="feed" style="margin-top:8px">${h.activity.length?h.activity.map(a=>`<li><time datetime="${esc(a.at)}" title="${esc(a.at)}">${esc(ago(a.at))}</time><a href="${esc(a.go||'#home')}">${esc(a.text)}</a>${a.by&&a.by!=='me'?`<span class="derived" style="margin-left:auto">${esc(a.by)}</span>`:''}</li>`).join('')
     :'<li><span class="empty" style="padding:0">Nothing yet.</span></li>'}</ul>`;
+}
+
+async function drawHomeStories(){
+  const box=$('#h-stories'); if(!box) return;
+  const r=await api('/api/engine/stories'); const list=(r.stories||[]).filter(s=>s.exists);
+  box.innerHTML = list.map(s=>`<a class="hstory" href="#stories?read=${encodeURIComponent(s.id)}">${s.photo?`<img src="${fileUrl(s.photo)}" alt="" loading="lazy">`:''}
+      <div><b>${esc(s.title)}</b><span>${esc(s.dates||'')}</span>${s.summary?`<em>${esc(s.summary)}</em>`:''}</div></a>`).join('') || '<p class="empty">No stories yet.</p>';
+}
+async function drawHomeGallery(){
+  const box=$('#h-gal'); if(!box) return;
+  // original photographs only, each once (the server drops illustrations, restorations, scans and near-duplicates)
+  const [r] = await Promise.all([api('/api/engine/gallery'), pvLoad()]);
+  const items = onePerPhoto((r.items||[]).filter(p=>p.thumb)).map(({p, row})=>({...row, ph:p}));
+  const day=Math.floor(Date.now()/864e5); const key=p=>{let x=0; for(const c of String(p.id)+day) x=(x*31+c.charCodeAt(0))|0; return x;};
+  const pick=items.slice().sort((a,b)=>key(a)-key(b)).slice(0,24);
+  // a click opens the photo viewer (photoviewer.js); nothing here links to an image file
+  box.innerHTML = pick.map(({ph, thumb, caption})=>`<figure title="${esc(ph?ph.title:caption||'')}"><img src="${fileUrl(ph?ph.image:thumb)}" data-photo="${esc(ph?ph.image:thumb)}" alt="${esc(ph?ph.title:caption||'')}" loading="lazy">${pvBadgeSmall(ph)}</figure>`).join('') || '<p class="empty">No photographs yet.</p>';
+}
+async function drawHomeRelatives(){
+  const box=$('#h-rels'); if(!box) return;
+  // everyone in the family tree when the project keeps one (data/family_tree.csv): the same people the tree shows
+  const [g, r] = await Promise.all([api('/api/engine/genealogy'), api('/api/engine/familypedia')]);
+  if(g && g.from_file){
+    const byLetter={}; g.people.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>{ const k=(p.name[0]||'#').toUpperCase(); (byLetter[k]=byLetter[k]||[]).push(p); });
+    box.innerHTML = Object.keys(byLetter).sort().map(k=>`<div class="hrel-group"><div class="hrel-letter">${k}</div><div class="hrels">${byLetter[k].map(p=>
+      entryChip(p.article, p.name, 'person', '', p.photo||null, p.article?'':`href="#genealogy?focus=${encodeURIComponent(p.id)}"`)).join('')}</div></div>`).join('');
+    return;
+  }
+  const ppl=(Array.isArray(r)?r:(r.articles||[])).filter(a=>a.type==='person');
+  // one entry per relative: the articles one person has (nicknames, "Last, First" museum forms) fold under their name
+  const people={}; ppl.forEach(a=>{ const n=a.family_name||a.title; (people[n]=people[n]||[]).push(a); });
+  const rank=a=>(a.portrait?1e6:0)+(a.sources||0)*10+(a.units||0)+(a.mentions||0);
+  const one=Object.entries(people).map(([n,arts])=>{ const best=[...arts].sort((x,y)=>rank(y)-rank(x))[0];
+    return {...best, title:n, portrait:best.portrait||(arts.find(x=>x.portrait)||{}).portrait}; });
+  const byLetter={}; one.sort((a,b)=>a.title.localeCompare(b.title)).forEach(a=>{ const k=(a.title.replace(/^[^A-Za-z]+/,'')[0]||'#').toUpperCase(); (byLetter[k]=byLetter[k]||[]).push(a); });
+  box.innerHTML = Object.keys(byLetter).sort().map(k=>`<div class="hrel-group"><div class="hrel-letter">${k}</div><div class="hrels">${byLetter[k].map(a=>entryChip(a.slug, a.title, 'person', '', a.portrait?a.portrait.thumb:null)).join('')}</div></div>`).join('') || '<p class="empty">No relatives yet.</p>';
 }

@@ -15,7 +15,7 @@ const L = {
   contributor:'contributor', contributors:'contributors', Contributors:'Contributors',
 };
 /* Working surfaces only. Administration lives behind the gear (#/settings/<section>). */
-const TABS = [['home','Home'], ['sources','Sources'], ['familypedia','Familypedia'], ['genealogy','Genealogy'], ['stories','Stories'], ['timeline','Timeline']];
+const TABS = [['home','Home'], ['sources','Sources'], ['familypedia','Familypedia'], ['genealogy','Genealogy'], ['stories','Stories'], ['timeline','Timeline'], ['updates','Updates']];
 const SETTINGS = [
   ['family','Family details','Title, family name, summary, subject, crest'],
   ['connectors','Connectors','Drive, GitHub, Anthropic, OpenAI, ElevenLabs, agent CLIs'],
@@ -73,14 +73,7 @@ function options(list, cur){ return list.map(([v,l])=>`<option value="${esc(v)}"
 function alertNote(msg){ const n=document.createElement('div'); n.className='note'; n.style.cssText='position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:60;box-shadow:0 6px 20px rgba(0,0,0,.15);max-width:80vw'; n.textContent=msg; document.body.appendChild(n); setTimeout(()=>n.remove(),4500); }
 async function copyText(t){ try{ await navigator.clipboard.writeText(t); alertNote('Copied.'); }catch(e){ openModal('Copy this', `<textarea rows="12" style="font-family:var(--mono);font-size:12.5px">${esc(t)}</textarea>`); } }
 function download(name, blob){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }
-/* SVG → PNG in the browser, for exports. */
-function svgToPng(svgText, name, scale=2){
-  const img=new Image(); const url=URL.createObjectURL(new Blob([svgText],{type:'image/svg+xml'}));
-  img.onload=()=>{ const c=document.createElement('canvas'); c.width=img.width*scale; c.height=img.height*scale;
-    const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(img,0,0,c.width,c.height);
-    c.toBlob(b=>download(name,b),'image/png'); URL.revokeObjectURL(url); };
-  img.src=url;
-}
+/* SVG → PNG and PDF, and the Download menu: exports.js. */
 /* A print-ready page in a new window; the person presses Print. */
 function printable(title, bodyHtml){
   const w=window.open('','_blank'); if(!w){ alertNote('Allow pop-ups to open the printable page.'); return; }
@@ -102,6 +95,11 @@ async function boot(){
   if(!location.hash) history.replaceState(null,'','#home');
   refreshAttention();
   route();
+  if(typeof lsubLoad==='function') lsubLoad();     // the published site's Subscribe form; absent locally
+  $('#hdr-sub').onclick=(e)=>{
+    if(window.LineageSubscribe && typeof window.LineageSubscribe.open==='function'){ e.preventDefault(); window.LineageSubscribe.open(e.currentTarget); return; }
+    if(S.tab==='home' && location.hash==='#home?to=subscribe') homeToSubscribe();
+  };
   if(typeof ensureFP==='function') ensureFP();   // names for [[links]] everywhere
 }
 function parseHash(){
@@ -129,7 +127,7 @@ function route(){
   $$('#tabs a').forEach(a=>a.setAttribute('aria-current', a.dataset.tab===t?'page':'false'));
   $('#tab-settings').classList.add('hidden');
   TABS.forEach(([x])=>$('#tab-'+x).classList.toggle('hidden', x!==t));
-  const always = ['home','sources','stories','genealogy','timeline'];
+  const always = ['home','sources','stories','genealogy','timeline','updates'];
   if(!S.built[t] || always.includes(t)){ BUILDERS[t]($('#tab-'+t), rest, q); S.built[t]=true; }
   else { syncMirrors(); if(t==='familypedia'){ if(rest.length) openArticle(decodeURIComponent(rest[0])); else showView(q.view||'articles', q); } }
   window.scrollTo(0,0);

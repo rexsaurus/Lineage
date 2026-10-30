@@ -343,11 +343,11 @@
    }
   ]
  },
- "b364f3991770": {
-  "id": "b364f3991770",
+ "dbd77bfc7186": {
+  "id": "dbd77bfc7186",
   "path": "sources/1944-letter-henrik-to-ruth.pdf",
   "original_name": "1944-letter-henrik-to-ruth.pdf",
-  "sha256": "b364f3991770e728e23a5fd0ff0dc7e3ac3f98015c51b6006fd52e450488d5aa",
+  "sha256": "dbd77bfc7186533b7a521c4cc329ed890d0e738d3528235859d82f30f0cd429c",
   "bytes": 16378,
   "mime": "application/pdf",
   "kind": "pdf",
@@ -500,7 +500,7 @@
    ],
    "organizations": [],
    "date_range": "about 1946",
-   "doc_kind": "photo",
+   "doc_kind": "illustration",
    "confidence": {
     "summary": "high",
     "people": "high",
@@ -565,7 +565,7 @@
    ],
    "organizations": [],
    "date_range": "about 1965",
-   "doc_kind": "photo",
+   "doc_kind": "illustration",
    "confidence": {
     "summary": "high",
     "people": "high",
@@ -630,7 +630,7 @@
    ],
    "organizations": [],
    "date_range": "November 1950",
-   "doc_kind": "photo",
+   "doc_kind": "illustration",
    "confidence": {
     "summary": "high",
     "people": "high",
@@ -695,7 +695,7 @@
    ],
    "organizations": [],
    "date_range": "May 1900",
-   "doc_kind": "photo",
+   "doc_kind": "illustration",
    "confidence": {
     "summary": "high",
     "people": "high",

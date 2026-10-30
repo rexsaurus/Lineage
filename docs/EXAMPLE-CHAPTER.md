@@ -45,7 +45,7 @@ the chapter's whole audit trail.
 | Place-and-years line | `setting` · `dates` |
 | A short summary line, not a list | "On Whales, Bandits, Bone Saws and Such" |
 | Epigraphs: public domain only, cited, verified | Melville (1851) and Whitman (1865); the comment under them gives the Gutenberg sources, and `verify_quotes.py` checks the wording |
-| Two columns for research-dense chapters | `columns: 2`. A narrative chapter would use 1 |
+| Two columns | `columns: 2`, the default for every chapter since 0.6.0 (`columns: 1` where one measure reads better) |
 | Recto start, no running head, drop cap | done by the template; the drop cap is `#opening[…][…]` |
 
 ## 2. Saying what kind of material this is
@@ -150,12 +150,12 @@ None of these notes print, and none of them is settled by the writer.
   AI-generated map was tried first and rejected as inaccurate.
 - **Illustrations.** The family's copy has five AI renderings of scenes from the text, made
   with his real Civil War tintype as the likeness reference. The photographs page says so.
-  One caption marks its image ("The surgeon's tent, as the family told it"). The others,
-  like "Erasthus Burnham, 1864", **do not**. That was written before the rule that every illustration's own caption
-  must say what it is (photo-processor skill), and it is the fix this chapter still needs.
+  Captions are short scene titles and portrait names with a year, like any image's. Under the 0.6.0 rule the marking lives in the photo index (`kind:
+  illustration`), the photographs-page note and the copyright-page line, not in each caption.
 - **The photographs page** (`#photo-addendum`) lists nine real photographs at the museum, with
   catalogue numbers, dates, descriptions and links. It says that printing them needs the
-  museum's permission, so thumbnails stay off until it's granted.
+  museum's permission, so thumbnails print in drafts only (the template's default) until
+  it's granted.
 
 ## 11. The Records
 
