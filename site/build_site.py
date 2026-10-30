@@ -625,7 +625,7 @@ class Demo:
                   "/api/engine/timeline.svg", "/api/engine/genealogy", "/api/engine/genealogy/review",
                   "/api/engine/genealogy.ged", "/api/engine/attention", "/api/engine/requests", "/api/engine/trash",
                   "/api/engine/episodes", "/api/engine/familypedia/catalogue?what=records",
-                  "/api/engine/familypedia/catalogue?what=photos", "/api/engine/gallery", "/api/engine/updates"]:
+                  "/api/engine/familypedia/catalogue?what=photos", "/api/engine/gallery", "/api/engine/photos", "/api/engine/updates"]:
             self.fetch(p)
         # Home rotates its story and relative; find each cycle and keep every combination
         def period(param, field):
