@@ -180,7 +180,9 @@ online goes into the catalogue's additional-research list as a to-do.
 - Report anything that failed to upload. An expired login is a "needs owner" item.
 
 ### 4.7 `write-daily-report` (private)
-Write `reports/daily-YYYY-MM-DD.md`. Facts only; every item links to its record, page or message id. Sections:
+Write `reports/daily-YYYY-MM-DD.md`. Facts only; every item links to its record, page or message id. If today's report
+already exists (an earlier run today), don't rewrite it: append a `## Run N (HH:MM)` block with only what changed since
+the previous run, and update the summary counts and open to-dos at the top so they cover the whole day. Sections:
 1. **Summary counts:** people updated, sources, records, messages in and out, photos, content revised, and minutes.
 2. **Open to-dos (read first):**
    - follow-ups due;
@@ -195,8 +197,20 @@ Write `reports/daily-YYYY-MM-DD.md`. Facts only; every item links to its record,
 8. **Storage:** Drive, R2 and git.
 
 ### 4.8 `publish-post` (public)
-1. Write `posts/YYYY-MM-DD-daily-update.md` with front matter: title "Daily update, D Month YYYY: …",
-   `slug: daily-YYYY-MM-DD`, date, summary, image (a project path that's on R2) and author.
+**One post per day.** A second run on the same day adds to that day's post; it never starts a new one or rewrites what
+was already published.
+
+1. **No post today yet:** write `posts/YYYY-MM-DD-daily-update.md` with front matter: title "Daily update, D Month
+   YYYY: …", `slug: daily-YYYY-MM-DD`, date, summary, image (a project path that's on R2) and author.
+   **Today's post already exists** (published by an earlier run): add to it.
+   - Take only what is new since the previous run: compare against the post itself and today's private report (its
+     `Run N` blocks say what each run covered). Nothing new means leave the post alone and skip step 4.
+   - Fold each new finding into the section it belongs to (a new person gets a new bold lead-in under "What we found";
+     a lead followed goes under leads). Don't add timestamped run headings to the public post.
+   - Keep every published sentence. If a new record corrects one, edit that sentence and say so ("Correction: …"),
+     never silently.
+   - Keep the slug, date, file name and image. Update the title and summary so they cover the whole day, and set
+     `updated: YYYY-MM-DDTHH:MM` in the front matter.
 2. **Findings only:**
    - what was found;
    - what changed in the book, linking `/family/<person>/` pages;
@@ -204,10 +218,12 @@ Write `reports/daily-YYYY-MM-DD.md`. Facts only; every item links to its record,
    - what is still being looked for, per person.
 3. Run the privacy filter (section 5). If it refuses the post, fix it. If it can't be fixed, set `draft: true` and add
    a "needs owner" to-do. **Never weaken the filter to make a post pass.**
-4. Publish: add the release-notes entry, rebuild only the changed chapters (and the book edition when the owner bumps
-   it), then republish the site.
+4. Publish: add the release-notes entry (on a re-run, add to today's entry rather than adding a second one), rebuild
+   only the changed chapters (and the book edition when the owner bumps it), then republish the site.
 
 The post appears in the dashboard's **Updates** tab and at `/updates/<slug>/`. It is **not** emailed.
+The weekly digest tracks posts by slug, so a post that grows after that week's digest has gone out is not emailed
+again; the next digest carries the following days' posts as usual.
 
 ### 4.9 `weekly-digest` (public; the only thing emailed)
 **Inputs:** `week` (`YYYY-Www`, default last week); `dry_run`; `send` (default off, from `MACROS.local.md`).
