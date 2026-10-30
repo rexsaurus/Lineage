@@ -15,7 +15,7 @@ const L = {
   contributor:'contributor', contributors:'contributors', Contributors:'Contributors',
 };
 /* Working surfaces only. Administration lives behind the gear (#/settings/<section>). */
-const TABS = [['home','Home'], ['sources','Sources'], ['familypedia','Familypedia'], ['genealogy','Genealogy'], ['stories','Stories'], ['timeline','Timeline']];
+const TABS = [['home','Home'], ['sources','Sources'], ['familypedia','Familypedia'], ['genealogy','Genealogy'], ['stories','Stories'], ['timeline','Timeline'], ['updates','Updates']];
 const SETTINGS = [
   ['family','Family details','Title, family name, summary, subject, crest'],
   ['connectors','Connectors','Drive, GitHub, Anthropic, OpenAI, ElevenLabs, agent CLIs'],
@@ -129,7 +129,7 @@ function route(){
   $$('#tabs a').forEach(a=>a.setAttribute('aria-current', a.dataset.tab===t?'page':'false'));
   $('#tab-settings').classList.add('hidden');
   TABS.forEach(([x])=>$('#tab-'+x).classList.toggle('hidden', x!==t));
-  const always = ['home','sources','stories','genealogy','timeline'];
+  const always = ['home','sources','stories','genealogy','timeline','updates'];
   if(!S.built[t] || always.includes(t)){ BUILDERS[t]($('#tab-'+t), rest, q); S.built[t]=true; }
   else { syncMirrors(); if(t==='familypedia'){ if(rest.length) openArticle(decodeURIComponent(rest[0])); else showView(q.view||'articles', q); } }
   window.scrollTo(0,0);

@@ -5,6 +5,18 @@ Every entry says whether it changes anything that would alter already-generated 
 (templates, the book template, style guides, skills); when it does, a project updating to it
 marks those stories stale rather than regenerating them.
 
+## Unreleased
+
+**Alters generated stories: no.** Dashboard and snapshot only.
+
+- **Updates tab.** The dashboard's tab bar gains **Updates**: the project's posts (`posts/<slug>.md`, the same files the
+  published site turns into `/updates/` pages), newest first, each opening in place at `#updates/<slug>`. Served by
+  `GET /api/engine/updates` through `posts.py` (same parsing, image resolution and privacy rules) and captured into the
+  published snapshot, so a family site shows its news inside the Lineage view. Research reports written as posts
+  (the daily update) appear here.
+- **Header on narrow screens.** The tabs move to their own scrolling row under the title (they were squeezed to nothing
+  beside the Terminal and Settings buttons); on wide screens tab labels never shrink, the project path gives way first.
+
 ## 0.9.1 — 2026-10-13
 
 **Alters generated stories: no** (the paragraph tool changes them only when run with `--fix`).
