@@ -51,7 +51,11 @@ module.exports = async function handler(req, res) {
   if (!c) return L.closed(req, res);
   if (req.method === "GET" || req.method === "HEAD") {
     res.setHeader("Cache-Control", "no-store");
-    return res.status(200).json({ ok: true, open: true });
+    const g = L.googleOn();
+    return res.status(200).json({
+      ok: true, open: true, google: !!g,
+      google_url: g ? L.googleRedirect(c) : null,
+    });
   }
   if (req.method !== "POST") return reply(req, res, 405, false, "Please use the form on the page.", c);
 

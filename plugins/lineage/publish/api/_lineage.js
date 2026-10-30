@@ -23,7 +23,7 @@ try { CFG = require("./_lineage-config.json"); } catch { CFG = {}; }
 
 const NEED = ["KV_REST_API_URL", "KV_REST_API_TOKEN", "RESEND_API_KEY", "DIGEST_FROM", "DIGEST_REPLY_TO",
   "CRON_SECRET", "SUBSCRIBE_SECRET"];
-const CLOSED = "Subscriptions open soon — follow the RSS feed meanwhile.";
+const CLOSED = "Subscriptions are not open yet. Follow the RSS feed meanwhile.";
 const PENDING_TTL = 7 * 24 * 3600;          // an unconfirmed address is forgotten after a week
 
 function env(k) { return String(process.env[k] || "").trim(); }
@@ -107,6 +107,38 @@ function readUnsubToken(c, t) {
 }
 const apiUrl = (c, name, token) => `${c.site}/api/${name}${c.slash}?t=${encodeURIComponent(token)}`;
 
+// Google sign-in is optional. Email double opt-in works without it. Both client values must be set;
+// nothing here is a default credential.
+function googleOn() {
+  const id = env("GOOGLE_CLIENT_ID"), secret = env("GOOGLE_CLIENT_SECRET");
+  if (!id || !secret) return null;
+  return {
+    id, secret,
+    auth: env("GOOGLE_AUTH_URL") || "https://accounts.google.com/o/oauth2/v2/auth",
+    token: env("GOOGLE_TOKEN_URL") || "https://oauth2.googleapis.com/token",
+    userinfo: env("GOOGLE_USERINFO_URL") || "https://openidconnect.googleapis.com/v1/userinfo",
+  };
+}
+const googleRedirect = c => `${c.site}/api/google${c.slash}`;
+function oauthState(c) {
+  const exp = Date.now() + 10 * 60 * 1000;
+  const nonce = b64u(crypto.randomBytes(16));
+  const payload = `${exp}.${nonce}`;
+  return `${payload}.${hmac(c, "gstate:" + payload)}`;
+}
+function readOauthState(c, t) {
+  const m = /^(\d{10,})\.([A-Za-z0-9_-]{8,})\.([A-Za-z0-9_-]{20,})$/.exec(String(t || ""));
+  if (!m || Number(m[1]) < Date.now() || !same(m[3], hmac(c, `gstate:${m[1]}.${m[2]}`))) return null;
+  return m[0];
+}
+function cookieVal(req, name) {
+  for (const part of String((req.headers && req.headers.cookie) || "").split(";")) {
+    const i = part.indexOf("=");
+    if (i > 0 && part.slice(0, i).trim() === name) return part.slice(i + 1).trim();
+  }
+  return "";
+}
+
 // ---------------------------------------------------------------------------------------------- HTTP helpers
 async function readBody(req) {
   if (req.body && typeof req.body === "object" && !Buffer.isBuffer(req.body)) return req.body;
@@ -148,4 +180,5 @@ function closed(req, res) {
 module.exports = {
   CFG, CLOSED, PENDING_TTL, config, kv, sendEmail, subId, subKey, confirmedSet, sha, same,
   confirmToken, readConfirmToken, unsubToken, readUnsubToken, apiUrl, readBody, wantsHtml, esc, page, closed,
+  googleOn, googleRedirect, oauthState, readOauthState, cookieVal,
 };
