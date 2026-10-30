@@ -14,6 +14,12 @@ marks those stories stale rather than regenerating them.
   `GET /api/engine/updates` through `posts.py` (same parsing, image resolution and privacy rules) and captured into the
   published snapshot, so a family site shows its news inside the Lineage view. Research reports written as posts
   (the daily update) appear here.
+- **Privacy filter for posts** (so for the weekly digest too, which only carries published posts). Every post is
+  refused, with the reason, if it contains a term the project lists as private (`settings.publish.private_terms`, and/or
+  `settings.publish.private_terms_file`, one per line — people to protect, case numbers, topics; whole words, any case),
+  any sign of correspondence (e-mail header lines, quoted replies, mail or draft ids, a section about letters, e-mails
+  or drafts), or a phone number. Posts report what was found, never who wrote to whom. Fix the post or mark it
+  `draft: true`.
 - **Digest off switch.** `settings.publish.digest.enabled: false` publishes posts, the feed and the subscribe form
   but leaves the weekly digest cron out of `vercel.json`, so no email goes to subscribers until it is turned back on.
 - **Header on narrow screens.** The tabs move to their own scrolling row under the title (they were squeezed to nothing
