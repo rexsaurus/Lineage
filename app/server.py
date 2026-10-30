@@ -1909,6 +1909,12 @@ def engine_gallery(project):
         kept.append((hsh, area, it))
     return {"items": [k[2] for k in kept]}
 
+def engine_photos(project):
+    """The photo registry (app/photos.py): one entry per photograph, for the photo viewer and every grid."""
+    import photos as _ph
+    return _ph.registry(project)
+
+
 def home_story(project, reroll=0):
     drafts = [st for st in engine_stories(project) if st["exists"]]
     st = _daily(drafts, "story", reroll)
@@ -3367,6 +3373,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def e_gallery(self, q):
         return self.send_json(engine_gallery(self.project))
 
+    def e_photos(self, q):
+        return self.send_json(engine_photos(self.project))
+
     def g_graph(self, q):
         return self.send_json(genealogy_graph(self.project))
 
@@ -4084,6 +4093,7 @@ ROUTES = {
     ("POST", "/api/engine/tags"): Handler.e_tags_set,
     ("GET", "/api/engine/home"): Handler.h_home,
     ("GET", "/api/engine/gallery"): Handler.e_gallery,
+    ("GET", "/api/engine/photos"): Handler.e_photos,
     ("GET", "/api/engine/updates"): Handler.e_updates,
     ("GET", "/api/engine/attention"): Handler.h_attention,
     ("GET", "/api/engine/requests"): Handler.h_requests,

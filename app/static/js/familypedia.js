@@ -6,19 +6,19 @@
    Sources and the Timeline. */
 const TYPE_ICON={person:'☺', place:'⌖', event:'◷', vessel:'⛵', organization:'⚑', object:'◆', publication:'❡', occupation:'⚒', theme:'❖'};
 const TIER_TITLES={witnessed:'What was witnessed', told:'What was told', lore:'Family lore', documented:'What the records show'};
-const FP={meta:null, list:null, view:'articles', type:'', sort:'az', letter:'', q:'', hits:null, shown:200, sel:new Set()};
+const FP={meta:null, list:null, view:'people', type:'', sort:'az', letter:'', q:'', hits:null, shown:200, sel:new Set()};
 
 BUILDERS.familypedia = async function(el, rest, q={}){
   el.innerHTML='';
   head(el,{kicker:'Familypedia', title:'Everything the material names', lede:"People, places, events, ships, regiments, objects, papers, trades and themes. Built only from this project's own material: every sentence points at its source, and stubs show where the next recording or record should go."});
   el.insertAdjacentHTML('beforeend', `<div class="row fp-views" role="tablist" style="margin:0 0 14px">
-      ${[['articles','Articles'],['people','People'],['events','Events'],['places','Places'],['map','Map'],['records','Records'],['photos','Photographs']].map(([v,l])=>`<a class="chiplink" role="tab" data-view="${v}" href="#familypedia?view=${v}">${l}</a>`).join('')}
+      ${[['people','People'],['places','Places'],['photos','Photographs'],['records','Sources'],['articles','Everything'],['events','Events'],['map','Map']].map(([v,l])=>`<a class="chiplink" role="tab" data-view="${v}" href="#familypedia?view=${v}">${l}</a>`).join('')}
       <span class="spacer"></span><button class="btn ghost sm" id="fp-new">New subject…</button></div>
     <div id="fp-body"><p class="empty">Loading…</p></div>`);
   $('#fp-new').onclick=()=>openPicker({title:'New subject', newOnly:true, onPick:s=>{ location.hash='familypedia/'+encodeURIComponent(s.slug); }});
-  await loadFamilypedia();
+  await Promise.all([loadFamilypedia(), pvLoad()]);
   if(rest && rest.length) return showArticle(decodeURIComponent(rest[0]));
-  showView(q.view||'articles', q);
+  showView(q.view||'people', q);
 };
 async function loadFamilypedia(force=false){
   if(FP.list && !force) return;
@@ -33,7 +33,7 @@ function showView(v, q={}){
   if(v==='places') return drawTypeCards('place');
   if(v==='map') return drawMapView(q.focus);
   if(v==='records') return drawCatalogue('records');
-  if(v==='photos') return drawCatalogue('photos');
+  if(v==='photos') return drawAllPhotos(q);
   if(q.type) FP.type=q.type; if(q.sort) FP.sort=q.sort;
   drawBrowse();
 }
@@ -153,8 +153,7 @@ async function showArticle(slug){
   const sec = (title, body, extra='') => body ? `<section class="tier"><div class="row"><h4>${title}</h4><span class="spacer"></span>${extra}</div>${body}</section>` : '';
   const rec = r => `<tr><td>${esc(r.type)}</td><td>${r.url?`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a>`:esc(r.title)}${r.description&&r.description!==r.title?`<div class="sub" style="margin:2px 0 0;font-size:12.6px">${esc(r.description.slice(0,240))}</div>`:''}</td>
     <td>${esc(r.archive||'—')}</td><td class="mono">${esc(r.number||'')}</td><td>${esc(r.date||'')}</td><td>${r.retrieved?esc(r.retrieved):'<span class="derived">no retrieval date</span>'}</td></tr>`;
-  const photo = p => !p.thumb ? '' : `<figure class="fp-photo">${`<img src="${fileUrl(p.thumb)}" alt="${esc(p.caption)}">`}
-    <figcaption>${esc(p.caption)}${p.illustration?' <span class="pill warn" title="Generated: not a photograph of the real scene">illustration</span>':''}<br><span class="derived">${esc(p.provenance||p.origin||'')}</span>${p.date?`<br><span class="derived">${esc(p.date)}${p.date_basis?' · '+esc(p.date_basis):''}</span>`:''}</figcaption></figure>`;
+  const photo = ({p:x, row:p}) => !p.thumb ? '' : photoFigure(x, p);
   const related = a.related.map(g=>`<div class="fp-rel"><h5>${esc(g.group)} · ${g.count}</h5>${g.items.map(i=>artLink(i.slug,i.title,i.type,i.note)).join(' ')}${g.count>g.items.length?` <span class="derived">and ${g.count-g.items.length} more</span>`:''}</div>`).join('');
   const tiers = Object.entries(a.tiers).filter(([,v])=>v.length).map(([k,v])=>sec(`<span class="tierdot t-${k}"></span>${TIER_TITLES[k]} · ${v.length}`,
       `<ul class="fp-tier">${v.slice(0,40).map(i=>`<li>${i.slug?artLink(i.slug,i.text):wikiLink(i.text,{skip:a.slug})} ${i.date?`<span style="color:var(--ink-3)">${esc(i.date)}</span>`:''}${i.archive?` <span class="derived">${esc(i.archive)}</span>`:''}${(i.cite||'').split(/;\s*/).map(chip).join('')}${i.id&&i.kind==='event'?` <a class="chiplink" href="#timeline?focus=${encodeURIComponent(i.id)}">timeline</a>`:''}</li>`).join('')}</ul>${v.length>40?`<p class="derived">and ${v.length-40} more</p>`:''}`)).join('');
@@ -164,7 +163,7 @@ async function showArticle(slug){
     a.coords||a.routes.length?`<a class="chiplink" href="#familypedia?view=map&focus=${encodeURIComponent(a.slug)}">On the map</a>`:'',
     ...a.stories.slice(0,4).map(s=>storyChip(s.id, s.title))].filter(Boolean).join('');
   box.innerHTML = `<article class="card article">
-    <aside class="infobox">${lead&&lead.thumb?`<img src="${fileUrl(lead.thumb)}" alt="${esc(lead.caption)}" style="width:100%;border-radius:8px;margin-bottom:6px">${lead.illustration?'<span class="pill warn">illustration, not a photograph</span>':''}`:''}
+    <aside class="infobox">${lead&&lead.thumb?`<img src="${fileUrl((photoFor(lead.id)||photoFor(lead.thumb)||{}).image||lead.thumb)}" data-photo="${esc(lead.thumb)}" alt="${esc((photoFor(lead.thumb)||{}).title||lead.caption)}" style="width:100%;border-radius:8px;margin-bottom:6px">${lead.illustration?'<span class="pill warn">illustration, not a photograph</span>':''}`:''}
       <dl class="kv ib"><dt>article</dt><dd>${esc(a.type_label)}${a.kind?` · ${esc(a.kind)}`:''}</dd>
       ${a.infobox.map(r=>`<dt>${esc(r.label.toLowerCase())}</dt><dd>${r.values.length?r.values.slice(0,12).map(ibv).join(r.values.length>3?'<br>':', ')+(r.values.length>12?` <span class="derived">+${r.values.length-12}</span>`:'')+` <span class="derived" title="${esc(r.basis)}">${r.by==='me'?'mine':'derived'}</span>`:'<span class="derived">not in the material</span>'}</dd>`).join('')}
       <dt>material</dt><dd>${[a.stories.length&&`${a.stories.length} ${a.stories.length>1?L.stories:L.story}`, a.passages.length&&`${a.passages.length} passage${a.passages.length>1?'s':''}`, a.records.length&&`${a.records.length} record${a.records.length>1?'s':''}`, a.photos.length&&`${a.photos.length} image${a.photos.length>1?'s':''}`, a.sources.length&&`${a.sources.length} source${a.sources.length>1?'s':''}`].filter(Boolean).join(' · ')||'one mention'}</dd></dl>
@@ -183,7 +182,7 @@ async function showArticle(slug){
     ${sec(`Sources · ${a.sources.length}`, a.sources.length&&`<div class="fp-srcs">${a.sources.map(x=>`<a class="fp-src" href="#sources" data-src="${esc(x.id)}">${x.thumb?`<img src="${fileUrl(x.thumb)}" alt="">`:`<span class="icon ${esc(x.kind)}">${esc((typeof KIND_LABEL!=='undefined'&&KIND_LABEL[x.kind])||x.kind)}</span>`}<span>${esc(x.name)}<br><span class="derived">${esc(x.why)}</span></span></a>`).join('')}</div>`)}
     ${(a.book_sources||[]).length?sec(`Sources from the book · ${a.book_sources.reduce((n,g)=>n+g.items.length,0)}`, a.book_sources.map(g=>`<details class="fp-book-src"${a.book_sources.length===1?' open':''}><summary><a class="wl" href="#stories?read=${encodeURIComponent(g.story)}">${esc(g.title)}</a> <span class="derived">${g.items.length} source${g.items.length!==1?'s':''}, as listed at the chapter's end</span></summary><ol>${g.items.map(x=>`<li>${esc(x.text)}${(x.urls||[]).map((u,k)=>` <a href="${esc(u)}" target="_blank" rel="noopener">${(x.urls.length>1?'link '+(k+1):'link')}</a>`).join('')}</li>`).join('')}</ol></details>`).join('')):''}
     ${sec(`Records · ${a.records.length}`, a.records.length&&`<table class="fp-rec"><thead><tr><th>Type</th><th>Record</th><th>Archive</th><th>Number</th><th>Date</th><th>Retrieved</th></tr></thead><tbody>${a.records.slice(0,80).map(rec).join('')}</tbody></table>${a.records.length>80?`<p class="derived">and ${a.records.length-80} more in <a href="#familypedia?view=records">Records</a></p>`:''}`)}
-    ${sec(`Photographs and illustrations · ${a.photos.filter(p=>p.thumb).length}`, a.photos.some(p=>p.thumb)&&`<div class="fp-photos">${a.photos.filter(p=>p.thumb).map(photo).join('')}</div>`)}
+    ${(ps=>sec(`Photographs and illustrations · ${ps.length}`, ps.length&&`<div class="fp-photos">${ps.map(photo).join('')}</div>`))(onePerPhoto(a.photos.filter(p=>p.thumb)))}
     ${sec('Related articles', related)}
     ${sec('Story units', a.units.map(u=>`<span class="chiplink" title="${esc(u.id)}">${esc(u.id)} · ${esc(u.title)}</span>`).join(' '))}
     <section class="tier"><h4>Notes <span class="derived">stated by me</span></h4><textarea id="wk-notes" rows="3" placeholder="What you know that the material doesn't say. [[Links]] work here. Your notes outrank anything derived.">${esc(a.notes)}</textarea>
@@ -252,6 +251,37 @@ async function drawMapView(focus){
 }
 
 /* ------------------------------------------------------------------ records and photographs: browse and bulk tag */
+/* All photographs: one card per photograph (an original and its restoration are one), from the photo registry.
+   Filters by kind, plus Restored and Low resolution, so the backfill queue is visible and shrinking.
+   Select turns on bulk tagging; a click anywhere else on a picture opens the photo viewer. */
+const PH_FILTERS = [['all','All'],['portrait','Portraits'],['group','Groups'],['document','Documents'],['place','Places'],['restored','Restored'],['low','Low resolution']];
+async function drawAllPhotos(q={}){
+  const reg = await pvLoad(), all = (reg.photos||[]).filter(p=>!p.illustration);
+  const st = FP.ph = FP.ph || {f: q.filter||'all', q:'', select:false};
+  const test = {all:()=>true, restored:p=>p.restored, low:p=>p.isLowRes};
+  const pass = f => p => (test[f] || (x=>x.kind===f))(p);
+  $('#fp-body').innerHTML = `<div class="ph-head"><input type="search" id="ph-q" placeholder="Search photographs" aria-label="Search photographs" value="${esc(st.q)}">
+      <button class="btn ghost sm${st.select?' on':''}" id="ph-select" aria-pressed="${st.select}">Select</button></div>
+    <div class="ph-filters" role="tablist" aria-label="Kind">${PH_FILTERS.map(([k,l])=>`<button role="tab" class="ph-f${st.f===k?' on':''}${k==='low'?' f-low':''}" data-f="${k}" aria-selected="${st.f===k}">${l} <span>${all.filter(pass(k)).length}</span></button>`).join('')}</div>
+    <p class="sub ph-lede">Every photograph in the archive. Click any one to open it full size, with its source, date and the articles it appears in. Restorations and their originals are one entry — open it to compare.</p>
+    <div class="row hidden" id="cat-bulk" style="margin:8px 0;background:#F3EEE4;border-radius:9px;padding:8px 12px"><b id="cat-n"></b><button class="btn ghost sm" id="cat-tag">Tag to a subject…</button><button class="btn ghost sm" id="cat-clear">Clear selection</button></div>
+    <div class="ph-grid" id="ph-grid" data-photo-set></div>`;
+  const targets = id => { const p = all.find(x=>x.id===id); return (p ? p.ids : [id]).filter(i=>!String(i).startsWith('portrait:')).map(i=>String(i).startsWith('src:') ? 'source:'+i.slice(4) : 'photo:'+i); };
+  const bulk = () => { $('#cat-bulk').classList.toggle('hidden', !FP.sel.size); $('#cat-n').textContent = `${FP.sel.size} selected`; };
+  const draw = () => {
+    const qq = st.q.toLowerCase();
+    const list = all.filter(pass(st.f)).filter(p=>!qq || [p.title, p.description, p.date, p.place, ...p.tags.people.map(t=>t.title), ...p.tags.places.map(t=>t.title)].join(' ').toLowerCase().includes(qq));
+    $('#ph-grid').innerHTML = list.length ? list.map(p=>photoCard(p, st.select ? FP.sel : null)).join('') : '<p class="empty">Nothing matches.</p>';
+    $$('#ph-grid [data-psel]').forEach(c=>c.onchange=()=>{ c.checked ? FP.sel.add(c.dataset.psel) : FP.sel.delete(c.dataset.psel); c.closest('.ph-card').classList.toggle('on', c.checked); bulk(); });
+    $$('#ph-grid [data-ptags]').forEach(b=>b.onclick=e=>{ e.preventDefault(); photoTagsModal(all.find(x=>x.id===b.dataset.ptags), b); });
+  };
+  $('#ph-q').oninput = e => { st.q = e.target.value; draw(); };
+  $$('.ph-f').forEach(b=>b.onclick=()=>{ st.f = b.dataset.f; $$('.ph-f').forEach(x=>{ x.classList.toggle('on', x===b); x.setAttribute('aria-selected', x===b); }); draw(); });
+  $('#ph-select').onclick = () => { st.select = !st.select; if(!st.select) FP.sel.clear(); $('#ph-select').classList.toggle('on', st.select); $('#ph-select').setAttribute('aria-pressed', st.select); draw(); bulk(); };
+  $('#cat-clear').onclick = () => { FP.sel.clear(); draw(); bulk(); };
+  $('#cat-tag').onclick = () => bulkTagTo([...FP.sel].flatMap(targets), () => { FP.sel.clear(); PV.reg = null; PV.loading = null; drawAllPhotos(); });
+  draw(); bulk();
+}
 async function drawCatalogue(what){
   FP.sel=new Set();
   $('#fp-body').innerHTML='<div class="card"><p class="empty">Loading…</p></div>';
@@ -360,12 +390,12 @@ function drawWikiArticle(a){
     `<a class="chiplink" href="#genealogy?focus=${encodeURIComponent(a.genealogy||a.slug)}">In the tree</a>`,
     // only the chapter about this person; the article's own book section lists the rest
     ...a.stories.filter(s=>[a.title, a.wiki_title].includes(s.title)).map(s=>storyChip(s.id, s.title))].filter(Boolean).join('');
-  const photos=a.photos.filter(p=>p.thumb);
+  const photos=onePerPhoto(a.photos.filter(p=>p.thumb));
   box.innerHTML=`<article class="card article wiki-article">
     <div class="kicker">${esc(a.type_label)} · encyclopedia article</div><h2 class="wtitle">${esc(a.wiki_title||a.title)}</h2>
     ${outLinks?`<div class="row" style="gap:6px;margin:4px 0 12px">${outLinks}</div>`:''}
     ${html}
-    ${photos.length?`<section class="tier" style="clear:both"><h4>Photographs and illustrations · ${photos.length}</h4><div class="fp-photos">${photos.map(p=>`<figure class="fp-photo"><img src="${fileUrl(p.thumb)}" alt="${esc(p.caption)}" loading="lazy"><figcaption>${esc(p.caption)}${p.illustration?' <span class="pill warn">illustration</span>':''}</figcaption></figure>`).join('')}</div></section>`:''}
+    ${photos.length?`<section class="tier" style="clear:both"><h4>Photographs and illustrations · ${photos.length}</h4><div class="fp-photos">${photos.map(({p:x,row:p})=>photoFigure(x,p)).join('')}</div></section>`:''}
     ${a.backlinks.length?`<section class="tier"><h4>What links here · ${a.backlinks.length}</h4>${a.backlinks.map(b=>artLink(b.slug,b.title,b.type)).join(' ')}</section>`:''}
   </article>`;
   $$('#wk-article .encyc a[href^="#ref-"], #wk-article .encyc a[href^="#cite-"], #wk-article .wtoc a, #wk-article .encyc a[href="#references"]').forEach(x=>x.onclick=e=>{
