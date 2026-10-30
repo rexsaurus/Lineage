@@ -182,6 +182,47 @@ def body_html(md_text, resolve):
     return out
 
 
+# ------------------------------------------------------------------------------------------------ privacy filter
+# Posts are public and feed the weekly digest, so every post passes this before anything is rendered. It refuses:
+#   - any term the project lists as private: settings.publish.private_terms (a list) and/or
+#     settings.publish.private_terms_file (one term per line, "#" comments; a project can generate it, e.g. from the
+#     names of everyone it corresponds with): people to protect, case numbers, topics. Whole words, any case.
+#   - correspondence: e-mail header lines, quoted replies, mail/draft ids, and sections about letters or drafts.
+#     Posts say what was found, never who wrote to whom or what was asked.
+#   - phone numbers (e-mail addresses, local paths and keys are caught by the leak check on the rendered pages).
+CORRESPONDENCE = [
+    (re.compile(r"^\s*>?\s*(from|to|cc|bcc|sent|subject|reply-to)\s*:\s*\S", re.I | re.M), "an e-mail header line"),
+    (re.compile(r"-----\s*original message|^\s*on .{4,80} wrote:\s*$|\bwrote:\s*$", re.I | re.M), "a quoted e-mail"),
+    (re.compile(r"\bgmail\b|\bmsg\s+[0-9a-f]{12,}\b|\bthread\s+[0-9a-f]{12,}\b|\bdraft\s+r-?\d{6,}", re.I), "a mail or draft id"),
+    (re.compile(r"^#{1,6}\s*(letters?|e-?mails?|correspondence|messages?|drafts?|replies)\b[^\n]*$", re.I | re.M),
+     "a section about correspondence"),
+    (re.compile(r"(?<!\d)(?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}(?!\d)"), "a phone number"),
+]
+
+
+def private_terms(root, cfg):
+    terms = [str(x) for x in (cfg.get("private_terms") or []) if str(x).strip()]
+    f = cfg.get("private_terms_file")
+    if f:
+        fp = Path(root) / f
+        if fp.exists():
+            terms += [l.split("#", 1)[0].strip() for l in fp.read_text(encoding="utf-8").splitlines()]
+    return sorted({x for x in terms if x}, key=str.lower)
+
+
+def privacy_issues(text, terms):
+    """What in this post text must not be published: a list of short descriptions (empty when it is clean)."""
+    out = []
+    for pat, what in CORRESPONDENCE:
+        m = pat.search(text)
+        if m:
+            out.append(f"{what}: {m.group(0).strip()[:60]!r}")
+    for term in terms:
+        if re.search(r"(?<!\w)" + re.escape(term) + r"(?!\w)", text, re.I):
+            out.append(f"a private term: {term!r}")
+    return out
+
+
 def nice(d):
     try:
         return dt.date.fromisoformat(d).strftime("%-d %B %Y")
@@ -196,6 +237,7 @@ def load_posts(root, cfg):
     if not pdir.is_dir():
         return []
     manifest = load_manifest(root)
+    terms = private_terms(root, cfg)
     posts, errors = [], []
     for f in sorted(pdir.glob("*.md")):
         meta, body = front(f.read_text(encoding="utf-8"))
@@ -204,6 +246,11 @@ def load_posts(root, cfg):
         slug = _publish.slug(meta.get("slug") or re.sub(r"^\d{4}-\d{2}-\d{2}-", "", f.stem))
         if not meta.get("title") or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", meta.get("date", "")):
             errors.append(f"{f.name}: needs a title and a date (YYYY-MM-DD) in its front matter")
+            continue
+        bad = privacy_issues("\n".join([meta.get("title", ""), meta.get("summary", ""), body]), terms)
+        if bad:
+            errors.append(f"{f.name}: not publishable (privacy filter): " + "; ".join(bad)
+                          + " — remove it, or set draft: true")
             continue
         res = Resolver(root, manifest, pdir)
         img = meta.get("image", "")
@@ -384,7 +431,8 @@ def install_functions(site, cfg):
     written.append(api / "_lineage-config.json")
     path = "/api/digest/" if slash else "/api/digest"
     crons = [c for c in conf.get("crons") or [] if c.get("path", "").rstrip("/") != "/api/digest"]
-    crons.append({"path": path, "schedule": d.get("schedule") or "0 15 * * 1"})
+    if d.get("enabled", True) not in (False, "false", "no", 0):   # settings.publish.digest.enabled: false = no emails
+        crons.append({"path": path, "schedule": d.get("schedule") or "0 15 * * 1"})
     conf["crons"] = crons
     hdrs = conf.setdefault("headers", [])
     if not any(h.get("source") == "/api/(.*)" for h in hdrs):

@@ -1834,6 +1834,20 @@ def _opening(project, st, n=3):
 
 
 
+def engine_updates(project):
+    """The family's news posts, newest first: posts/<slug>.md in the project, the same files the published site turns
+    into /updates/ pages (plugins/lineage/scripts/posts.py does the parsing, image resolution and rendering)."""
+    sp = str(HERE.parent / "plugins" / "lineage" / "scripts")
+    if sp not in sys.path:
+        sys.path.insert(0, sp)
+    import _publish
+    import posts as _posts
+    try:
+        return {"posts": _posts.load_posts(project.root, _publish.settings(project.root))}
+    except Exception as e:                       # a broken post is shown, not fatal to the page
+        return {"posts": [], "error": str(e)}
+
+
 def engine_gallery(project):
     """Original photographs only, each once:
     no illustrations, no digital restorations (anything with an unretouched original), no document scans, no crops
@@ -3347,6 +3361,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def h_requests(self, q):
         return self.send_json(_requests(self.project))
 
+    def e_updates(self, q):
+        return self.send_json(engine_updates(self.project))
+
     def e_gallery(self, q):
         return self.send_json(engine_gallery(self.project))
 
@@ -4067,6 +4084,7 @@ ROUTES = {
     ("POST", "/api/engine/tags"): Handler.e_tags_set,
     ("GET", "/api/engine/home"): Handler.h_home,
     ("GET", "/api/engine/gallery"): Handler.e_gallery,
+    ("GET", "/api/engine/updates"): Handler.e_updates,
     ("GET", "/api/engine/attention"): Handler.h_attention,
     ("GET", "/api/engine/requests"): Handler.h_requests,
     ("POST", "/api/engine/request/draft"): Handler.h_request_draft,
