@@ -33,6 +33,7 @@ function lsubLoad(){
   if(LSUB.state) return; LSUB.state='loading';
   const s=document.createElement('script'); s.id='lsub-js'; s.src='/updates/subscribe.js'; s.defer=true;
   s.onload=()=>{ LSUB.state='ok'; $$('[data-lsub-wrap]').forEach(b=>b.classList.remove('hidden')); const h=$('#hdr-sub'); if(h) h.classList.remove('hidden');
+    if(window.LineageSubscribe) window.LineageSubscribe();
     if(S.tab==='home' && S.q.to==='subscribe') homeToSubscribe(); };
   s.onerror=()=>{ LSUB.state='off'; $$('[data-lsub-wrap]').forEach(b=>b.remove()); };
   document.head.appendChild(s);

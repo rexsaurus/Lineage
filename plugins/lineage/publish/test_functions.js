@@ -18,7 +18,7 @@ const api = path.join(site, "api");
 if (!fs.existsSync(path.join(api, "subscribe.js"))) { console.error(`no api/subscribe.js in ${site}`); process.exit(2); }
 
 // ---------------------------------------------------------------------------------------- fake Upstash + Resend
-const db = new Map(), sets = new Map(), emails = [];
+const db = new Map(), sets = new Map(), emails = [], googlePosts = [];
 function redis(cmd) {
   const [op, k, ...a] = cmd; const O = op.toUpperCase();
   const set = () => { if (!sets.has(k)) sets.set(k, new Set()); return sets.get(k); };
@@ -49,6 +49,17 @@ const server = http.createServer((req, res) => {
       if (failFor && msg.to.includes(failFor)) { res.statusCode = 500; return res.end("{}"); }
       emails.push({ ...JSON.parse(body), idem: req.headers["idempotency-key"] });
       res.end(JSON.stringify({ id: "em_" + emails.length }));
+    } else if (req.url === "/google/token" && req.method === "POST") {
+      const fields = new URLSearchParams(body);
+      googlePosts.push(Object.fromEntries(fields));
+      if (fields.get("code") === "bad") { res.statusCode = 400; return res.end("{}"); }
+      const code = fields.get("code");
+      res.end(JSON.stringify({ access_token: "tok_" + code }));
+    } else if (req.url.split("?")[0] === "/google/userinfo") {
+      const auth = req.headers.authorization || "";
+      if (auth.endsWith("tok_unverified")) res.end(JSON.stringify({ email: "person@example.org", email_verified: false }));
+      else if (auth.endsWith("tok_ok")) res.end(JSON.stringify({ email: "person@example.org", email_verified: true }));
+      else { res.statusCode = 401; res.end("{}"); }
     } else {                                          // the "live site": static files from the built folder
       const f = path.join(site, decodeURIComponent(req.url.split("?")[0]));
       if (f.startsWith(site) && fs.existsSync(f) && fs.statSync(f).isFile()) res.end(fs.readFileSync(f));
@@ -89,6 +100,7 @@ const ENV = { KV_REST_API_URL: "", KV_REST_API_TOKEN: "kv-token", RESEND_API_KEY
 server.listen(0, "127.0.0.1", async () => {
   const base = `http://127.0.0.1:${server.address().port}`;
   const EMAIL = "reader@example.org";
+  let gstate = "";
   for (const k of Object.keys(ENV)) delete process.env[k];
 
   await step("not configured: GET/POST subscribe -> 503, nothing stored or sent", async () => {
@@ -218,6 +230,48 @@ server.listen(0, "127.0.0.1", async () => {
     const n = emails.length;
     const r = await call("digest", { headers: AUTH });
     assert.strictEqual(r.statusCode, 200); assert.strictEqual(emails.length, n);
+  });
+
+  await step("google stays off until both client values are set", async () => {
+    const r = await call("subscribe");
+    assert.strictEqual(r.body.google, false);
+    assert.strictEqual((await call("google")).statusCode, 503);
+    process.env.GOOGLE_CLIENT_ID = "client-id";
+    assert.strictEqual((await call("google")).statusCode, 503);   // secret still missing
+    process.env.GOOGLE_CLIENT_SECRET = "client-secret";
+    process.env.GOOGLE_TOKEN_URL = base + "/google/token";
+    process.env.GOOGLE_USERINFO_URL = base + "/google/userinfo";
+  });
+
+  await step("google: start redirects with a signed state cookie", async () => {
+    const r = await call("google");
+    assert.strictEqual(r.statusCode, 302);
+    const loc = new URL(r.headers.location);
+    assert.strictEqual(loc.searchParams.get("client_id"), "client-id");
+    assert.strictEqual(loc.searchParams.get("scope"), "openid email");
+    assert.match(loc.searchParams.get("redirect_uri"), /\/api\/google\/$/);
+    const cookie = /lsub_g=([^;]+)/.exec(r.headers["set-cookie"])[1];
+    assert.strictEqual(cookie, loc.searchParams.get("state"));
+    gstate = cookie;
+  });
+
+  await step("google: bad state, unverified email, then a verified address is confirmed", async () => {
+    const state = gstate;
+    assert.strictEqual((await call("google", { query: { code: "ok", state: "nope" }, headers: { cookie: "lsub_g=" + state } })).statusCode, 400);
+    assert.strictEqual((await call("google", { query: { code: "unverified", state }, headers: { cookie: "lsub_g=" + state } })).statusCode, 400);
+    const before = [...db.keys()].filter(k => k.includes(":sub:")).length;
+    const n = emails.length;
+    const r = await call("google", { query: { code: "ok", state }, headers: { cookie: "lsub_g=" + state } });
+    assert.strictEqual(r.statusCode, 200); assert.match(String(r.body), /subscribed/);
+    assert.strictEqual(emails.length, n + 1);
+    assert.match(emails[emails.length - 1].text, /Unsubscribe/);
+    const recs = [...db.entries()].filter(([k, v]) => k.includes(":sub:") && v.includes("person@example.org"));
+    assert.strictEqual(recs.length, 1);
+    assert.strictEqual(JSON.parse(recs[0][1]).status, "confirmed");
+    assert.ok(recs.length >= 1);
+    assert.ok([...db.keys()].filter(k => k.includes(":sub:")).length >= before);
+    assert.strictEqual(googlePosts.at(-1).code, "ok");
+    db.delete(recs[0][0]);
   });
 
   await step("no email address in any function log", async () => {

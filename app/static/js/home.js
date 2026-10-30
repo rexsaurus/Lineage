@@ -37,7 +37,14 @@ function homeSubscribeBand(){
       <p>${esc(fam)} is still being researched. Subscribe and you'll get an email when a new ${esc(L.story)} is finished or a new record turns up — and nothing in the weeks when neither happens.</p></div>
     <div data-lineage-subscribe></div></section>`;
 }
-function homeToSubscribe(){ const b=$('#home-subscribe'); if(b && !b.classList.contains('hidden')){ b.scrollIntoView({behavior:'smooth', block:'center'}); const i=$('input[type=email]',b); if(i) setTimeout(()=>i.focus({preventScroll:true}),400); } }
+function homeToSubscribe(){
+  if(window.LineageSubscribe && typeof window.LineageSubscribe.open==='function'){
+    const t=document.getElementById('hdr-sub')||document.activeElement;
+    window.LineageSubscribe.open(t);
+    return;
+  }
+  const b=$('#home-subscribe'); if(b && !b.classList.contains('hidden')){ b.scrollIntoView({behavior:'smooth', block:'center'}); const i=$('input[type=email]',b); if(i) setTimeout(()=>i.focus({preventScroll:true}),400); }
+}
 function drawHomeStory(h){
   const box=$('#h-story'), s=h.story;
   if(!s){ box.innerHTML = `<div class="kicker">Story of the day</div><p class="empty">No ${L.stories} drafted yet. ${L.Stories} come from transcribed recordings: add one in <a href="#sources">Sources</a>, then ask the Genealogist (Terminal) to propose the ${L.storyMap.toLowerCase()}.</p>`; return; }

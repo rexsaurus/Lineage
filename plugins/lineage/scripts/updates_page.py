@@ -11,9 +11,9 @@ the "latest edition" link is the book PDF from data/r2_manifest.csv when it has 
 With a site folder it also publishes (see posts.py):
   - the project's news posts (posts/*.md) at /updates/<slug>/, listed newest first above the edition notes;
   - /updates/feed.xml (Atom: posts and editions) and /updates/posts.json (what the weekly digest reads);
-  - the Subscribe form (/updates/subscribe.js) and the site's subscription functions in api/ (subscribe, confirm,
-    unsubscribe, digest) with a weekly cron merged into the site's vercel.json. They stay closed (503, "opens
-    soon") until the Vercel project has every variable listed in docs/HOWTO.md; --no-subscribe leaves them out.
+  - the Subscribe form (/updates/subscribe.js) and the site's subscription functions in api/ (subscribe, google,
+    confirm, unsubscribe, digest) with a weekly cron merged into the site's vercel.json. They stay closed (503)
+    until the Vercel project has every variable listed in docs/HOWTO.md; --no-subscribe leaves them out.
 Every file written is run through the instance build's leak check (local paths, localhost, keys, emails); a hit
 stops the build.
 """

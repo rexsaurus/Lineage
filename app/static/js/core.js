@@ -96,7 +96,10 @@ async function boot(){
   refreshAttention();
   route();
   if(typeof lsubLoad==='function') lsubLoad();     // the published site's Subscribe form; absent locally
-  $('#hdr-sub').onclick=()=>{ if(S.tab==='home' && location.hash==='#home?to=subscribe') homeToSubscribe(); };
+  $('#hdr-sub').onclick=(e)=>{
+    if(window.LineageSubscribe && typeof window.LineageSubscribe.open==='function'){ e.preventDefault(); window.LineageSubscribe.open(e.currentTarget); return; }
+    if(S.tab==='home' && location.hash==='#home?to=subscribe') homeToSubscribe();
+  };
   if(typeof ensureFP==='function') ensureFP();   // names for [[links]] everywhere
 }
 function parseHash(){
