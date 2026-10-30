@@ -9,6 +9,9 @@ marks those stories stale rather than regenerating them.
 
 **Alters generated stories: no.** Dashboard and snapshot only.
 
+- **A first name inside someone else's name no longer tags a relative**: "John" in "John Carmack" or "Alex St. John",
+  "William" in "William H. Bristol". A one-word person's name counts only standing alone, or followed by initials and
+  that person's own surname ("Erasthus W. Burnham"). Places keep matching inside longer names ("the Arctic Circle").
 - **The timeline reads the material, not only `facts/timeline.csv`**: a dated photograph that shares a year and a person with
   an event illustrates it; other dated photographs gather into one entry per year, and dated records into one entry
   per year and archive (a box of letters is one line). Spans of more than 15 years date nothing. `updatedAt` now also
