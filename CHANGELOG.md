@@ -9,6 +9,10 @@ marks those stories stale rather than regenerating them.
 
 **Alters generated stories: no.** Dashboard and snapshot only.
 
+- **The research loop as macros** (`macros/lineage-macros.md`): one readable file with the whole daily loop (scan mail,
+  update each changed person, revise chapters and Familypedia pages by targeted edits, pursue leads, store, write a
+  private report, publish a findings-only daily post, weekly digest), its rules and its privacy filter. Projects add a
+  `MACROS.local.md` with their paths and settings; any agent runs it by reading the two.
 - **Updates tab.** The dashboard's tab bar gains **Updates**: the project's posts (`posts/<slug>.md`, the same files the
   published site turns into `/updates/` pages), newest first, each opening in place at `#updates/<slug>`. Served by
   `GET /api/engine/updates` through `posts.py` (same parsing, image resolution and privacy rules) and captured into the
