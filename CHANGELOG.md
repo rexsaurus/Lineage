@@ -12,6 +12,10 @@ marks those stories stale rather than regenerating them.
 - **A first name inside someone else's name no longer tags a relative**: "John" in "John Carmack" or "Alex St. John",
   "William" in "William H. Bristol". A one-word person's name counts only standing alone, or followed by initials and
   that person's own surname ("Erasthus W. Burnham"). Places keep matching inside longer names ("the Arctic Circle").
+- **Subscribe opens a dialog.** The header link, the Updates tab, and any `href="#subscribe"` link open the weekly-digest form in a dialog (focus trap, Escape, backdrop, scroll lock, focus restored). Without JavaScript the link still scrolls to the form. While sign-up is not configured the dialog says so and keeps the RSS link. Google sign-in (`api/google.js`) confirms a verified Google address beside the existing Resend double opt-in. It stays off until `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
+- **Photo viewer on a phone.** The scan fits the space above the caption. The caption and the controls sit below it and stay on screen.
+- **Genealogy tree on a phone.** The panel stays the site's light paper. Names are dark on the cream pills, the selected person is clay-outlined, and the links stay ink and clay. Automatic dark mode no longer turns the names pale.
+
 - **The timeline reads the material, not only `facts/timeline.csv`**: a dated photograph that shares a year and a person with
   an event illustrates it; other dated photographs gather into one entry per year, and dated records into one entry
   per year and archive (a box of letters is one line). Spans of more than 15 years date nothing. `updatedAt` now also
@@ -41,8 +45,8 @@ marks those stories stale rather than regenerating them.
   star to a scratch copy of the demo and checks each appears and moves `updatedAt`.
 - **Subscribe on Home** (published site only, using the existing `/updates/subscribe.js`): a band after Story of the
   day ("New stories, when there are new stories", with the project's family name), the form again at the foot of
-  Home, and a quiet **Subscribe** link in the header that jumps to the band. Nothing shows where the script is absent
-  (the local app).
+  Home, and a quiet **Subscribe** link in the header that opens the subscribe dialog. Without JavaScript the
+  link still reaches the form on the page. Nothing shows where the script is absent (the local app).
 - **One photo viewer, everywhere** (`app/static/js/photoviewer.js`): any photograph on the site — homepage gallery,
   All photographs, Familypedia articles and their profile photos, updates, story images, timeline entries — opens the
   same modal: the full-resolution image, a Restored | Original scan flip, badge, description, date, place, source
@@ -68,7 +72,7 @@ marks those stories stale rather than regenerating them.
   run folds only the new findings into that day's post (title, summary and an `updated:` time cover the whole day),
   keeps every published sentence, and appends a `Run N` block to the private report. Nothing new: no republish.
 - **Subscribe and Weekly Update in the Updates tab:** the tab opens with a Weekly Update button (newest `weekly-` post)
-  and a Subscribe button that jumps to the weekly-digest form at the foot of the list. The form is the site's own
+  and a Subscribe button that opens the same subscribe dialog. The form is the site's own
   `/updates/subscribe.js`, so it appears only on a published site with subscriptions configured.
 - **The research loop as macros** (`macros/lineage-macros.md`): one readable file with the whole daily loop (scan mail,
   update each changed person, revise chapters and Familypedia pages by targeted edits, pursue leads, store, write a

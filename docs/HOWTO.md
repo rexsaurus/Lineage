@@ -1783,16 +1783,19 @@ into what is there, never replacing it):
 
 | Function | What it does |
 |---|---|
-| `api/subscribe` | `GET`: is it open? `POST {email}`: double opt-in. Stores the address as *pending* (forgotten after 7 days) and emails a signed confirmation link. A honeypot field and a per-visitor hourly limit stop bots |
+| `api/subscribe` | `GET`: is it open, and is Google sign-in on? `POST {email}`: double opt-in. Stores the address as *pending* (forgotten after 7 days) and emails a signed confirmation link. A honeypot field and a per-visitor hourly limit stop bots |
+| `api/google` | Continue with Google. Redirects to Google, then stores a verified address as *confirmed* and emails an unsubscribe link. Off until the Google variables below are set |
 | `api/confirm` | the confirmation link: *pending* becomes *confirmed* |
 | `api/unsubscribe` | the one-click link in every digest (and RFC 8058 `List-Unsubscribe-Post`): deletes the record |
 | `api/digest` | the cron, Mondays 15:00 UTC. Reads the site's own `/changelog.json` and `/updates/posts.json`, takes what no earlier digest carried, and emails every confirmed subscriber with an unsubscribe link and the sender/postal footer. Once per ISO week; a run that failed part way resumes without re-sending. Refuses any caller without `Authorization: Bearer $CRON_SECRET` |
 
-**It is closed until configured.** Until *every* variable below is set, the form says
-"Subscriptions open soon — follow the RSS feed meanwhile" and every function answers 503: nothing
+**It is closed until configured.** Until *every* variable in the first table below is set, the form says
+"Subscriptions are not open yet. Follow the RSS feed meanwhile." and every function answers 503: nothing
 is stored, nothing is sent. Nothing needs npm: storage is Upstash Redis over its REST API and email
 is Resend's REST API, both with plain `fetch`. An address is never logged; a record holds only the
 email, its status, created/confirmed times and the hash of the pending confirmation token.
+Google sign-in is separate: email subscription opens without it, and the Google button appears only
+when both Google variables are set.
 
 | Vercel env var | Value |
 |---|---|
@@ -1803,6 +1806,7 @@ email, its status, created/confirmed times and the hash of the pending confirmat
 | `DIGEST_POSTAL_ADDRESS` | a postal address for the footer (a P.O. box is fine) |
 | `CRON_SECRET` | 32+ random characters (`openssl rand -hex 32`); Vercel sends it to the cron |
 | `SUBSCRIBE_SECRET` | 32+ random characters (`openssl rand -hex 32`); signs confirm/unsubscribe links. Changing it invalidates every unsubscribe link already sent, so set it once |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | optional. From a Google Cloud OAuth client (Web application). Both must be set or the Google button stays hidden. Do not commit them |
 
 Setting it up (once per site, in the Vercel project the site deploys to):
 
@@ -1818,7 +1822,16 @@ Setting it up (once per site, in the Vercel project the site deploys to):
    `SUBSCRIBE_SECRET` (or `vercel env add NAME production` in the site folder).
 4. Optionally set `digest.sender_line` in `lineage.json` (e.g. "Sent by A. Compiler, who is writing
    the family book. You subscribed at family.example.org.").
-5. **Republish** (the variables are read at request time, but the cron is registered by a
+5. **Google sign-in (optional).** Google Cloud Console, APIs & Services, Credentials, Create
+   credentials, OAuth client ID, Application type **Web application**. Authorized redirect URI:
+   `https://family.example.org/api/google/` if the site's `vercel.json` has `"trailingSlash": true`,
+   otherwise `https://family.example.org/api/google` (no slash). The URI has to match exactly,
+   including the slash. OAuth consent screen: External is fine for a public family site; scopes are
+   `openid` and `email` only (the code asks for those, not a profile photo or contacts). Put
+   `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in the same Production environment. A verified
+   Google address is stored as confirmed. Resend still sends the note that carries the unsubscribe
+   link. Email double opt-in keeps working beside it.
+6. **Republish** (the variables are read at request time, but the cron is registered by a
    deploy). The form opens by itself. Subscribe yourself, confirm, then run the digest once by hand:
    `curl -H "Authorization: Bearer $CRON_SECRET" https://family.example.org/api/digest/`.
    The cron then runs every Monday; its runs are under the project's **Settings → Cron Jobs**.
