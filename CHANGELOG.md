@@ -15,6 +15,7 @@ marks those stories stale rather than regenerating them.
 - **Subscribe opens a dialog.** The header link, the Updates tab, and any `href="#subscribe"` link open the weekly-digest form in a dialog (focus trap, Escape, backdrop, scroll lock, focus restored). Without JavaScript the link still scrolls to the form. While sign-up is not configured the dialog says so and keeps the RSS link. Google sign-in (`api/google.js`) confirms a verified Google address beside the existing Resend double opt-in. It stays off until `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
 - **Photo viewer on a phone.** The scan fits the space above the caption. The caption and the controls sit below it and stay on screen.
 - **Genealogy tree on a phone.** The panel stays the site's light paper. Names are dark on the cream pills, the selected person is clay-outlined, and the links stay ink and clay. Automatic dark mode no longer turns the names pale.
+- **No Unplaced box under the tree.** The dashed "Unplaced" list (and the demo's "Not in this view" card) is gone from the bottom of the Genealogy page. People with no evidenced link are still off the tree, still in the Cast view and the "Centre on" list, and still selectable; nothing about the data or the export changes.
 
 - **The timeline reads the material, not only `facts/timeline.csv`**: a dated photograph that shares a year and a person with
   an event illustrates it; other dated photographs gather into one entry per year, and dated records into one entry

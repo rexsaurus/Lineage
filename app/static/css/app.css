@@ -486,7 +486,7 @@ sup.wref{font-size:.72em;line-height:0}sup.wref a{text-decoration:none}
 .upd-btn.upd-sub{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:44px;padding:0 18px;border:0;border-radius:9px;color:var(--paper);font-weight:600}
 .upd-btn.upd-sub:hover{background:var(--clay-dark);color:var(--paper)}
 
-/* ---- chart pages: the Download menu (exports.js), Genealogy's view switch, person card and Unplaced tray */
+/* ---- chart pages: the Download menu (exports.js), Genealogy's view switch, and person card */
 .dl{position:relative;display:inline-block}
 .dl-btn{display:inline-flex;align-items:center;gap:6px}
 .dl-caret{font-size:10px;color:var(--ink-3)}
@@ -519,9 +519,6 @@ sup.wref{font-size:.72em;line-height:0}sup.wref a{text-decoration:none}
 .gcard-more{margin-top:12px;border-top:1px solid #DED8CA;padding-top:8px}
 .gcard-more summary{cursor:pointer;font-size:13.4px;color:#1A1814}
 .gev{border-top:1px solid var(--line);padding:8px 0}
-.gtray{margin:12px 0;padding:12px 14px;border:1px dashed #DED8CA;border-radius:5px}
-.gtray h4{margin:0 0 8px;font-size:13.5px;color:#1A1814}
-.gtray-p{display:inline-flex;align-items:center;gap:6px;margin:0 12px 4px 0}
 @media (max-width:700px){.gcard{flex-direction:column;padding-right:18px}}
 
 /* ---- Home: Subscribe (the published site's /updates/subscribe.js form, restyled inside these boxes) */
