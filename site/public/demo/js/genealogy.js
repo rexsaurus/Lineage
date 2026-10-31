@@ -52,8 +52,7 @@ function drawGenealogy(){
   if(G.view==='cast') return drawCast();
   $('#g-body').innerHTML = `<div class="gwrap"><div>
       <div class="gcanvas" id="g-canvas"><div class="zoom"><button class="btn ghost sm" id="gz-in" aria-label="Zoom in">+</button><button class="btn ghost sm" id="gz-out" aria-label="Zoom out">−</button><button class="btn ghost sm" id="gz-fit" aria-label="Fit">fit</button></div></div>
-      <div class="legend">${Object.entries(G_TIER).map(([k,v])=>`<span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" class="glink ${k}"/></svg>${esc(v)}</span>`).join('')}<span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" class="glink mine"/></svg>my edit</span><span><svg width="18" height="12"><rect x="1" y="1" width="16" height="10" rx="3" fill="#F3EEE4" stroke="#C9BFAE" stroke-dasharray="3 2"/></svg>unknown parents</span></div>
-      <div id="g-float"></div></div>
+      <div class="legend">${Object.entries(G_TIER).map(([k,v])=>`<span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" class="glink ${k}"/></svg>${esc(v)}</span>`).join('')}<span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" class="glink mine"/></svg>my edit</span><span><svg width="18" height="12"><rect x="1" y="1" width="16" height="10" rx="3" fill="#F3EEE4" stroke="#C9BFAE" stroke-dasharray="3 2"/></svg>unknown parents</span></div></div>
     <aside class="card" id="g-side" style="margin:0;position:sticky;top:84px;max-height:calc(100vh - 110px);overflow-y:auto"></aside></div>`;
   const fresh = !G.vb;
   $('#g-canvas').insertAdjacentHTML('afterbegin', treeSvg(false));
@@ -63,9 +62,6 @@ function drawGenealogy(){
   }
   G.fitAll=false;
   bindPanZoom();
-  const lay=G.lay, floating=d.people.filter(p=>!lay.nodes.some(n=>n.id===p.id));
-  $('#g-float').innerHTML = floating.length ? `<div class="card" style="margin-top:12px"><h3>Not in this view · ${floating.length}</h3><p class="sub">${G.layout==='all'?'No evidenced link to the people above yet. Nothing is guessed; add a source, or state a link yourself.':'Outside this layout. Switch to "Everyone connected", or centre on someone else.'}</p>
-    <div class="float">${floating.map(p=>entryChip(p.article, p.name||p.id, 'person', '', p.photo||null, p.article?'':`data-gpick="${esc(p.id)}"`)).join(' ')}</div></div>` : '';
   $$('[data-gpick]').forEach(b=>b.onclick=()=>selectPerson(b.dataset.gpick));
   $$('#g-canvas .gnode').forEach(n=>n.onclick=e=>{ e.stopPropagation(); if(!n.dataset.id || n.classList.contains('unknown')) return;
     const p=d.people.find(x=>x.id===n.dataset.id); if(p && p.article){ location.hash='#familypedia/'+encodeURIComponent(p.article); return; } selectPerson(n.dataset.id); });
