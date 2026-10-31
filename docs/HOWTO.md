@@ -1661,6 +1661,7 @@ that needs a missing value says so and is skipped.
 | `hidden_aliases` | `[]` | aliases never printed on public pages (household nicknames) |
 | `changelog_commit_messages` | `false` | list the project's own commit messages on `/changelog/` (otherwise commits are summarised as file counts by area) |
 | `posts_dir` | `posts` | news posts published under `/updates/<slug>/` (see "Posts, the feed and subscriptions" below) |
+| `subscribe_home` | `false` | when false (the default), republishing strips the Subscribe button and form from the book home page (`<site>/index.html`, outside `/lineage`). The header button and the Updates tab inside `/lineage` stay. Set `true` only if that landing page should keep a form the project wrote itself |
 | `digest.sender_line` | none | the footer line of every digest email: who sends it and why the reader gets it |
 | `digest.postal_address` | none | the footer's postal address (required by anti-spam law). It is published in `api/_lineage-config.json`, so prefer the `DIGEST_POSTAL_ADDRESS` env var |
 | `digest.schedule` | `0 15 * * 1` | the weekly digest's Vercel cron, in UTC (Mondays 15:00) |
@@ -1807,6 +1808,12 @@ when both Google variables are set.
 | `CRON_SECRET` | 32+ random characters (`openssl rand -hex 32`); Vercel sends it to the cron |
 | `SUBSCRIBE_SECRET` | 32+ random characters (`openssl rand -hex 32`); signs confirm/unsubscribe links. Changing it invalidates every unsubscribe link already sent, so set it once |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | optional. From a Google Cloud OAuth client (Web application). Both must be set or the Google button stays hidden. Do not commit them |
+| `NOTIFY_FROM` | sender for subscriber mail, owner alerts and sign-in links. Example: `Lineage <no-reply@lineage.rexstjohn.com>` on a domain verified in Resend. If unset, subscriber mail keeps `DIGEST_FROM` |
+| `OWNER_NOTIFY_EMAIL` | one address that is told when someone confirms and when someone unsubscribes. Not a secret, but do not commit it |
+| `ADMIN_SECRET` | 32+ random characters (`openssl rand -hex 32`). Bearer token for the test-email endpoint and for `backfill.js` |
+| `SESSION_SECRET` | 32+ random characters (`openssl rand -hex 32`). Signs the sign-in cookie. Do not commit it |
+| `RESEND_WEBHOOK_SECRET` | the signing secret Resend shows for the webhook (`whsec_...`). Do not commit it |
+| `OWNER_NOTIFY_UNSUBSCRIBES` | optional. Unsubscribe notes are on unless this is `false` |
 
 Setting it up (once per site, in the Vercel project the site deploys to):
 
@@ -1835,6 +1842,27 @@ Setting it up (once per site, in the Vercel project the site deploys to):
    deploy). The form opens by itself. Subscribe yourself, confirm, then run the digest once by hand:
    `curl -H "Authorization: Bearer $CRON_SECRET" https://family.example.org/api/digest/`.
    The cron then runs every Monday; its runs are under the project's **Settings → Cron Jobs**.
+   A second cron, daily at 16:00 UTC, calls `/api/notify/` so a missed publish hook still sends.
+   After `vercel --prod`, with `CRON_SECRET` in the environment and not on the command line:
+   `node plugins/lineage/publish/post_deploy.js` (set `SITE_URL` too). It checks that
+   `GET /api/subscribe/` returns `open: true`, then asks notify to send anything new.
+7. **Owner alerts, sign-in and the test email.** In the same Production environment set
+   `NOTIFY_FROM`, `OWNER_NOTIFY_EMAIL`, `ADMIN_SECRET`, `SESSION_SECRET` and `RESEND_WEBHOOK_SECRET`
+   (`openssl rand -hex 32` for each secret). New subscribers get each post when it is published.
+   People who subscribed before that stay on the Monday digest until they change it under
+   Manage my subscription. Sign-in is Google plus an emailed link. No passwords are stored.
+   An address that is already confirmed gets "You are already subscribed" and a link to manage it.
+   No second confirmation email is sent.
+8. **Google Cloud, the existing OAuth client.** Authorized redirect URI
+   `https://family.example.org/api/google/` (match the site's trailing slash). The consent screen
+   must be **Production**, not Testing. Testing only allows listed test users.
+9. **Resend webhook.** Add a webhook for `email.bounced` and `email.complained` pointing at
+   `https://family.example.org/api/account/?op=resend-webhook`. Copy its signing secret into
+   `RESEND_WEBHOOK_SECRET`. A hard bounce or a complaint suppresses that subscriber. The address is not logged.
+10. **A test email, and the backfill.** Both refuse to mail the subscriber list unless you say so.
+    `ADMIN_SECRET=... node plugins/lineage/publish/send_test.js https://family.example.org post`
+    sends a `[TEST]` copy to `OWNER_NOTIFY_EMAIL` only. `backfill.js` is a dry run unless you pass
+    `--send` and `--i-approve` together. Do not put `ADMIN_SECRET` on the command line.
 
 **The form on other pages.** Any page of the site (the family's own landing page, for one) can carry
 the form with two lines; the script fills in the form and keeps it closed until the functions are

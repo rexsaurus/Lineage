@@ -21,29 +21,18 @@ BUILDERS.home = async function(el, rest, q={}){
       <h2 style="margin:0">${esc(S.data.identity.display_title)}</h2></div><span class="spacer"></span>
       <span class="pill" title="${esc(h.updated||'')}">${h.updated?'Last updated '+esc(ago(h.updated)):'Nothing recorded yet'}</span></div>
     <div class="card" id="h-story"></div>
-    ${homeSubscribeBand()}
     <section class="hsec"><div class="row"><h3>${esc(L.Stories||'Stories')}</h3><span class="spacer"></span><a href="#stories">All ${esc((L.stories||'stories'))} →</a></div><div class="hstories" id="h-stories"><p class="empty">Loading…</p></div></section>
     <section class="hsec" data-photo-set><div class="row"><h3>Gallery</h3><span class="spacer"></span><a href="#familypedia?view=photos">All photographs →</a></div><div class="hgal" id="h-gal"><p class="empty">Loading…</p></div></section>
     <section class="hsec"><div class="row"><h3>Relatives</h3><span class="spacer"></span><a href="#familypedia">Familypedia →</a></div><div id="h-rels"><p class="empty">Loading…</p></div></section>`;
   drawHomeStory(h);
   drawHomeStories(); drawHomeGallery(); drawHomeRelatives();
 };
-/* Subscribe: the published site's own form (/updates/subscribe.js, see updates.js), in a band under the Story
-   of the day and again at the foot. It shows only where that script loads, so never in the local app. */
-function homeSubscribeBand(){
-  const I=S.data.identity, fam=I.family_name||I.display_title||'This family';
-  return `<section class="hsub${lsubOn()?'':' hidden'}" id="home-subscribe" data-lsub-wrap aria-labelledby="hsub-h">
-    <div><h3 id="hsub-h">New ${esc(L.stories)}, when there are new ${esc(L.stories)}</h3>
-      <p>${esc(fam)} is still being researched. Subscribe and you'll get an email when a new ${esc(L.story)} is finished or a new record turns up, and nothing in the weeks when neither happens.</p></div>
-    <div data-lineage-subscribe></div></section>`;
-}
+/* Subscribe lives in the header button and on the Updates tab. The header opens the dialog. */
 function homeToSubscribe(){
   if(window.LineageSubscribe && typeof window.LineageSubscribe.open==='function'){
     const t=document.getElementById('hdr-sub')||document.activeElement;
     window.LineageSubscribe.open(t);
-    return;
   }
-  const b=$('#home-subscribe'); if(b && !b.classList.contains('hidden')){ b.scrollIntoView({behavior:'smooth', block:'center'}); const i=$('input[type=email]',b); if(i) setTimeout(()=>i.focus({preventScroll:true}),400); }
 }
 function drawHomeStory(h){
   const box=$('#h-story'), s=h.story;

@@ -273,9 +273,49 @@ def abs_url(site, u):
 
 
 def subscribe_block():
-    """The Subscribe form (filled in and opened by /updates/subscribe.js once the site's functions are configured)."""
+    """The Subscribe form for /updates/ and /changelog/ (not the book home page)."""
     return ('<div data-lineage-subscribe><noscript><p>Follow the <a href="/updates/feed.xml">RSS feed</a> for new posts and changes.</p>'
             '</noscript></div>\n<script src="/updates/subscribe.js" defer></script>')
+
+
+_HOME_BTN = re.compile(r"[ \t]*<a\b[^>]*\bhref=(['\"])#subscribe\1[^>]*>\s*Subscribe\s*</a>[ \t]*\n?", re.I)
+_HOME_FOLLOW = re.compile(
+    r"\s*<h2>\s*Follow the book\s*</h2>\s*<p>.*?</p>\s*"
+    r"<div\b[^>]*\bdata-lineage-subscribe\b[^>]*>\s*</div>\s*"
+    r"(?:<script\b[^>]*\bsrc=(['\"])/updates/subscribe\.js\1[^>]*>\s*</script>)?",
+    re.I | re.S)
+_HOME_WIDGET = re.compile(r"\s*<div\b[^>]*\bdata-lineage-subscribe\b[^>]*>\s*</div>", re.I)
+_HOME_SCRIPT = re.compile(r"\s*<script\b[^>]*\bsrc=(['\"])/updates/subscribe\.js\1[^>]*>\s*</script>", re.I)
+
+
+def strip_home_subscribe(html):
+    """Remove the Subscribe button and form from a book home page. Leave the lineage app header alone."""
+    if 'id="hdr-sub"' in html or "id='hdr-sub'" in html:
+        return html
+    html = _HOME_BTN.sub("", html)
+    html = _HOME_FOLLOW.sub("", html)
+    html = _HOME_WIDGET.sub("", html)
+    if "data-lineage-subscribe" not in html:
+        html = _HOME_SCRIPT.sub("", html)
+    return html
+
+
+def apply_home_subscribe(site, cfg):
+    """Default: the book home page (SITE/index.html, outside /lineage) does not offer Subscribe.
+    settings.publish.subscribe_home true keeps whatever the project put there.
+    Republishing runs this again, so a form copied in from an older page does not come back."""
+    if cfg.get("subscribe_home") in (True, "true", "yes", 1):
+        return False
+    idx = Path(site) / "index.html"
+    if not idx.is_file():
+        return False
+    text = idx.read_text(encoding="utf-8")
+    new = strip_home_subscribe(text)
+    if new != text:
+        idx.write_text(new, encoding="utf-8")
+    if re.search(r"~/|/Users/|/home/[a-z]", idx.read_text(encoding="utf-8", errors="replace")):
+        raise PostError(f"{idx} still contains a home folder path")
+    return new != text
 
 
 def feed_link(cfg):
@@ -427,13 +467,19 @@ def install_functions(site, cfg):
     (api / "_lineage-config.json").write_text(json.dumps({
         "site_url": cfg["site_url"], "title": cfg["title"] or "The family book", "slug": cfg["slug"],
         "sender_line": d.get("sender_line", ""), "postal_address": d.get("postal_address", ""), "trailing_slash": slash,
+        "app_path": cfg.get("app_path") or "/lineage/",
     }, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     written.append(api / "_lineage-config.json")
-    path = "/api/digest/" if slash else "/api/digest"
-    crons = [c for c in conf.get("crons") or [] if c.get("path", "").rstrip("/") != "/api/digest"]
+    digest_path = "/api/digest/" if slash else "/api/digest"
+    notify_path = "/api/notify/" if slash else "/api/notify"
+    crons = [c for c in conf.get("crons") or [] if c.get("path", "").rstrip("/") not in ("/api/digest", "/api/notify")]
     if d.get("enabled", True) not in (False, "false", "no", 0):   # settings.publish.digest.enabled: false = no emails
-        crons.append({"path": path, "schedule": d.get("schedule") or "0 15 * * 1"})
+        crons.append({"path": digest_path, "schedule": d.get("schedule") or "0 15 * * 1"})
+        crons.append({"path": notify_path, "schedule": d.get("notify_schedule") or "0 16 * * *"})
     conf["crons"] = crons
+    fns = conf.setdefault("functions", {})
+    fns["api/notify.js"] = {"maxDuration": 60}
+    fns["api/digest.js"] = {"maxDuration": 60}
     hdrs = conf.setdefault("headers", [])
     if not any(h.get("source") == "/api/(.*)" for h in hdrs):
         hdrs.append({"source": "/api/(.*)", "headers": [{"key": "X-Robots-Tag", "value": "noindex"},
@@ -475,7 +521,8 @@ def leak_check(paths, base=None):
             continue
         n += 1
         text = p.read_text(encoding="utf-8", errors="replace")
-        for m in pat.finditer(text):
+        extra = re.compile(r"~/")
+        for m in list(pat.finditer(text)) + list(extra.finditer(text)):
             name = p.relative_to(base) if base else p
             hits.append(f"{name}: …{text[max(0, m.start() - 50):m.end() + 30]!r}…")
     if hits:

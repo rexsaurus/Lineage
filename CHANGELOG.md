@@ -9,6 +9,7 @@ marks those stories stale rather than regenerating them.
 
 **Alters generated stories: no.** Dashboard and snapshot only.
 
+- **Subscriptions.** New subscribers get one email per post when it is published. Existing subscribers stay on the Monday digest until they change it. Sign in with Google or an emailed link. Manage my subscription covers frequency, pause, unsubscribe, a new address and delete. The owner is told when someone subscribes or unsubscribes. The book home page does not show Subscribe; the header button and the Updates tab on `/lineage` do. Continue with Google is a white secondary button.
 - **A first name inside someone else's name no longer tags a relative**: "John" in "John Carmack" or "Alex St. John",
   "William" in "William H. Bristol". A one-word person's name counts only standing alone, or followed by initials and
   that person's own surname ("Erasthus W. Burnham"). Places keep matching inside longer names ("the Arctic Circle").

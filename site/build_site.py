@@ -54,7 +54,7 @@ SAMPLE_PDF = ROOT / "examples" / "sample-project" / "output" / "book-draft.pdf"
 GITHUB = "https://github.com/rexsaurus/Lineage"
 GH_REF = "main"
 SCRATCH_NAME = "the-calders"
-PUBLIC_PROJECT_PATH = "~/lineages/the-calders"        # what the demo shows instead of a real path
+PUBLIC_PROJECT_PATH = "published"        # stand-in for the real project folder; not a home path
 
 # repo markdown -> site page (directory with index.html)
 DOCS = [
@@ -462,6 +462,15 @@ make demo            # the dashboard, on a scratch copy of the demo lineage</cod
           .replace('="start/', '="/start/').replace('="quickstart/', '="/quickstart/').replace('="blog/', '="/blog/').replace('="testdrive/', '="/testdrive/').replace('="changelog/', '="/changelog/'))
 
 
+def mark_published(html):
+    """The published dashboard is not the local authoring app. Drop the project-path chip and set the flag
+    that stops core.js from writing a folder path into the header."""
+    html = re.sub(r'[ \t]*<div class="proj">project <code id="proj"></code></div>\n?', '', html, count=1)
+    if "data-published=" not in html:
+        html = html.replace("<body>", '<body data-published="1">', 1)
+    return html
+
+
 def write(p, text):
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(text, encoding="utf-8")
@@ -522,7 +531,7 @@ class Demo:
         for s in {str(real), str(self.proj)}:
             self.scrub += [("file://" + s, ""), (s, PUBLIC_PROJECT_PATH)]
         for s in {str(self.home.resolve()), str(self.home)}:
-            self.scrub.append((s, "~"))
+            self.scrub.append((s, "local"))
         self.scrub.append((str(self.tmp.resolve()), "/tmp"))
         self.scrub.append((str(ROOT), "<lineage>"))
         self.scrub.sort(key=lambda x: -len(x[0]))
@@ -568,7 +577,7 @@ class Demo:
     def clean(self, text):
         for a, b in self.scrub:
             text = text.replace(a, b)
-        text = re.sub(r"/(?:Users|home)/[^/\"\s]+", "~", text)              # e.g. where an agent CLI is installed
+        text = re.sub(r"/(?:Users|home)/[^/\"\s]+", "/local", text)              # e.g. where an agent CLI is installed
         text = re.sub(r"http://127\.0\.0\.1:\d+", "http://127.0.0.1:8777", text)   # invite links: the default port
         return text
 
@@ -746,7 +755,7 @@ class Demo:
         for need in ("demo/shim.js", "demo/after.js", "demo/demo.css"):
             if need not in idx:
                 raise SystemExit("app/static/index.html changed; update build_site.py")
-        write(self.out / "index.html", idx)
+        write(self.out / "index.html", mark_published(idx))
         write(self.out / "demo" / "shim.js", SHIM_JS.replace("__META__", json.dumps(self.meta)))
         write(self.out / "demo" / "after.js", AFTER_JS)
         write(self.out / "demo" / "demo.css", DEMO_CSS)
@@ -869,6 +878,8 @@ SHIM_JS = r"""/* Lineage read-only demo: answers the dashboard's API calls from 
     if(!url.startsWith('/api/')) return realFetch(input, opts);
     const method = (opts.method||'GET').toUpperCase();
     let u = new URL(url, location.origin);
+    // The snapshot answers dashboard reads. Subscribe, account and Google stay on the live functions.
+    if(/^\/api\/(subscribe|account|google)(\/|$)/.test(u.pathname)) return realFetch(input, opts);
     if(method!=='GET'){
       if(u.pathname==='/api/engine/story/render'){
         try{ const id = JSON.parse(opts.body).id; return json({job:'demo-render-'+id}); }catch(e){}

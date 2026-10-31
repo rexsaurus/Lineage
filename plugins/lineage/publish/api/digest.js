@@ -10,8 +10,6 @@
 // A week with nothing new sends nothing.
 const L = require("./_lineage.js");
 
-const MAX_LINES = 40;
-
 function isoWeek(d) {
   const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
   const day = t.getUTCDay() || 7;
@@ -28,45 +26,6 @@ async function getJson(url) {
     const r = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store", signal: ctl.signal });
     return r.ok ? await r.json() : null;
   } catch { return null; } finally { clearTimeout(t); }
-}
-
-const nice = iso => { try { return new Date(iso + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }); } catch { return iso; } };
-
-function build(c, posts, entries, unsubLink) {
-  const lines = [];
-  for (const e of entries) for (const x of e.changes || []) lines.push(x);
-  const shown = lines.slice(0, MAX_LINES);
-  const more = lines.length - shown.length;
-  const T = [`${c.title}: this week`, ""];
-  let H = `<div style="font:16px/1.6 Georgia,serif;color:#1d1a17;max-width:600px">
-<h1 style="font-weight:400;color:#b3261e;font-size:26px;margin:0 0 4px">${L.esc(c.title)}</h1>
-<p style="color:#6b645b;margin:0 0 18px">What's new this week</p>`;
-  if (posts.length) {
-    T.push("NEW POSTS", "");
-    H += `<h2 style="font-size:19px;margin:18px 0 6px">New posts</h2>`;
-    for (const p of posts) {
-      const url = c.site + p.url;
-      T.push(`${p.title} (${nice(p.date)})`, p.summary || "", url, "");
-      H += `<p style="margin:0 0 14px">${p.image ? `<img src="${L.esc(p.image)}" alt="" width="560" style="max-width:100%;height:auto;border-radius:4px;display:block;margin:0 0 6px">` : ""}` +
-        `<a href="${L.esc(url)}" style="color:#b3261e;font-size:18px">${L.esc(p.title)}</a><br>` +
-        `<span style="color:#6b645b;font-size:14px">${L.esc(nice(p.date))}</span>${p.summary ? `<br>${L.esc(p.summary)}` : ""}</p>`;
-    }
-  }
-  if (shown.length) {
-    T.push("CHANGES TO THE SITE", "");
-    H += `<h2 style="font-size:19px;margin:18px 0 6px">Changes to the site</h2><ul style="padding-left:20px">`;
-    for (const x of shown) { T.push("- " + x); H += `<li style="margin:0 0 6px">${L.esc(x)}</li>`; }
-    H += "</ul>";
-    if (more > 0) { T.push(`…and ${more} more`); H += `<p>…and ${more} more.</p>`; }
-    T.push("", `Everything: ${c.site}/changelog/`);
-    H += `<p><a href="${L.esc(c.site)}/changelog/" style="color:#b3261e">The full changelog</a></p>`;
-  }
-  T.push("", "--", c.sender, c.postal, `Unsubscribe (one click): ${unsubLink}`);
-  H += `<hr style="border:0;border-top:1px solid #d9d2c4;margin:24px 0 10px">
-<p style="color:#6b645b;font-size:13px">${c.sender ? L.esc(c.sender) + "<br>" : ""}${L.esc(c.postal)}<br>
-You subscribed at <a href="${L.esc(c.site)}/updates/" style="color:#6b645b">${L.esc(c.site.replace(/^https?:\/\//, ""))}</a>.
-<a href="${L.esc(unsubLink)}" style="color:#6b645b">Unsubscribe with one click</a>.</p></div>`;
-  return { subject: `${c.title}: what's new this week`, text: T.filter(x => x != null).join("\n"), html: H };
 }
 
 module.exports = async function handler(req, res) {
@@ -118,11 +77,12 @@ module.exports = async function handler(req, res) {
       if (await L.kv(c, "SISMEMBER", `${P}${week}:sent`, id)) { skipped++; continue; }
       const rec = JSON.parse((await L.kv(c, "GET", L.subKey(c, id))) || "null");
       if (!rec || rec.status !== "confirmed" || !rec.email) { await L.kv(c, "SREM", L.confirmedSet(c), id); skipped++; continue; }
-      const unsub = L.apiUrl(c, "unsubscribe", L.unsubToken(c, id));
-      const msg = build(c, posts, entries, unsub);
+      if (!L.wantsWeekly(rec)) { skipped++; continue; }
+      const links = L.subscriberLinks(c, id);
+      const msg = L.renderDigestEmail(c, posts, entries, links);
       const ok = await L.sendEmail(c, {
         to: [rec.email], ...msg,
-        headers: { "List-Unsubscribe": `<${unsub}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
+        headers: L.listHeaders(c, links.unsub),
       }, `digest-${c.prefix}${week}-${id}`);
       if (ok) { sent++; await L.kv(c, "SADD", `${P}${week}:sent`, id); await L.kv(c, "EXPIRE", `${P}${week}:sent`, 60 * 86400); }
       else failed++;

@@ -118,7 +118,7 @@ class Instance(bs.Demo):
         self.proj = Path(tempfile.gettempdir()) / f"lineage-instance-{os.getpid()}" / name
         self.out = out
         self.pdf = pdf
-        self.public_path = f"~/lineages/{name}"
+        self.public_path = "published"
 
     def prepare(self):
         shutil.rmtree(self.proj.parent, ignore_errors=True)
@@ -171,10 +171,10 @@ class Instance(bs.Demo):
         for s in {str(self.proj.resolve()), str(self.proj), str(self.src), str(self.src.resolve())}:
             self.scrub += [("file://" + s, ""), (s, self.public_path)]
         for s in {str(self.home.resolve()), str(self.home)}:
-            self.scrub.append((s, "~"))
+            self.scrub.append((s, "local"))
         self.scrub.append((str(self.tmp.resolve()), "/tmp"))
         self.scrub.append((str(bs.ROOT), "<lineage>"))
-        self.scrub.append((str(Path.home()), "~"))
+        self.scrub.append((str(Path.home()), "local"))
         self.scrub.sort(key=lambda x: -len(x[0]))
 
 
@@ -189,7 +189,7 @@ def scrub_paths(out: Path):
     for f in out.rglob("*"):
         if f.is_file() and f.suffix.lower() in TEXT:
             t = f.read_text(encoding="utf-8", errors="ignore")
-            u = TMP_PATH.sub("/tmp", HOME_PATH.sub("~/", t))
+            u = TMP_PATH.sub("/tmp", HOME_PATH.sub("local/", t))
             if u != t:
                 f.write_text(u, encoding="utf-8"); n += 1
     return n

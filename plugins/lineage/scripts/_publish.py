@@ -18,6 +18,7 @@ A project's publish settings live in its lineage.json, under "settings" -> "publ
           "hidden_aliases": [],                        # aliases never printed on public pages (nicknames)
           "changelog_commit_messages": false,          # list the project's commit messages on /changelog/
           "posts_dir": "posts",                        # news posts (posts/*.md) published under /updates/<slug>/
+          "subscribe_home": false,                     # Subscribe on the book home page (site root). Default off.
           "digest": {                                  # the weekly email digest (api/digest.js); off until configured
             "sender_line": "",                         # who sends it and why the reader gets it (footer of every email)
             "postal_address": "",                      # postal address for the footer (or env DIGEST_POSTAL_ADDRESS)
@@ -57,6 +58,7 @@ DEFAULTS = {
     "hidden_aliases": [],
     "changelog_commit_messages": False,
     "posts_dir": "posts",
+    "subscribe_home": False,
     "digest": {
         "sender_line": "",
         "postal_address": "",

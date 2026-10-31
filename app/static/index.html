@@ -15,7 +15,11 @@
   <a class="brand" href="#home" style="color:inherit;text-decoration:none"><img src="/logo.svg" alt="Lineage"><h1 id="lin-title">Lineage</h1><img id="lin-crest" class="hidden" alt="" style="width:30px;height:30px;border-radius:6px;object-fit:cover"></a>
   <nav class="tabs" id="tabs" aria-label="Working surfaces"></nav>
   <div class="proj">project <code id="proj"></code></div>
-  <a class="btn go hsub-link hidden" id="hdr-sub" href="#home?to=subscribe">Subscribe</a>
+  <div class="hactions">
+    <a class="btn go hsub-link hidden" id="hdr-sub" href="#home?to=subscribe">Subscribe</a>
+    <button class="hsign hidden" id="hdr-sign" type="button">Sign in</button>
+    <div class="hacct hidden" id="hdr-acct"></div>
+  </div>
   <button class="hbtn" id="termbtn" type="button" aria-expanded="false"></button>
   <div id="gearwrap" style="position:relative"><button class="hbtn" id="gear" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Settings"></button></div>
 </header>
@@ -35,6 +39,7 @@
 <script src="/js/genealogy.js"></script>
 <script src="/js/stories.js"></script>
 <script src="/js/updates.js"></script>
+<script src="/js/account.js"></script>
 <script src="/js/timeline.js"></script>
 <script src="/js/settings.js"></script>
 <script src="/js/photoviewer.js"></script>
