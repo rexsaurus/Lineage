@@ -142,11 +142,20 @@ function bindPanZoom(){
   const apply=()=>svg.setAttribute('viewBox', `${G.vb.x} ${G.vb.y} ${G.vb.w} ${G.vb.h}`);
   const zoom=(f,cx=0.5,cy=0.5)=>{ const nw=G.vb.w*f, nh=G.vb.h*f; G.vb.x+= (G.vb.w-nw)*cx; G.vb.y+=(G.vb.h-nh)*cy; G.vb.w=nw; G.vb.h=nh; apply(); };
   c.onwheel=e=>{ e.preventDefault(); const r=c.getBoundingClientRect(); zoom(e.deltaY>0?1.12:1/1.12, (e.clientX-r.left)/r.width, (e.clientY-r.top)/r.height); };
-  let drag=null;
-  c.onpointerdown=e=>{ if(e.target.closest('.gnode,.zoom')) return; drag={x:e.clientX,y:e.clientY,vx:G.vb.x,vy:G.vb.y}; c.classList.add('drag'); c.setPointerCapture(e.pointerId); };
-  c.onpointermove=e=>{ if(!drag) return; const r=c.getBoundingClientRect(); const k=G.vb.w/r.width;
+  // A drag anywhere on the tree, a person included, pans it. It never starts a text selection
+  // across the names, and a drag that ends on a person does not also open them.
+  let drag=null, moved=false;
+  c.onpointerdown=e=>{ if(e.target.closest('.zoom')) return; if(e.pointerType==='mouse' && e.button!==0) return;
+    if(!e.target.closest('.gnode')) e.preventDefault();
+    const s=window.getSelection&&window.getSelection(); if(s && s.rangeCount && !s.isCollapsed) s.removeAllRanges();
+    drag={x:e.clientX,y:e.clientY,vx:G.vb.x,vy:G.vb.y,id:e.pointerId}; moved=false; };
+  c.onpointermove=e=>{ if(!drag || e.pointerId!==drag.id) return;
+    if(!moved){ if(Math.hypot(e.clientX-drag.x, e.clientY-drag.y)<4) return; moved=true; c.classList.add('drag'); try{ c.setPointerCapture(e.pointerId); }catch(_){} }
+    const r=c.getBoundingClientRect(); const k=G.vb.w/r.width;
     G.vb.x=drag.vx-(e.clientX-drag.x)*k; G.vb.y=drag.vy-(e.clientY-drag.y)*k; apply(); };
-  c.onpointerup=()=>{ drag=null; c.classList.remove('drag'); };
+  c.onpointerup=c.onpointercancel=()=>{ drag=null; c.classList.remove('drag'); };
+  c.addEventListener('click', e=>{ if(moved){ moved=false; e.stopPropagation(); e.preventDefault(); } }, true);
+  c.onselectstart=e=>e.preventDefault();
   $('#gz-in').onclick=()=>zoom(1/1.25); $('#gz-out').onclick=()=>zoom(1.25); $('#gz-fit').onclick=()=>{ G.vb=null; G.fitAll=true; drawGenealogy(); };
 }
 /* ---- the person card, under the tree: who this is, their links with how sure each is, what to do next.

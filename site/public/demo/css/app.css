@@ -253,6 +253,7 @@ body.docked .page{padding-bottom:calc(var(--dockh,0px) + 90px)}
 .gwrap{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start}
 .gcanvas{background:var(--card);border:1px solid var(--line);border-radius:14px;height:calc(100vh - 250px);min-height:460px;overflow:hidden;position:relative;cursor:grab;touch-action:none}
 .gcanvas.drag{cursor:grabbing}
+.gcanvas,.gcanvas svg,.gcanvas text{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .gcanvas svg{width:100%;height:100%;display:block;user-select:none}
 .gcanvas .zoom{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:4px}
 .gnode rect{fill:#FFFDF8;stroke:#C9BFAE;stroke-width:1.2}
