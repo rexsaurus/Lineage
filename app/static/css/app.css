@@ -483,6 +483,8 @@ sup.wref{font-size:.72em;line-height:0}sup.wref a{text-decoration:none}
 .upd-actions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
 .upd-btn{display:inline-block;padding:8px 16px;border:1px solid var(--accent,#b3261e);border-radius:6px;color:var(--accent,#b3261e);text-decoration:none}
 .upd-btn:hover{background:var(--accent,#b3261e);color:#fff}
+.upd-btn.upd-sub{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:44px;padding:0 18px;border:0;border-radius:9px;color:var(--paper);font-weight:600}
+.upd-btn.upd-sub:hover{background:var(--clay-dark);color:var(--paper)}
 
 /* ---- chart pages: the Download menu (exports.js), Genealogy's view switch, person card and Unplaced tray */
 .dl{position:relative;display:inline-block}
@@ -523,8 +525,10 @@ sup.wref{font-size:.72em;line-height:0}sup.wref a{text-decoration:none}
 @media (max-width:700px){.gcard{flex-direction:column;padding-right:18px}}
 
 /* ---- Home: Subscribe (the published site's /updates/subscribe.js form, restyled inside these boxes) */
-.top .hsub-link{color:#D9D2C6;font-size:12.5px;text-decoration:none;flex:none}
-.top .hsub-link:hover{color:#fff;text-decoration:underline}
+/* Subscribe is always a button (brand rule): the primary .btn.go style, a 44px tap target and a visible focus ring */
+.top .hsub-link{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:44px;padding:0 18px;color:#fff;font-size:14px;font-weight:600;text-decoration:none;flex:none}
+.top .hsub-link:hover{color:#fff;text-decoration:none}
+.btn.go:focus-visible,.top .hsub-link:focus-visible{outline:2px solid #fff;outline-offset:2px;box-shadow:0 0 0 4px var(--clay)}
 .hsub{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px 28px;align-items:center;background:#FBF8F2;border:1px solid #DED8CA;border-radius:5px;padding:22px 24px;margin:26px 0 0}
 .hsub h3{font-family:var(--serif);font-size:21px;margin:0 0 6px;color:#1A1814}
 .hsub p{margin:0;color:#6B6459;font-size:15px;line-height:1.55}
