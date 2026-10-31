@@ -8,7 +8,7 @@ const G_TREE_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" 
 const G_CAST_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5.2 6-5.2s5.4 1.9 6 5.2"/><circle cx="16.8" cy="9" r="2.6"/><path d="M16.5 14.4c2.4.2 4 1.8 4.5 4.6"/></svg>';
 BUILDERS.genealogy = async function(el, rest, q={}){
   el.innerHTML='';
-  head(el,{kicker:'Genealogy', title:'The family tree, from the evidence', lede:'Every link points at the words that establish it. Nothing is inferred from surnames, dates or photographs; anyone without evidence waits under Unplaced until something connects them.'});
+  head(el,{kicker:'Genealogy', title:'The family tree, from the evidence', lede:'Every link points at the words that establish it. Nothing is inferred from surnames, dates or photographs; anyone without evidence stays off the tree until something connects them.'});
   el.insertAdjacentHTML('beforeend', `<div class="card"><div class="row">
       <div class="seg" role="group" aria-label="View"><button type="button" data-gview="tree" aria-label="Tree" title="Tree">${G_TREE_SVG}</button><button type="button" data-gview="cast" aria-label="Cast: everyone, as a list" title="Cast">${G_CAST_SVG}</button></div>
       <span class="gshape"><label for="g-layout">Tree shape</label><select id="g-layout" style="max-width:190px"><option value="hour">Hourglass</option><option value="anc">Ancestors only</option><option value="desc">Descendants only</option><option value="all">Everyone</option></select></span>
@@ -57,7 +57,7 @@ function drawGenealogy(){
   if(G.view==='cast') return drawCast();
   $('#g-body').innerHTML = `<div class="gcanvas" id="g-canvas"><div class="zoom" role="group" aria-label="Zoom"><button class="btn ghost sm" id="gz-in" aria-label="Zoom in" title="Zoom in">+</button><button class="btn ghost sm" id="gz-out" aria-label="Zoom out" title="Zoom out">−</button><button class="btn ghost sm" id="gz-fit" aria-label="Fit everyone in view" title="Fit">fit</button></div></div>
     <div class="legend">${Object.entries(G_TIER).map(([k,v])=>`<span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" class="glink ${k}"/></svg>${esc(v)}</span>`).join('')}<span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" class="glink mine"/></svg>my edit</span><span><svg width="18" height="12"><rect x="1" y="1" width="16" height="10" rx="3" fill="#F3EEE4" stroke="#C9BFAE" stroke-dasharray="3 2"/></svg>unknown parents</span></div>
-    <div id="g-card"></div><div id="g-unplaced"></div>`;
+    <div id="g-card"></div>`;
   const fresh = !G.vb;
   $('#g-canvas').insertAdjacentHTML('afterbegin', treeSvg(false));
   if(fresh && !G.fitAll){                         // open at reading size, centred on the focus person; "fit" shows everyone
@@ -66,12 +66,6 @@ function drawGenealogy(){
   }
   G.fitAll=false;
   bindPanZoom();
-  // Unplaced: people no evidenced link reaches. Nothing is guessed; a source or a stated link places them.
-  const shown=new Set(G.lay.nodes.map(n=>n.id));
-  const unplaced=d.people.filter(p=>!shown.has(p.id) && (!linked.has(p.id) || G.layout==='all'));
-  $('#g-unplaced').innerHTML = unplaced.length ? `<div class="gtray"><h4>Unplaced · ${unplaced.length}</h4>
-    <div class="float">${unplaced.map(p=>`<span class="gtray-p">${entryChip(null, p.name||p.id, 'person', '', p.photo||null, `data-gpick="${esc(p.id)}" role="button" tabindex="0"`)}<span class="derived">${linked.has(p.id)?'linked only outside this tree':'no evidenced link yet'}</span></span>`).join('')}</div></div>` : '';
-  $$('#g-unplaced [data-gpick]').forEach(b=>{ b.onclick=e=>{ e.preventDefault(); selectPerson(b.dataset.gpick); }; b.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); selectPerson(b.dataset.gpick); } }; });
   $$('#g-canvas .gnode').forEach(n=>{ const pick=e=>{ e.stopPropagation(); if(!n.dataset.id || n.classList.contains('unknown')) return; selectPerson(n.dataset.id); };
     n.onclick=pick; n.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); pick(e); } }; });
   if(!G.closed) selectPerson(G.sel && d.people.some(p=>p.id===G.sel) ? G.sel : G.focus, true);
