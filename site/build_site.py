@@ -3,6 +3,7 @@
 screenshots, the docs rendered to HTML, install instructions, the sample book PDF, and a
 READ-ONLY static snapshot of the dashboard running on the invented demo lineage, and /changelog/
 (site/changelog.json, appended first on every build by plugins/lineage/scripts/site_changelog.py).
+Also writes site/public/version.txt: the git commit, whether the tree was dirty, and the UTC build time.
 
     make site                       (from the Lineage repo root; runs `make sample` first)
     python site/build_site.py [--no-browser] [--with-example-chapter]
@@ -979,12 +980,53 @@ def check_text():
     return findings
 
 
+def git_state():
+    """Return (sha, dirty) for HEAD. The stamp file itself does not count as dirty."""
+    def run(*args):
+        return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True)
+
+    rev = run("rev-parse", "HEAD")
+    sha = rev.stdout.strip() if rev.returncode == 0 else ""
+    status = run("status", "--porcelain", "--untracked-files=all")
+    dirty = True
+    if status.returncode == 0:
+        dirty = False
+        for line in status.stdout.splitlines():
+            path = line[3:] if len(line) >= 4 else line
+            if " -> " in path:
+                path = path.split(" -> ", 1)[1]
+            path = path.strip().strip('"').replace("\\", "/")
+            if path == "site/public/version.txt":
+                continue
+            dirty = True
+            break
+    return sha, dirty
+
+
+def write_version(sha=None, dirty=None):
+    """Stamp site/public/version.txt with the commit this build came from."""
+    import datetime
+
+    if sha is None or dirty is None:
+        found_sha, found_dirty = git_state()
+        if sha is None:
+            sha = found_sha
+        if dirty is None:
+            dirty = found_dirty
+    built = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    text = f"git={sha}\ndirty={'true' if dirty else 'false'}\nbuilt={built}\n"
+    write(SITE / "version.txt", text)
+    log("version: " + " ".join(text.splitlines()))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--no-browser", action="store_true", help="skip the Playwright pass over the static demo")
     ap.add_argument("--with-example-chapter", action="store_true",
                     help="also publish the worked example chapter (a real family): off by default")
     a = ap.parse_args()
+    # Taken before this build writes the changelog or version.txt.
+    sha, dirty = git_state()
     if not SAMPLE_PDF.exists():
         raise SystemExit("no sample book: run `make sample` first (make site does)")
     try:
@@ -1027,6 +1069,7 @@ def main():
         demo.stop()
         shutil.rmtree(tmp, ignore_errors=True)
 
+    write_version(sha, dirty)
     found = check_text()
     size = sum(f.stat().st_size for f in SITE.rglob("*") if f.is_file())
     n = sum(1 for f in SITE.rglob("*") if f.is_file())
