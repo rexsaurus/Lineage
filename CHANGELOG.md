@@ -9,6 +9,9 @@ marks those stories stale rather than regenerating them.
 
 **Alters generated stories: no.** Dashboard and snapshot only.
 
+- **A first name inside someone else's name no longer tags a relative**: "John" in "John Carmack" or "Alex St. John",
+  "William" in "William H. Bristol". A one-word person's name counts only standing alone, or followed by initials and
+  that person's own surname ("Erasthus W. Burnham"). Places keep matching inside longer names ("the Arctic Circle").
 - **Subscribe opens a dialog.** The header link, the Updates tab, and any `href="#subscribe"` link open the weekly-digest form in a dialog (focus trap, Escape, backdrop, scroll lock, focus restored). Without JavaScript the link still scrolls to the form. While sign-up is not configured the dialog says so and keeps the RSS link. Google sign-in (`api/google.js`) confirms a verified Google address beside the existing Resend double opt-in. It stays off until `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
 - **Photo viewer on a phone.** The scan fits the space above the caption. The caption and the controls sit below it and stay on screen.
 - **Genealogy tree on a phone.** The panel stays the site's light paper. Names are dark on the cream pills, the selected person is clay-outlined, and the links stay ink and clay. Automatic dark mode no longer turns the names pale.

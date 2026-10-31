@@ -523,6 +523,9 @@ def _build(project):
         if len(slugs) == 1 and f not in keys and not any(k in whole for k in _keys(subs[slugs[0]])):
             keys[f] = {slugs[0]}
     rx = _key_regex(keys)
+    _PERSON_KEYS.clear()
+    _PERSON_KEYS.update({k: {subs[x]["title"].split()[-1].strip(".,") for x in v} for k, v in keys.items()
+                         if v and all(subs.get(x, {}).get("type") == "person" for x in v)})
     for i, para in enumerate(paras):
         for slug in _hits(rx, keys, para["text"]):
             subs[slug]["mention_paras"].append(i)
@@ -805,12 +808,27 @@ def _key_regex(keys):
     return re.compile(r"(?<![\w])(" + "|".join(re.escape(k) for k in alts) + r")(?![\w])")
 
 
+_PART_OF_NAME_AFTER = re.compile(r"((?:\s+[A-Z]\.)*)\s+([A-Z][a-z]+|[A-Z]\.)")
+_PART_OF_NAME_BEFORE = re.compile(r"(?:\b(?:St|Ste|Mc|Mac|De|Van|Von)\.?|\b[A-Z]\.)\s+$")
+
+
+_PERSON_KEYS = {}         # names that point only at people -> those people's surnames (set while the index is built)
+
+
 def _hits(rx, keys, text):
+    """The subjects a text names. A one-word person's name ("John", "William") counts only when it stands alone:
+    inside a longer name ("John Carmack", "William H. Bristol", "Alex St. John") it is someone else's name.
+    Places and other subjects keep matching inside longer names ("the Arctic Circle")."""
     if not rx or not text:
         return set()
     out = set()
     for m in rx.finditer(text):
-        out.update(keys.get(m.group(1), ()))
+        k = m.group(1)
+        if " " not in k.strip() and k in _PERSON_KEYS:
+            after = _PART_OF_NAME_AFTER.match(text, m.end(1))
+            if (after and after.group(2).strip(".") not in _PERSON_KEYS[k]) or _PART_OF_NAME_BEFORE.search(text[:m.start(1)]):
+                continue      # "Erasthus W. Burnham" is still Erasthus Burnham; "William H. Bristol" is not William Krug
+        out.update(keys.get(k, ()))
     return out
 
 
