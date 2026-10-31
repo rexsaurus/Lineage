@@ -34,7 +34,7 @@ function homeSubscribeBand(){
   const I=S.data.identity, fam=I.family_name||I.display_title||'This family';
   return `<section class="hsub${lsubOn()?'':' hidden'}" id="home-subscribe" data-lsub-wrap aria-labelledby="hsub-h">
     <div><h3 id="hsub-h">New ${esc(L.stories)}, when there are new ${esc(L.stories)}</h3>
-      <p>${esc(fam)} is still being researched. Subscribe and you'll get an email when a new ${esc(L.story)} is finished or a new record turns up — and nothing in the weeks when neither happens.</p></div>
+      <p>${esc(fam)} is still being researched. Subscribe and you'll get an email when a new ${esc(L.story)} is finished or a new record turns up, and nothing in the weeks when neither happens.</p></div>
     <div data-lineage-subscribe></div></section>`;
 }
 function homeToSubscribe(){
