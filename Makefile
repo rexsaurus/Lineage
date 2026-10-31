@@ -148,8 +148,8 @@ test-timeline:
 	@$(PY) $(BA)/app/tests/check_timeline.py
 
 test-subscribe:
-	@test -n "$(SITE)" || { echo "usage: make test-subscribe SITE=path/to/built/site  (offline: fake Upstash and Resend)"; exit 1; }
-	@node plugins/lineage/publish/test_functions.js "$(SITE)"
+	@node plugins/lineage/publish/test_functions.js $(SITE)
+	@python3 plugins/lineage/publish/test_home_subscribe.py
 
 changelog:
 	@test -x $(PY) || { echo "run 'make install' first"; exit 1; }

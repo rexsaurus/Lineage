@@ -8,8 +8,14 @@ module.exports = async function handler(req, res) {
   const id = L.readUnsubToken(c, (req.query && req.query.t) || new URL(req.url, "http://x").searchParams.get("t"));
   if (!id) return L.page(res, 400, "Link not valid", "This unsubscribe link is not valid. Reply to any digest and you will be removed by hand.", c);
   try {
-    await L.kv(c, "DEL", L.subKey(c, id));
+    const key = L.subKey(c, id);
+    const rec = JSON.parse((await L.kv(c, "GET", key)) || "null");
+    await L.kv(c, "DEL", key);
     await L.kv(c, "SREM", L.confirmedSet(c), id);
+    if (rec && rec.email) {
+      try { await L.ownerNote(c, "unsub", rec, id, rec.method || ""); }
+      catch (e) { console.error("unsubscribe: owner note failed"); }
+    }
   } catch {
     console.error("unsubscribe: store unavailable");
     return L.page(res, 503, "Please try again", "Something went wrong on our side. Please try the link again in a few minutes.", c);

@@ -139,6 +139,7 @@ def main():
     written.append(up / "posts.json")
     if not a.no_subscribe:
         written += P.install_functions(out, cfg)
+    P.apply_home_subscribe(out, cfg)
     n = P.leak_check(written, out)
     print(f"updates page: {up / 'index.html'} ({len(posts)} posts, {len(eds)} editions"
           f"{', feed' if cfg['site_url'] else ''}{'' if a.no_subscribe else ', subscribe functions'}; leak check passed on {n} files)")

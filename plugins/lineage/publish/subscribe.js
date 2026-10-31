@@ -32,8 +32,8 @@
     ".lsub-x:hover{background:rgba(0,0,0,.06)}.lsub-x:focus-visible,.lsub button:focus-visible,.lsub a.lsub-google:focus-visible,.lsub input:focus-visible{outline:2px solid currentColor;outline-offset:2px}" +
     "@media (min-width:700px){.lsub-modal{align-items:center;padding:24px}.lsub-dialog{border-radius:12px;padding:26px 24px 28px}}" +
     "@media (max-width:480px){.lsub form{flex-direction:column}.lsub form button{width:100%}}";
-  var HTML = '<p class="lsub-h" id="lsub-title">Get the weekly digest</p>' +
-    '<p class="lsub-note">New posts and changes to the site, in one email a week. Confirm by email. Unsubscribe with one click.</p>' +
+  var HTML = '<p class="lsub-h" id="lsub-title">Get each new update</p>' +
+    '<p class="lsub-note">One email when an update is published. Confirm from your inbox. You can switch to a Monday digest later. Unsubscribe with one click.</p>' +
     '<form method="post" action="' + API + '" hidden><label class="lsub-l" for="lsub-email">Email address</label>' +
     '<input id="lsub-email" type="email" name="email" required autocomplete="email" placeholder="you@example.com" maxlength="254">' +
     '<span class="lsub-hp" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off"></span>' +
@@ -42,6 +42,19 @@
     '<p class="lsub-rss">or follow the <a href="/updates/feed.xml">RSS feed</a></p>';
 
   var modal = null, lastFocus = null, locked = null;
+
+  function pageSource() {
+    var s = location.pathname || "/";
+    return /^\/[A-Za-z0-9/_.-]{0,200}$/.test(s) ? s : "/";
+  }
+  function googleHref(base) {
+    var b = String(base || "").replace(/"/g, "");
+    return b + (b.indexOf("?") >= 0 ? "&" : "?") + "mode=subscribe&source=" + encodeURIComponent(pageSource());
+  }
+  function safeManage(u) {
+    if (typeof u === "string" && (/^\/[A-Za-z0-9/_.#?=&%-]{1,200}$/.test(u) || /^https:\/\/[A-Za-z0-9.-]+\/[A-Za-z0-9/_.#?=&%-]*$/.test(u))) return u;
+    return "/lineage/#account";
+  }
 
   function setup(box, open, googleUrl) {
     var form = box.querySelector("form"), msg = box.querySelector(".lsub-msg");
@@ -57,11 +70,11 @@
       if (!row) {
         row = document.createElement("p");
         row.className = "lsub-google-row";
-        row.innerHTML = '<span class="lsub-or">or</span><br><a class="lsub-google" href="' + googleUrl.replace(/"/g, "") + '">Continue with Google</a>';
+        row.innerHTML = '<span class="lsub-or">or</span><br><a class="lsub-google" href="' + googleHref(googleUrl) + '">Continue with Google</a>';
         form.insertAdjacentElement("afterend", row);
       }
       row.hidden = false;
-      var a = row.querySelector("a"); if (a) a.href = googleUrl;
+      var a = row.querySelector("a"); if (a) a.href = googleHref(googleUrl);
     } else if (row) row.hidden = true;
     if (form.dataset.ready) return;
     form.dataset.ready = "1";
@@ -70,10 +83,14 @@
       var btn = form.querySelector("button"), fd = new FormData(form);
       btn.disabled = true; msg.textContent = "Sending…";
       fetch(API, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ email: fd.get("email") || "", website: fd.get("website") || "" }) })
+        body: JSON.stringify({ email: fd.get("email") || "", website: fd.get("website") || "", source: pageSource() }) })
         .then(function (r) { return r.json().catch(function () { return { ok: false }; }).then(function (j) { j.status = r.status; return j; }); })
         .then(function (j) {
           if (j.status === 503 && j.open === false) { form.hidden = true; msg.textContent = j.message || CLOSED; return; }
+          if (j.already || j.status === "already") {
+            msg.innerHTML = 'You are already subscribed. <a href="' + safeManage(j.manage_url) + '">Manage my subscription</a>';
+            return;
+          }
           msg.textContent = j.message || (j.ok ? "Thank you. Check your inbox." : "Sorry, that didn't go through.");
           if (j.ok) form.reset();
         })

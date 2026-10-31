@@ -441,6 +441,7 @@ def main():
                                    head_extra=posts_mod.feed_link(cfg)))
     cj = out / "changelog.json"                          # the same lines as the page, for the weekly digest
     cj.write_text(json.dumps(posts_mod.changelog_json(clog), ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    posts_mod.apply_home_subscribe(out, cfg)
     posts_mod.leak_check([cj, out / "changelog" / "index.html"], out)
     try:
         urls += [(f"/updates/{p['slug']}/", "0.6") for p in posts_mod.load_posts(root, cfg)]
