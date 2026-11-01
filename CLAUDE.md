@@ -31,6 +31,13 @@ forks of it.
   read-only to `~/.lineage/releases/<tag>`; a project pins one in `lineage.lock`.
 - Commits here are authored `Lineage contributors <noreply@lineage.invalid>`.
 
+## The research loop (macros)
+`macros/lineage-macros.md` is the whole research loop in one readable file: the graph, every macro (`daily-update`,
+`scan-email`, `update-person`, `handle-correspondence`, `pursue-leads`, `sync-storage`, `write-daily-report`,
+`publish-post`, `weekly-digest`, `add-source`), the rules and the privacy filter. Any agent runs a macro by reading it
+together with the project's `MACROS.local.md` (paths, settings, frozen content, blocked sites). Keep it generic: no
+names, places or paths from any family's project.
+
 ## Layout
 - `plugins/lineage/` the plugin: `skills/`, `scripts/`, `book/` (Typst template), `fonts/`,
   `templates/project/` (what `make new` gives a project: CLAUDE.md, Makefile, gitignore).

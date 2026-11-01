@@ -36,7 +36,7 @@ def esc_str(s):
 def chapter_text(ch, units, show_contents):
     """Chapter opener from data/chapters.csv columns: title, chapter (number), setting,
     dates (falls back to date_range), summary_line, epigraph + epigraph_source and optional
-    epigraph_2 + epigraph_2_source, columns (1 or 2)."""
+    epigraph_2 + epigraph_2_source, columns (2 by default; 1 when the row says so)."""
     num = ch.get("number") or ch.get("chapter")
     lines = ['#import "/book/template.typ": *', HEADER.rstrip(), ""]
     args = [f'"{esc_str(ch["title"])}"']
@@ -50,8 +50,8 @@ def chapter_text(ch, units, show_contents):
     if eps:
         args.append("epigraphs: (" + "".join(f'([{t}], "{esc_str(src)}"), ' for t, src in eps) + ")")
     if show_contents and ch.get("contents"): args.append(f"contents: [{ch['contents']}]")
-    cols = str(ch.get("columns") or "1").strip()
-    args.append(f"columns: {2 if cols == '2' else 1}")
+    cols = str(ch.get("columns") or "2").strip()
+    args.append(f"columns: {1 if cols == '1' else 2}")
     lines += [f"#show: chapter.with({', '.join(args)})", ""]
     sections = [u[0].get("section") for u in units]
     multi_section = len({s for s in sections if s}) > 1

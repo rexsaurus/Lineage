@@ -9,10 +9,26 @@
 #                                    (warning only), build output/book-draft.pdf + back index
 #   make final PROJECT=...           final build: stops on any misquote or unapproved #bridge,
 #                                    then runs preflight
+#   make chapter PROJECT=... CHAPTER=chapters/NN-x.typ [FINAL=1] [PAGES=1]
+#                                    one story as a preview PDF (PAGES=1: one image per page)
+#   make test-timeline               check the timeline rebuilds from its inputs (scratch copy of the demo)
 #   make screenshots                 rebuild the invented demo lineage and capture the dashboard
 #                                    into docs/images/ (needs: pip install playwright, and Chrome)
 #   make demo                        the dashboard on the demo lineage (a scratch copy)
+#   make site                        the public website in site/public/ (landing, tour, docs, sample
+#                                    PDF, read-only demo snapshot); deploy: docs/DEPLOY.md
 #   make clean                       remove generated files from the examples
+#
+# Publishing a family site (settings: lineage.json -> settings.publish; docs/HOWTO.md "Publishing a family site"):
+#   make chapter-pdfs PROJECT=... [ONLY=text]   one compressed PDF per story into the chapters folder
+#   make edition PROJECT=... [BUMP=1]           versioned, compressed book PDF: output/<slug>-v<VERSION>.pdf
+#   make r2-sync PROJECT=... [DRY=1]            images and PDFs to Cloudflare R2; writes data/r2_manifest.csv
+#   make face-focus PROJECT=...                 data/image_focus.json (faces, for cropped pictures)
+#   make seo PROJECT=... SITE=dir               static /stories/, /family/, sitemap.xml, robots.txt into SITE
+#   make updates PROJECT=... SITE=dir           CHANGELOG.md as SITE/updates/index.html
+#   make changelog PROJECT=... [SITE=dir] [DRY=1]   append what changed to data/site_changelog.json (every
+#                                               site build does this itself); SITE: also write SITE/changelog/
+#   make changelog [DRY=1]                      the same for this website (site/changelog.json; make site runs it)
 #
 # Everything runs inside the project folder; nothing here edits your recordings.
 
@@ -26,8 +42,10 @@ EXAMPLE := $(BA)/examples/erasthus-burnham
 export LINEAGE := $(BA)
 # zsh passes PROJECT=~/x through unexpanded; expand a leading ~ here.
 override PROJECT := $(patsubst ~/%,$(HOME)/%,$(PROJECT))
+override SITE := $(patsubst ~/%,$(HOME)/%,$(SITE))
 
-.PHONY: install install-transcribe sample new status draft final clean check-project screenshots demo
+.PHONY: install install-transcribe sample new status draft final clean check-project screenshots demo chapter site \
+        chapter-pdfs edition r2-sync face-focus seo updates posts test-subscribe test-timeline changelog check-lineage-project
 
 install:
 	@command -v python3 >/dev/null || { echo "python3 is required"; exit 1; }
@@ -91,6 +109,53 @@ final: draft
 	    --printer $$($(PY) -c "import yaml;print(yaml.safe_load(open('book.yaml'))['print'].get('printer','kdp'))") \
 	    --color $$($(PY) -c "import yaml;print(yaml.safe_load(open('book.yaml'))['print'].get('color','bw'))")
 
+chapter: check-project
+	@test -n "$(CHAPTER)" || { echo "usage: make chapter PROJECT=path CHAPTER=chapters/NN-x.typ [FINAL=1] [PAGES=1]"; exit 1; }
+	@cd "$(PROJECT)" && $(PY) $(SKILLS)/book-generator/scripts/build_book.py chapter "$(CHAPTER)" $(if $(FINAL),--final) $(if $(PAGES),--pages)
+
+# ---- publishing a family site --------------------------------------------------------
+PUB := $(BA)/plugins/lineage/scripts
+
+check-lineage-project:
+	@test -n "$(PROJECT)" || { echo "set PROJECT=path/to/your-lineage"; exit 1; }
+	@test -d "$(PROJECT)" || { echo "$(PROJECT) not found"; exit 1; }
+	@test -x $(PY) || { echo "run 'make install' first"; exit 1; }
+
+chapter-pdfs: check-lineage-project
+	@$(PY) $(PUB)/chapter_pdfs.py --project "$(PROJECT)" $(ONLY)
+
+edition: check-lineage-project
+	@$(PY) $(PUB)/book_edition.py --project "$(PROJECT)" $(if $(BUMP),--bump)
+
+r2-sync: check-lineage-project
+	@$(PY) $(PUB)/r2_sync.py --project "$(PROJECT)" $(if $(DRY),--dry-run)
+
+face-focus: check-lineage-project
+	@$(PY) $(PUB)/face_focus.py --project "$(PROJECT)"
+
+seo: check-lineage-project
+	@test -n "$(SITE)" || { echo "usage: make seo PROJECT=path SITE=path/to/built/site"; exit 1; }
+	@$(PY) $(PUB)/seo_build.py --project "$(PROJECT)" "$(SITE)"
+
+updates: check-lineage-project
+	@test -n "$(SITE)" || { echo "usage: make updates PROJECT=path SITE=path/to/built/site"; exit 1; }
+	@$(PY) $(PUB)/updates_page.py --project "$(PROJECT)" "$(SITE)"
+
+posts: check-lineage-project
+	@$(PY) $(PUB)/posts.py --project "$(PROJECT)"
+
+test-timeline:
+	@$(PY) $(BA)/app/tests/check_timeline.py
+
+test-subscribe:
+	@node plugins/lineage/publish/test_functions.js $(SITE)
+	@python3 plugins/lineage/publish/test_home_subscribe.py
+
+changelog:
+	@test -x $(PY) || { echo "run 'make install' first"; exit 1; }
+	@if [ -n "$(PROJECT)" ]; then $(PY) $(PUB)/site_changelog.py --project "$(PROJECT)" $(if $(DRY),--dry-run) $(if $(SITE),--render "$(SITE)"); \
+	 else $(PY) $(PUB)/site_changelog.py --platform $(if $(DRY),--dry-run); fi
+
 screenshots: sample
 	@$(PY) -c "import playwright" 2>/dev/null || $(PY) -m pip install -q playwright
 	@$(PY) $(BA)/plugins/lineage/scripts/screenshots.py
@@ -100,6 +165,10 @@ demo: sample
 	@rm -rf /tmp/lineage-demo && cp -R $(BA)/examples/demo-lineage /tmp/lineage-demo
 	@echo "demo lineage copied to /tmp/lineage-demo (the fixture stays clean)"
 	@$(BA)/app/lineage /tmp/lineage-demo
+
+site: sample
+	@$(PY) -c "import markdown" 2>/dev/null || $(PY) -m pip install -q markdown
+	@$(PY) $(BA)/site/build_site.py $(SITEFLAGS)
 
 clean:
 	@rm -rf $(SAMPLE)/output $(SAMPLE)/chapters $(SAMPLE)/book/main.typ $(SAMPLE)/book/template.typ \

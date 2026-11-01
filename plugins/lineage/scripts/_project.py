@@ -112,7 +112,7 @@ def write_sessions(rows):
     SESSIONS_CSV.parent.mkdir(parents=True, exist_ok=True)
     tmp = SESSIONS_CSV.with_suffix(".csv.tmp")
     with open(tmp, "w", newline="", encoding="utf-8") as fh:
-        w = csv.DictWriter(fh, fieldnames=SESSION_COLS, extrasaction="ignore")
+        w = csv.DictWriter(fh, fieldnames=SESSION_COLS, extrasaction="ignore", lineterminator="\n")
         w.writeheader()
         w.writerows(sorted(rows, key=lambda r: session_key(r["session"])))
     tmp.replace(SESSIONS_CSV)

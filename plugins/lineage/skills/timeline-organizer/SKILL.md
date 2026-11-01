@@ -45,6 +45,8 @@ Read `book.yaml` (birth year, family figures), `transcript/master.md`, `facts/gl
 3. **Resolve relative dates** against anchors and show the working:
    - "when I was twelve" → birth year + 12 (±1) → `derived`, display "about 1943"
    - "right after the war" → say which war and why; display "late 1940s"
+   - "the year her mother got sick" → chain to that event's row: date it from that row and
+     name its `event_id` in `date_basis`, so a later correction to one flows to both
    - public-history anchors are labelled `historical context` in the basis
    - **Never invent precision**: no month or day unless said or documented. **Hedges carry
      over** ("around 1972" stays around). A bare "yeah" to a leading question → low confidence.

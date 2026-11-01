@@ -21,3 +21,11 @@ __pycache__/
 lineage.tmp
 data/search_index.json
 data/extracted/
+# photo intake and archive (originals and superseded copies stay local)
+photos/inbox/
+photos/archive/
+# generated illustrations and likeness references (images stay out of git; the plan is tracked)
+photos/generated/
+photos/reference/
+# copies of records looked up by hand (sites often restrict reproduction)
+research/manual-lookups/
